@@ -102,7 +102,7 @@ export function PlanPage() {
           {subtitle && <p className="page-date">{subtitle}</p>}
           <h1 className="page-title">{t.plan.title}</h1>
         </div>
-        <div className="profile">
+        <div className="menu-anchor">
           <button type="button" className="icon-button" aria-label={t.plan.manage} aria-haspopup="menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <circle cx="5" cy="12" r="2" />

@@ -1,4 +1,4 @@
-import { MEAL_TYPES } from "@intake/shared";
+import { NUTRITION_MEAL_TYPES } from "@intake/shared";
 import type { FastifyPluginAsync, preHandlerHookHandler } from "fastify";
 import { z } from "zod";
 import type { NutritionApi } from "../mcp/nutritionApi.js";
@@ -32,7 +32,7 @@ const updateSchema = z
   .object({
     date,
     time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
-    type: z.enum(MEAL_TYPES),
+    type: z.enum(NUTRITION_MEAL_TYPES),
     description: z.string().trim().min(1).max(2000),
     items: z
       .array(

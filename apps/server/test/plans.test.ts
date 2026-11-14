@@ -91,6 +91,13 @@ describe("plannedEntries (Thursday of the example plan)", () => {
     expect(entries.map((e) => e.title)).toEqual(["Spuntino", "Pranzo", "Spuntino", "Cena"]);
   });
 
+  it("lets Nutrition's in-between meal types cover a planned snack (afternoon_snack at 15:40 → the 16:00 snack)", () => {
+    const entries = plannedEntries(stored, [meal("a", "15:40", "afternoon_snack"), meal("m", "10:50", "second_breakfast")], [], context);
+    expect(entries.filter((e) => e.type === "snack")).toEqual([]);
+    // A supper is still a snack-type meal, never a dinner
+    expect(plannedEntries(stored, [meal("p", "20:10", "supper")], [], context).some((e) => e.title === "Cena")).toBe(true);
+  });
+
   it("does not match meals of another type or too far in time", () => {
     // A dinner at 08:30 does not cover breakfast; a snack at 19:30 is more than 3 hours from the 16:00 snack
     const entries = plannedEntries(stored, [meal("d", "08:30", "dinner"), meal("s", "19:30", "snack")], [], context);

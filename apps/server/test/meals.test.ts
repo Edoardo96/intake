@@ -118,6 +118,15 @@ describe("meal routes", () => {
     });
     expect(update.statusCode).toBe(200);
     expect(updateMeal).toHaveBeenCalledWith(espresso.id, expect.objectContaining({ logged_at: "2026-11-04T16:40" }));
+    // Nutrition's own types are kept on edit (e.g. a meal logged by Claude as afternoon_snack)
+    const afternoon = await app.inject({
+      method: "PATCH",
+      url: `/api/meals/${espresso.id}`,
+      headers,
+      payload: { date: "2026-11-04", time: "15:40", type: "afternoon_snack", description: "Caffè", totals: { kcal: 2, protein: 0.1, carbs: 0.3, fat: 0 } },
+    });
+    expect(afternoon.statusCode).toBe(200);
+    expect(updateMeal).toHaveBeenLastCalledWith(espresso.id, expect.objectContaining({ meal_type: "afternoon_snack" }));
 
     expect((await app.inject({ method: "DELETE", url: `/api/meals/${espresso.id}`, headers })).statusCode).toBe(200);
     expect(deleteMeal).toHaveBeenCalledWith(espresso.id);

@@ -1,5 +1,5 @@
 import type { MealPlan, MealTypeValue, PlannedMacros } from "./mealPlan.js";
-import type { MealType, Nutrients } from "./nutrition.js";
+import type { MealType, Nutrients, NutritionMealType } from "./nutrition.js";
 
 /** A stored meal plan version. */
 export interface StoredPlan {
@@ -97,7 +97,7 @@ export interface UpdateMealRequest {
   /** Local date and time of the meal. */
   date: string;
   time: string;
-  type: MealType;
+  type: NutritionMealType;
   description: string;
   /** Full ingredient list (replaces the existing one); totals are then the sum of the items. */
   items?: MealItemInput[];
