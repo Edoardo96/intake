@@ -788,8 +788,13 @@ export const t = {
 
   mealTypes: {
     breakfast: "Colazione",
+    second_breakfast: "Spuntino di metà mattina",
     lunch: "Pranzo",
+    afternoon_snack: "Merenda",
     dinner: "Cena",
+    supper: "Dopocena",
+    pre_workout: "Pre-allenamento",
+    post_workout: "Post-allenamento",
     snack: "Spuntino",
   } as Record<string, string>,
 };

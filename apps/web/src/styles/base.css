@@ -359,6 +359,11 @@ strong,
   color: var(--color-text-2);
 }
 
+/* Positions a drop-down .menu under its button (Piano "⋯") */
+.menu-anchor {
+  position: relative;
+}
+
 .menu {
   position: absolute;
   right: 0;

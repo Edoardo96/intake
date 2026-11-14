@@ -4,6 +4,7 @@ import {
   mealFoodsText,
   mealTimes,
   mealTypeOf,
+  planSlotOf,
   planDay,
   type ComparedMeal,
   type Meal,
@@ -60,7 +61,8 @@ function coverage(stored: StoredPlan, meals: Meal[], links: PlanLink[], date: st
     const type = mealTypeOf(planned);
     const plannedKcal = isFixedMeal(planned) ? planned.macros?.kcal : undefined;
     for (const meal of meals) {
-      if (usedMeals.has(meal.id) || meal.type !== type) continue;
+      // Nutrition has more meal types than the plan: an afternoon snack logged through Claude covers the planned snack
+      if (usedMeals.has(meal.id) || planSlotOf(meal.type) !== type) continue;
       const offset = minutes(meal.time) - minutes(times[index]!);
       if (offset < -MATCH_BEFORE_MINUTES || offset > MATCH_AFTER_MINUTES) continue;
       if (plannedKcal && meal.nutrients.kcal < plannedKcal * MIN_KCAL_SHARE) continue;

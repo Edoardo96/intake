@@ -23,6 +23,18 @@ export interface Nutrients {
 
 export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
+/** Every meal type the Nutrition MCP server accepts (log_meal's meal_type). The plan only uses the four of MealType. */
+export const NUTRITION_MEAL_TYPES = ["breakfast", "second_breakfast", "lunch", "afternoon_snack", "dinner", "supper", "pre_workout", "post_workout", "snack"] as const;
+export type NutritionMealType = (typeof NUTRITION_MEAL_TYPES)[number];
+
+/**
+ * The plan slot a logged meal can cover: the main meals map to themselves, every in-between meal
+ * (mid-morning, afternoon, after dinner, around a workout) to "snack".
+ */
+export function planSlotOf(type: string): MealType {
+  return type === "breakfast" || type === "lunch" || type === "dinner" ? type : "snack";
+}
+
 export interface MealItem {
   name: string;
   /** Quantity exactly as the server returned it, e.g. "150 g" or "2 cucchiaini". */

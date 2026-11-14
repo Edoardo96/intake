@@ -1,4 +1,4 @@
-import { MEAL_TYPES, type Meal, type MealItemInput, type MealType, type Nutrients } from "@intake/shared";
+import { MEAL_TYPES, NUTRITION_MEAL_TYPES, type Meal, type MealItemInput, type Nutrients, type NutritionMealType } from "@intake/shared";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useDay, useUpdateMeal } from "../api/queries";
@@ -71,7 +71,7 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
   const [, navigate] = useLocation();
   const update = useUpdateMeal();
 
-  const [type, setType] = useState<MealType>("snack");
+  const [type, setType] = useState<NutritionMealType>("snack");
   const [time, setTime] = useState("12:00");
   const [items, setItems] = useState<ItemDraft[]>([]);
   const [totals, setTotals] = useState({ kcal: "", protein: "", carbs: "", fat: "" });
@@ -80,7 +80,8 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
 
   useEffect(() => {
     if (!meal || loadedId === meal.id) return;
-    setType((MEAL_TYPES as readonly string[]).includes(meal.type) ? (meal.type as MealType) : "snack");
+    // Keep Nutrition's own type (e.g. afternoon_snack) instead of flattening it to "snack" on save
+    setType((NUTRITION_MEAL_TYPES as readonly string[]).includes(meal.type) ? (meal.type as NutritionMealType) : "snack");
     setTime(meal.time);
     setItems(draftsFrom(meal));
     setTotals({ kcal: decimal(meal.nutrients.kcal), protein: decimal(meal.nutrients.protein), carbs: decimal(meal.nutrients.carbs), fat: decimal(meal.nutrients.fat) });
@@ -161,7 +162,7 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
       {update.isError && <p className="error-text">{t.edit.saveFailed}</p>}
 
       <div className="segmented" role="radiogroup" aria-label={t.edit.type}>
-        {MEAL_TYPES.map((option) => (
+        {[...MEAL_TYPES, ...(meal && !(MEAL_TYPES as readonly string[]).includes(meal.type) && (NUTRITION_MEAL_TYPES as readonly string[]).includes(meal.type) ? [meal.type as NutritionMealType] : [])].map((option) => (
           <button key={option} type="button" role="radio" aria-checked={type === option} className="segmented-option" onClick={() => setType(option)}>
             {t.mealTypes[option]}
           </button>
