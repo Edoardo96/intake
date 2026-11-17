@@ -558,6 +558,8 @@ export interface TrainingTargetExercise {
   openingReps?: number | null;
   /** openGym: why the opening differs from the routine ("Double progression…"); null when it does not. */
   note?: string | null;
+  /** openGym cardio or timed exercise: its target as openGym writes it ("1 × 20 min @ 20 km/h"). */
+  label?: string | null;
 }
 
 export interface TrainingLift {
