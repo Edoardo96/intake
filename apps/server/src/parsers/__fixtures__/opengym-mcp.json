@@ -1744,5 +1744,51 @@
         }
       ]
     }
+  },
+  "preview_session_cardio": {
+    "date": "2026-11-17",
+    "routine_id": "rt004",
+    "routine_name": "Cyclette — Zona 2",
+    "unit": "kg",
+    "starts_from": "plan",
+    "policy": "linear",
+    "policy_name": "Linear progression",
+    "exercises": [
+      {
+        "position": 1,
+        "id": "2138",
+        "name": "stationary bike run v. 3",
+        "mode": "cardio",
+        "policy": "off",
+        "policy_name": "No automatic progression",
+        "planned": {
+          "sets": 1,
+          "min": 20,
+          "summary": "1 × 20 min @ 20 km/h"
+        },
+        "prescription": {
+          "kind": "off",
+          "why": null
+        },
+        "opening_sets": [
+          {
+            "phase": "work",
+            "type": "straight",
+            "label": "20 min @ 20 km/h",
+            "w": 0,
+            "r": 0,
+            "sec": 0,
+            "min": 20,
+            "speed": 20
+          }
+        ],
+        "weight_source": "routine_plan",
+        "weight_source_text": "the routine's own target",
+        "changed": [],
+        "differs_from_plan": false
+      }
+    ],
+    "overridden_count": 0,
+    "overridden": []
   }
 }

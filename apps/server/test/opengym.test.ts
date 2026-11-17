@@ -2,14 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 import { buildApp } from "../src/app.js";
 import { openDatabase } from "../src/db/database.js";
 import { OpenGymApi, OpenGymError } from "../src/opengym/openGymApi.js";
-import { muscleBalanceSchema, openGymStateSchema, openGymWorkouts, previewSchema, weekPlanSchema } from "../src/parsers/openGym.js";
+import { muscleBalanceSchema, openGymWorkouts, parseOpenGymState, previewSchema, weekPlanSchema } from "../src/parsers/openGym.js";
 import { fromOpenGym, GymSources, hevySource, openGymSource } from "../src/services/gymSource.js";
 import { buildOpenGymTraining, nextPlannedDate, openGymLetter } from "../src/services/openGymTraining.js";
 import { authOptions, signIn } from "./helpers.js";
 import { fixture } from "./parsers/fixtures.js";
 
 const stateBody = JSON.parse(fixture("opengym-state.json"));
-const state = openGymStateSchema.parse(stateBody).state;
+const state = parseOpenGymState(stateBody);
 const tools = JSON.parse(fixture("opengym-mcp.json"));
 const plan = weekPlanSchema.parse(tools.get_week_plan);
 const preview = previewSchema.parse(tools.preview_session);
@@ -39,6 +39,16 @@ describe("openGym parsers", () => {
     expect(workouts[0]!.start).toBeGreaterThan(workouts[1]!.start);
   });
 
+  it("reads a partial state field by field (a view-only token returns fewer categories)", () => {
+    const partial = parseOpenGymState({ state: { routines: [{ id: "r1", name: "1 · Forza" }, { broken: true }], workouts: [{ id: "w1", d: "2026-11-17" }], week: "n/a" }, rev: 3 });
+    expect(partial.routines.map((r) => r.name)).toEqual(["1 · Forza"]);
+    expect(Object.keys(partial.workouts)).toEqual(["w1"]);
+    expect(partial).toMatchObject({ unit: "kg", week: null, customEx: null });
+    expect(() => parseOpenGymState({ error: "scope" })).toThrow();
+    // customEx as a list, as a view-only token returns it
+    expect(parseOpenGymState({ state: { customEx: [{ id: "c1", n: "landmine romanian deadlift" }] } }).customEx).toEqual({ c1: { id: "c1", n: "landmine romanian deadlift" } });
+  });
+
   it("maps a finished workout to the Hevy shape, warm-ups flagged and undone sets dropped", () => {
     const workout = openGymWorkouts(state).find((w) => w.d === "2026-11-13")!;
     const mapped = fromOpenGym(workout, names, state);
@@ -48,6 +58,13 @@ describe("openGym parsers", () => {
     // The raw data keeps the warm-up set that the MCP summary leaves out
     expect(mapped.exercises[0]!.sets[0]!.type).toBe("warmup");
     expect(mapped.exercises[0]!.sets.find((s) => s.type === "normal")).toMatchObject({ weight_kg: 20, reps: 8 });
+  });
+
+  it("reads a cardio session preview (no reason, minutes instead of reps)", () => {
+    const cardio = previewSchema.parse(tools.preview_session_cardio);
+    expect(cardio.exercises[0]).toMatchObject({ name: "stationary bike run v. 3", mode: "cardio" });
+    const view = buildOpenGymTraining({ state, plan, preview: cardio, muscles: null, workouts: [], health: [], timeZone: "Europe/Rome", today: "2026-11-17", openUrl: "https://gym.example" });
+    expect(view.next!.exercises[0]).toMatchObject({ label: "1 × 20 min @ 20 km/h", weights: [], openingReps: null, note: null });
   });
 
   it("numbers the routines like openGym does", () => {

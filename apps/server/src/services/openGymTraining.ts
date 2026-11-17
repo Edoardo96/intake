@@ -48,6 +48,22 @@ export function nextPlannedDate(plan: OpenGymWeekPlan, workouts: HevyWorkout[], 
 
 function targetExercise(e: OpenGymPreview["exercises"][number]): TrainingTargetExercise {
   const work = e.opening_sets.filter((s) => s.phase !== "warmup");
+  // Cardio and timed exercises: openGym's own target ("1 × 20 min @ 20 km/h") instead of sets × reps
+  if (e.mode && e.mode !== "reps") {
+    return {
+      templateId: e.id,
+      title: e.name,
+      templateTitle: e.name,
+      sets: work.length,
+      weights: [],
+      repRange: null,
+      superset: false,
+      suggestKg: null,
+      openingReps: null,
+      note: e.differs_from_plan && e.prescription?.why ? e.prescription.why : null,
+      label: e.planned?.summary ?? work[0]?.label ?? null,
+    };
+  }
   const range = /(\d+)\s*[–-]\s*(\d+)/.exec(e.planned?.summary ?? "");
   const repRange = range ? { start: Number(range[1]), end: Number(range[2]) } : e.planned?.reps ? { start: e.planned.reps, end: e.planned.reps } : null;
   return {

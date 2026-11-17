@@ -1,7 +1,7 @@
 import type { z } from "zod";
 import {
   muscleBalanceSchema,
-  openGymStateSchema,
+  parseOpenGymState,
   previewSchema,
   routineDetailSchema,
   weekPlanSchema,
@@ -96,9 +96,12 @@ export class OpenGymApi {
   /** The app state the token can view (routines, week plan, workouts with start and end). */
   state(): Promise<OpenGymState> {
     return this.cached("state", async () => {
-      const parsed = openGymStateSchema.safeParse(await this.request("/api/token/data"));
-      if (!parsed.success) throw new OpenGymError("Unexpected openGym state");
-      return parsed.data.state;
+      const body = await this.request("/api/token/data");
+      try {
+        return parseOpenGymState(body);
+      } catch {
+        throw new OpenGymError("Unexpected openGym state");
+      }
     });
   }
 

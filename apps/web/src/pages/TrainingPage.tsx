@@ -30,6 +30,7 @@ export function exerciseName(exercise: Pick<TrainingTargetExercise, "title" | "t
 const liftName = (title: string) => exerciseName({ title, templateTitle: title });
 
 export function targetText(e: TrainingTargetExercise): string {
+  if (e.label) return e.label.replace(/(\d)\.(\d)/g, "$1,$2");
   const range = e.repRange ? (e.repRange.start === e.repRange.end ? String(e.repRange.start) : `${e.repRange.start}–${e.repRange.end}`) : null;
   // openGym: the opening sets it computed, with the routine's range for context
   if (e.openingReps != null && e.sets > 0) {
