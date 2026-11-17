@@ -1,17 +1,17 @@
 import type { WorkoutsResponse } from "@intake/shared";
 import type { FastifyPluginAsync, preHandlerHookHandler } from "fastify";
 import type { HealthStore } from "../db/healthStore.js";
-import { HevyError, type HevyApi } from "../hevy/hevyApi.js";
 import type { NutritionApi } from "../mcp/nutritionApi.js";
 import type { HevyWorkout } from "../parsers/hevy.js";
 import { localDateTime } from "../parsers/hevy.js";
 import { isValidDate } from "../services/dayView.js";
 import { combineWorkouts } from "../services/dayWorkouts.js";
+import { isGymUnavailable, type GymSource } from "../services/gymSource.js";
 import { mergeWorkouts } from "../services/healthWorkouts.js";
 
 export interface WorkoutRoutesOptions {
-  /** null when no Hevy API key is configured. */
-  hevy: Pick<HevyApi, "workoutsSince"> | null;
+  /** The active workout source (Hevy or openGym), or null when none is configured. */
+  gym: () => Pick<GymSource, "label" | "workoutsSince"> | null;
   /** Apple Health workouts stored from Health Auto Export; omitted in tests that only cover Hevy. */
   health?: Pick<HealthStore, "workouts">;
   /** The Nutrition profile timezone decides the local date of a workout. */
@@ -26,9 +26,9 @@ const dayDiff = (from: string, to: string) => (Date.parse(`${to}T00:00:00Z`) - D
 
 /**
  * Workouts between two local dates: GET /api/workouts?from=YYYY-MM-DD&to=YYYY-MM-DD.
- * Hevy workouts (read live) and Apple Health sessions, each session once.
+ * Workouts of the active gym app (Hevy or openGym, read live) and Apple Health sessions, each session once.
  */
-export const workoutRoutes: FastifyPluginAsync<WorkoutRoutesOptions> = async (app, { hevy, health, api, requireOwner }) => {
+export const workoutRoutes: FastifyPluginAsync<WorkoutRoutesOptions> = async (app, { gym, health, api, requireOwner }) => {
   app.addHook("preHandler", requireOwner);
 
   app.get<{ Querystring: { from?: string; to?: string } }>("/workouts", async (request, reply): Promise<WorkoutsResponse | void> => {
@@ -38,25 +38,26 @@ export const workoutRoutes: FastifyPluginAsync<WorkoutRoutesOptions> = async (ap
     }
 
     const { timezone } = await api.clock();
+    const source = gym();
     let hevyWorkouts: HevyWorkout[] = [];
     let hevyUnavailable = false;
-    if (hevy) {
+    if (source) {
       // One day earlier in UTC covers every timezone offset; the local date filters exactly
       const since = new Date(Date.parse(`${from}T00:00:00Z`) - 86_400_000).toISOString();
       try {
-        hevyWorkouts = (await hevy.workoutsSince(since)).filter((w) => {
+        hevyWorkouts = (await source.workoutsSince(since)).filter((w) => {
           const date = localDateTime(w.start_time, timezone).date;
           return date >= from && date <= to;
         });
       } catch (error) {
         // Without Health data there is nothing else to show: keep the 502 from the error handler
-        if (!(error instanceof HevyError) || !health) throw error;
-        request.log.warn({ err: error }, "Hevy unavailable, listing Apple Health workouts only");
+        if (!isGymUnavailable(error) || !health) throw error;
+        request.log.warn({ err: error }, "Gym app unavailable, listing Apple Health workouts only");
         hevyUnavailable = true;
       }
     }
     const sessions = health ? mergeWorkouts(health.workouts(from, to)) : [];
-    const workouts = combineWorkouts(hevyWorkouts, sessions, timezone);
-    return { configured: hevy !== null, ...(hevyUnavailable ? { hevyUnavailable } : {}), workouts };
+    const workouts = combineWorkouts(hevyWorkouts, sessions, timezone, source?.label);
+    return { configured: source !== null, ...(source ? { source: source.label } : {}), ...(hevyUnavailable ? { hevyUnavailable } : {}), workouts };
   });
 };

@@ -23,6 +23,8 @@ import type {
   WeekView,
   ProfileView,
   TrainingView,
+  TrainingSourceId,
+  TrainingSourceStatus,
   WorkoutsResponse,
 } from "@intake/shared";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -322,6 +324,26 @@ export function useTraining() {
     queryKey: ["training"],
     queryFn: () => apiFetch<TrainingView>("/api/training"),
     staleTime: 5 * 60_000,
+  });
+}
+
+const trainingSourceKey = ["training", "source"] as const;
+
+/** Which workout sources are configured and which one is active (Hevy or openGym). */
+export function useTrainingSource() {
+  return useQuery({ queryKey: trainingSourceKey, queryFn: () => apiFetch<TrainingSourceStatus>("/api/training/source") });
+}
+
+/** Switches the workout source; everything that shows workouts reloads from the new one. */
+export function useSetTrainingSource() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (source: TrainingSourceId) => apiFetch<TrainingSourceStatus>("/api/training/source", { method: "PUT", json: { source } }),
+    onSuccess: (status) => {
+      queryClient.setQueryData(trainingSourceKey, status);
+      void queryClient.invalidateQueries({ queryKey: ["training"], exact: true });
+      void queryClient.invalidateQueries({ queryKey: ["workouts"] });
+    },
   });
 }
 

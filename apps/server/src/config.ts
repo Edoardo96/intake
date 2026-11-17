@@ -19,6 +19,21 @@ const envSchema = z.object({
     .string()
     .optional()
     .transform((value) => value?.trim() || undefined),
+  /** openGym base URL (self-hosted gym tracker), e.g. the DMZ address; workouts can come from openGym instead of Hevy. */
+  OPENGYM_URL: z
+    .string()
+    .optional()
+    .transform((value) => value?.trim().replace(/\/+$/, "") || undefined),
+  /** openGym scoped API token (Settings → API tokens), "view" on workouts and plans is enough. */
+  OPENGYM_TOKEN: z
+    .string()
+    .optional()
+    .transform((value) => value?.trim() || undefined),
+  /** Address used for "Apri in openGym" links when OPENGYM_URL is an internal one; defaults to OPENGYM_URL. */
+  OPENGYM_PUBLIC_URL: z
+    .string()
+    .optional()
+    .transform((value) => value?.trim().replace(/\/+$/, "") || undefined),
 });
 
 export type Config = z.infer<typeof envSchema>;

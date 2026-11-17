@@ -27,8 +27,8 @@ function exerciseNote(exercise: WorkoutExercise): string {
 export function sourcesLine(workout: Workout): string {
   const discarded = workout.sources.filter((s) => !s.used).map((s) => s.label);
   const parts: string[] = [];
-  if (workout.origin === "hevy") {
-    parts.push(t.workouts.sourcesHevy);
+  if (workout.origin === "app") {
+    parts.push(t.workouts.sourcesApp(workout.source));
     if (workout.heartRateFrom) parts.push(t.workouts.hrFromHealth);
     parts.push(workout.kcal !== null ? t.workouts.kcalFromHealth : t.workouts.noKcal);
   } else {
@@ -116,7 +116,7 @@ export function WorkoutCard({ workout }: { workout: Workout }) {
   const chips = [
     workout.exercises.length > 0 ? t.workouts.exercises(workout.exercises.length) : null,
     km ? t.workouts.km(km) : null,
-    workout.hrAvg !== null ? t.workouts.hrChip(formatKcal(workout.hrAvg), workout.origin === "hevy" && workout.hrMax !== null ? formatKcal(workout.hrMax) : null) : null,
+    workout.hrAvg !== null ? t.workouts.hrChip(formatKcal(workout.hrAvg), workout.origin === "app" && workout.hrMax !== null ? formatKcal(workout.hrMax) : null) : null,
   ].filter((c): c is string => c !== null);
   const stats: Array<[string, string]> = [[t.workouts.stats.duration, formatDuration(workout.durationMinutes)]];
   if (workout.sets > 0) stats.push([t.workouts.stats.sets, String(workout.sets)]);

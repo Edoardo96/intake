@@ -122,6 +122,8 @@ The interface is in Italian; this README uses English names for the screens (the
 - Trends › Health (Salute; after an Apple Health import, SQLite only, no Nutrition calls): period 7 / 30 / 90 days; Sleep (average sleep, mean fall-asleep and wake time averaged across midnight, floating bars from falling asleep to waking with the shortest night in amber, average phases, nights under 7 hours, falling asleep after midnight, longest night), Activity (average steps over finished days, days at the step goal, daily bars with the dashed goal and today drawn light, best day, workouts by type, latest four workouts with their source), Heart (average and minimum resting heart rate, change from the previous period of the same length, line over time with the average, average workout heart rate by type). Underlined tabs with a compact period switch on phones and tablets, three columns from 1100 px (`GET /api/health/trends?days=7|30|90`).
 - Trends › Training (Allenamenti; with `HEVY_API_KEY`, read live from Hevy, nothing stored): the next routine of the rotation (A → B → C, the one after the last routine done) with each exercise's target from the Hevy routine (sets, weights, rep range), a "try X kg" hint when every working set at the top weight reached the top of the rep range last time, superset tags, exercise count and typical duration; this week as a Monday–Sunday strip with the routine letters, rotation progress ("3 of 3"), time in the gym, exercises and other activity from Apple Health; load progress for the first two weighted exercises of each routine (best working set per session, warm-ups excluded) labeled "ready to go up", the change in the last session or since the first session; the last four workouts with heart rate from Apple Health. Exercise names as logged in Hevy (in the app's language), with a translation table for the English template names of exercises never logged. Two-column flow and one card per lift on desktop (`GET /api/training`).
 
+- Workout source: Hevy or openGym (self-hosted gym tracker, `OPENGYM_URL` + `OPENGYM_TOKEN`), one at a time, switched in Profile › Connections; the Timeline, Trends and Today use the active one. With openGym, Trends › Training shows the next session from the weekday plan with openGym's own opening sets after its progression policy and the reason when they differ from the routine, the week with done and planned routines, load trends, and the muscles trained most and not at all in the last month, plus an "Open in openGym" link. See [docs/opengym.md](docs/opengym.md).
+- Today's training card on Today ("Allenamento di oggi"): done today, today's planned session with its first exercises (openGym) or the next routine (Hevy), or rest with the next session.
 </details>
 
 <details>
@@ -201,7 +203,7 @@ flowchart LR
     DB[("SQLite<br/>plans · skips · reminders<br/>Apple Health · tokens")]
   end
   NUT["🥗 Nutrition MCP<br/>meals · water · weight · goals"]
-  HEVY["🏋️ Hevy API<br/>routines · workouts"]
+  HEVY["🏋️ Hevy or openGym<br/>routines · workouts · plan"]
   GOOGLE["🔑 Google sign-in"]
   CLAUDE["💬 Claude"]
 
@@ -283,4 +285,5 @@ All configuration comes from environment variables; see [.env.example](.env.exam
 | [docs/apple-health.md](docs/apple-health.md) | Health Auto Export import and sync, duplicates, scores, insights |
 | [docs/meal-plan-format.md](docs/meal-plan-format.md) | Meal plan JSON format and schema |
 | [docs/google-sign-in.md](docs/google-sign-in.md) | Google OAuth client setup |
+| [docs/opengym.md](docs/opengym.md) | openGym as the workout source: setup, what is read, how it is shown |
 | [docs/design/DESIGN.md](docs/design/DESIGN.md) | Design system, navigation, approved mockups |

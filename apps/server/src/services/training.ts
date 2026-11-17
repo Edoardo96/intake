@@ -18,8 +18,10 @@ const mondayOf = (date: string) => addDays(date, -((new Date(`${date}T12:00:00Z`
 const minutesOf = (w: HevyWorkout) => Math.max(0, Math.round((Date.parse(w.end_time) - Date.parse(w.start_time)) / 60_000));
 const working = <T extends { type: string }>(sets: T[]) => sets.filter((s) => s.type !== "warmup");
 
-/** "Full Body A — Squat + Panca" → "A"; otherwise the position in the rotation. */
+/** "Full Body A — Squat + Panca" → "A", "1 · Forza — Squat & Panca" → "1"; otherwise the position in the rotation. */
 export function routineLetter(title: string, index: number): string {
+  const numbered = /^\s*(\d+)\s*[·.)\-–—]/.exec(title);
+  if (numbered) return numbered[1]!;
   const match = /\b([A-Z])\s*[—–-]/.exec(title) ?? /\b([A-Z])$/.exec(title.trim());
   return match ? match[1]! : String.fromCharCode(65 + index);
 }
@@ -184,7 +186,7 @@ export function buildTraining(input: {
     .map(({ order: _order, ...lift }) => lift);
 
   const recent = sessions
-    .filter((s) => s.origin === "hevy")
+    .filter((s) => s.origin === "app")
     .sort((a, b) => (b.date + b.start).localeCompare(a.date + a.start))
     .slice(0, RECENT)
     .map((s) => {
@@ -201,5 +203,5 @@ export function buildTraining(input: {
       };
     });
 
-  return { configured: true, today, next, week, lifts, recent };
+  return { configured: true, today, source: { id: "hevy", label: "Hevy", openUrl: null }, next, week, lifts, recent };
 }

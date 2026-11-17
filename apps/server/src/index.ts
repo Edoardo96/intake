@@ -4,6 +4,8 @@ import { GoogleSignIn } from "./auth/google.js";
 import { loadConfig } from "./config.js";
 import { HevyApi } from "./hevy/hevyApi.js";
 import { HealthIngestToken } from "./services/healthSync.js";
+import { OpenGymApi } from "./opengym/openGymApi.js";
+import { GymSources, hevySource, openGymSource } from "./services/gymSource.js";
 import { NutritionApi } from "./mcp/nutritionApi.js";
 import { createServices } from "./services.js";
 import { ReminderScheduler } from "./services/reminderScheduler.js";
@@ -26,8 +28,14 @@ const scheduler = new ReminderScheduler({
 });
 
 const healthToken = new HealthIngestToken(services.secrets);
-// One Hevy client, so the workouts and training views share its 5-minute page cache
+// One client per gym app, so the workouts and training views share their caches; one source is active at a time
 const hevy = config.HEVY_API_KEY ? new HevyApi(config.HEVY_API_KEY) : null;
+const openGym = config.OPENGYM_URL && config.OPENGYM_TOKEN ? new OpenGymApi(config.OPENGYM_URL, config.OPENGYM_TOKEN) : null;
+const gymSources = new GymSources(services.db, {
+  ...(hevy ? { hevy: hevySource(hevy) } : {}),
+  ...(openGym ? { opengym: openGymSource(openGym, config.OPENGYM_PUBLIC_URL ?? config.OPENGYM_URL!) } : {}),
+});
+const gym = () => gymSources.active();
 const app = await buildApp({
   webDistDir: config.WEB_DIST_DIR ?? resolve(import.meta.dirname, "../../web/dist"),
   logger: true,
@@ -50,8 +58,8 @@ const app = await buildApp({
   insightHealth: services.health,
   plans: services.plans,
   push: { store: services.reminders, scheduler, publicKey: vapid.publicKey },
-  workouts: { hevy, health: services.health, api },
-  training: { hevy, health: services.health, api },
+  workouts: { gym, health: services.health, api },
+  training: { gym, sources: gymSources, health: services.health, api },
   appleHealth: { store: services.health, api, sync: { token: healthToken, endpoint: `${config.PUBLIC_BASE_URL}/api/health/ingest` } },
   healthIngest: { store: services.health, token: healthToken },
 });

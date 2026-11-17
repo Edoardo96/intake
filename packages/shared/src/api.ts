@@ -277,8 +277,8 @@ export interface WorkoutHeartRatePoint {
  */
 export interface Workout {
   id: string;
-  /** "hevy" when the workout comes from the Hevy API, "health" when only Apple Health has it. */
-  origin: "hevy" | "health";
+  /** "app": the gym app (Hevy or openGym, named by `source`); "health": an Apple Health session only. */
+  origin: "app" | "health";
   title: string;
   /** Type label ("Forza", "Cyclette") and family used for the icon ("Forza", "Ciclismo", "Calcio", ...). */
   type: string;
@@ -311,8 +311,10 @@ export interface Workout {
 }
 
 export interface WorkoutsResponse {
-  /** false when no Hevy API key is configured on the server. */
+  /** false when no workout source (Hevy or openGym) is configured on the server. */
   configured: boolean;
+  /** Label of the active gym app ("Hevy", "openGym"). */
+  source?: string;
   /** true when Hevy did not answer: only Apple Health workouts are listed. */
   hevyUnavailable?: boolean;
   workouts: Workout[];
@@ -550,8 +552,12 @@ export interface TrainingTargetExercise {
   weights: number[];
   repRange: { start: number; end: number } | null;
   superset: boolean;
-  /** "prova X kg": every working set at the top weight reached the top of the rep range last time. */
+  /** "prova X kg": every working set at the top weight reached the top of the rep range last time (Hevy only). */
   suggestKg: number | null;
+  /** openGym: reps of the opening working sets, after its progression policy; null for Hevy. */
+  openingReps?: number | null;
+  /** openGym: why the opening differs from the routine ("Double progression…"); null when it does not. */
+  note?: string | null;
 }
 
 export interface TrainingLift {
@@ -572,6 +578,8 @@ export interface TrainingLift {
 export interface TrainingView {
   configured: boolean;
   today: string;
+  /** The active workout source; null when none is configured. */
+  source?: { id: TrainingSourceId; label: string; openUrl: string | null } | null;
   /** Hevy did not answer; the view is empty but the rest of the app keeps working. */
   hevyUnavailable?: boolean;
   next: {
@@ -581,11 +589,21 @@ export interface TrainingView {
     after: { title: string; date: string } | null;
     exerciseCount: number;
     typicalMinutes: number | null;
+    /** openGym: the date the session is planned for (from the week plan); null for the Hevy rotation. */
+    date?: string | null;
     exercises: TrainingTargetExercise[];
   } | null;
   week: {
     start: string;
-    days: Array<{ date: string; letter: string | null; title: string | null; minutes: number | null; other: string | null }>;
+    days: Array<{
+      date: string;
+      letter: string | null;
+      title: string | null;
+      minutes: number | null;
+      other: string | null;
+      /** openGym: the routine planned for an upcoming day (letter), when nothing is done yet. */
+      planned?: string | null;
+    }>;
     /** Distinct rotation routines done this week, out of the rotation length. */
     done: number;
     total: number;
@@ -595,5 +613,16 @@ export interface TrainingView {
     other: Array<{ type: string; date: string; source: string }>;
   };
   lifts: TrainingLift[];
+  /** openGym: muscles trained most and not at all over the last month (slugs, e.g. "hip-flexors"). */
+  muscles?: { top: string[]; neglected: string[] } | null;
   recent: Array<{ id: string; letter: string | null; title: string; date: string; start: string; minutes: number; exercises: number; hrAvg: number | null }>;
+}
+
+/** Where workouts come from; one at a time (Profilo › Collegamenti). */
+export type TrainingSourceId = "hevy" | "opengym";
+
+export interface TrainingSourceStatus {
+  /** Sources configured on the server (HEVY_API_KEY, OPENGYM_URL + OPENGYM_TOKEN). */
+  available: TrainingSourceId[];
+  active: TrainingSourceId | null;
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import { HevyError } from "../src/hevy/hevyApi.js";
 import { hevyRoutinePageSchema, hevyWorkoutPageSchema } from "../src/parsers/hevy.js";
-import type { TrainingRoutesOptions } from "../src/routes/training.js";
+import { hevySource } from "../src/services/gymSource.js";
 import type { MergedWorkout } from "../src/services/healthWorkouts.js";
 import { buildTraining, nextWeight, routineLetter, rotationOf } from "../src/services/training.js";
 import { authOptions, signIn } from "./helpers.js";
@@ -65,16 +65,16 @@ describe("buildTraining", () => {
 });
 
 describe("GET /api/training", () => {
-  async function setup(hevy: TrainingRoutesOptions["hevy"]) {
+  async function setup(hevy: Parameters<typeof hevySource>[0] | null) {
     const api = { clock: async () => ({ timezone: "Europe/Rome", localDate: "2026-11-13", localTime: "18:00:00", utc: "" }) };
-    const app = await buildApp({ auth: authOptions(), training: { hevy, api } });
+    const app = await buildApp({ auth: authOptions(), training: { gym: () => (hevy ? hevySource(hevy) : null), api } });
     const { cookie } = await signIn(app);
     return (await app.inject({ method: "GET", url: "/api/training", headers: { cookie } })).json();
   }
 
   it("reads routines and about four months of workouts from Hevy", async () => {
     let since = "";
-    const body = await setup({ routines: async () => routines, workoutsSince: async (s) => ((since = s), workouts) });
+    const body = await setup({ routines: async () => routines, workoutsSince: async (s: string) => ((since = s), workouts) });
     expect(since).toBe("2026-07-16T00:00:00Z");
     expect(body).toMatchObject({ configured: true, next: { letter: "A" } });
   });
