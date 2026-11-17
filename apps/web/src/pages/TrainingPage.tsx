@@ -10,19 +10,33 @@ const MONTHS = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "l
 const kg = (value: number) => formatOneDecimal(value);
 const shortDate = (date: string) => `${Number(date.slice(8, 10))}/${Number(date.slice(5, 7))}`;
 
-/** Hevy template names are English: translate known ones, else the equipment in brackets ("Squat (Barbell)" → "Squat (bilanciere)"). */
+/**
+ * Exercise names in Italian. Hevy logs workouts in the app's language but names routine templates in English;
+ * openGym names every exercise in English lower case ("barbell full squat"). Known names are translated, else the
+ * equipment in brackets ("Squat (Barbell)" → "Squat (bilanciere)") and a capital first letter.
+ */
 export function exerciseName(exercise: Pick<TrainingTargetExercise, "title" | "templateTitle">): string {
-  if (exercise.title !== exercise.templateTitle) return exercise.title;
-  const known = t.training.exerciseNames[exercise.templateTitle];
+  const known = t.training.exerciseNames[exercise.title] ?? t.training.exerciseNames[exercise.templateTitle];
   if (known) return known;
-  return exercise.templateTitle.replace(/\(([^)]+)\)$/, (whole, equipment: string) => {
+  if (exercise.title !== exercise.templateTitle && exercise.title !== exercise.title.toLowerCase()) return exercise.title;
+  const name = exercise.templateTitle.replace(/\(([^)]+)\)$/, (whole, equipment: string) => {
     const it = t.training.equipment[equipment];
     return it ? `(${it})` : whole;
   });
+  return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-function targetText(e: TrainingTargetExercise): string {
+/** Names of logged exercises (lifts): the same translation, from the title alone. */
+const liftName = (title: string) => exerciseName({ title, templateTitle: title });
+
+export function targetText(e: TrainingTargetExercise): string {
   const range = e.repRange ? (e.repRange.start === e.repRange.end ? String(e.repRange.start) : `${e.repRange.start}–${e.repRange.end}`) : null;
+  // openGym: the opening sets it computed, with the routine's range for context
+  if (e.openingReps != null && e.sets > 0) {
+    const same = e.weights.length > 0 && e.weights.every((w) => w === e.weights[0]);
+    const opening = same || e.weights.length === 0 ? t.training.opening(e.sets, e.openingReps, e.weights[0] ? kg(e.weights[0]) : null) : t.training.perSet(e.weights.map(kg).join(" · "), String(e.openingReps));
+    return range && range !== String(e.openingReps) ? `${opening} ${t.training.rangeNote(range)}` : opening;
+  }
   if (e.weights.length === 0) return range ? t.training.noWeight(e.sets, range) : t.training.sets(e.sets);
   const same = e.weights.every((w) => w === e.weights[0]);
   if (!range) return `${t.training.sets(e.sets)} · ${e.weights.map(kg).join(" · ")} kg`;
@@ -35,17 +49,31 @@ function whenLabel(date: string, today: string): string {
   return t.training.onDay(formatWeekday(date).toLowerCase());
 }
 
-function NextRoutine({ next, today }: { next: NonNullable<TrainingView["next"]>; today: string }) {
+function plannedWhen(date: string, today: string): string {
+  if (date === today) return t.training.todayWhen;
+  if (date === addDays(today, 1)) return t.training.tomorrowWhen;
+  return formatWeekdayDay(date).toLowerCase();
+}
+
+/** openGym's reason, in Italian when it is a known one. */
+const reasonText = (note: string) => t.training.reasons[note] ?? t.training.reasonFallback;
+
+function NextRoutine({ next, today, source }: { next: NonNullable<TrainingView["next"]>; today: string; source: NonNullable<TrainingView["source"]> }) {
+  const planned = next.date != null;
+  // openGym often gives the same reason for every exercise: then it is shown once, under the list
+  const reasons = [...new Set(next.exercises.flatMap((e) => (e.note ? [e.note] : [])))];
+  const sharedReason = reasons.length === 1 ? reasons[0]! : null;
   const meta = [
-    next.after ? t.training.after(next.after.title, whenLabel(next.after.date, today)) : null,
+    planned ? t.training.plannedFor(plannedWhen(next.date!, today)) : null,
+    !planned && next.after ? t.training.after(next.after.title, whenLabel(next.after.date, today)) : null,
     t.training.exerciseCount(next.exerciseCount),
     next.typicalMinutes ? t.training.about(next.typicalMinutes) : null,
   ].filter(Boolean);
   return (
     <section className="card training-card training-next" aria-label={t.training.nextAria}>
       <div className="training-next-head">
-        <span className="training-eyebrow">{t.training.next}</span>
-        <span className="source-pill">{t.training.hevy}</span>
+        <span className="training-eyebrow">{planned ? t.training.nextPlanned : t.training.next}</span>
+        <span className="source-pill">{source.label}</span>
       </div>
       <div className="training-next-title">
         <h2>{next.title}</h2>
@@ -57,8 +85,13 @@ function NextRoutine({ next, today }: { next: NonNullable<TrainingView["next"]>;
             <div className="training-row-text">
               <strong>{exerciseName(e)}</strong>
               <span className="muted">{targetText(e)}</span>
+              {e.note && !sharedReason && <span className="training-reason">{reasonText(e.note)}</span>}
             </div>
-            {e.suggestKg !== null ? (
+            {e.note ? (
+              <span className="training-pill" data-kind="try" title={e.note}>
+                {t.training.updated}
+              </span>
+            ) : e.suggestKg !== null ? (
               <span className="training-pill" data-kind="try">
                 {t.training.tryKg(kg(e.suggestKg))}
               </span>
@@ -68,11 +101,17 @@ function NextRoutine({ next, today }: { next: NonNullable<TrainingView["next"]>;
           </div>
         ))}
       </div>
+      {sharedReason && <span className="training-reason">{t.training.sharedReason(reasonText(sharedReason))}</span>}
+      {source.openUrl && (
+        <a className="training-open" href={source.openUrl} target="_blank" rel="noreferrer">
+          {t.training.openApp(source.label)}
+        </a>
+      )}
     </section>
   );
 }
 
-function Week({ week }: { week: TrainingView["week"] }) {
+function Week({ week, planned }: { week: TrainingView["week"]; planned: boolean }) {
   const other = week.other;
   return (
     <section className="card training-card" aria-label={t.training.weekAria}>
@@ -80,7 +119,7 @@ function Week({ week }: { week: TrainingView["week"] }) {
         <h2>{t.training.week}</h2>
         {week.total > 0 && (
           <span className="training-pill" data-kind={week.done >= week.total ? "done" : undefined}>
-            {t.training.rotation(week.done, week.total)}
+            {t.training.rotation(week.done, week.total, planned)}
           </span>
         )}
       </div>
@@ -91,10 +130,11 @@ function Week({ week }: { week: TrainingView["week"] }) {
             <span
               className="training-day-tile"
               data-active={d.letter ? true : undefined}
-              data-other={!d.letter && d.other ? true : undefined}
+              data-planned={!d.letter && d.planned ? true : undefined}
+              data-other={!d.letter && !d.planned && d.other ? true : undefined}
               title={t.training.dayTitle(formatWeekdayDay(d.date), d.title, d.minutes, d.other)}
             >
-              {d.letter ?? ""}
+              {d.letter ?? d.planned ?? ""}
             </span>
           </div>
         ))}
@@ -168,7 +208,7 @@ function Lift({ lift, routineTitles }: { lift: TrainingLift; routineTitles: Map<
     <div className="lift">
       <div className="lift-head">
         <div className="lift-text">
-          <strong>{lift.title}</strong>
+          <strong>{liftName(lift.title)}</strong>
           <span className="muted">{routines}</span>
         </div>
         <span className="training-pill" data-kind={change.kind}>
@@ -191,6 +231,29 @@ function Progress({ lifts, routineTitles }: { lifts: TrainingLift[]; routineTitl
         <Lift key={lift.templateId} lift={lift} routineTitles={routineTitles} />
       ))}
       <span className="muted training-note">{t.training.cablesNote}</span>
+    </section>
+  );
+}
+
+/** openGym: muscles trained most and not at all over the last month. */
+function Muscles({ muscles }: { muscles: NonNullable<TrainingView["muscles"]> }) {
+  const name = (slug: string) => t.training.muscleNames[slug] ?? slug.replace(/-/g, " ");
+  return (
+    <section className="card consistency-card" aria-label={t.training.muscles}>
+      <h2>{t.training.muscles}</h2>
+      <div className="consistency-row">
+        <div>
+          <strong>{t.training.musclesTop}</strong>
+          <span className="muted">{muscles.top.length ? muscles.top.map(name).join(", ") : t.training.musclesNone}</span>
+        </div>
+      </div>
+      <div className="consistency-row">
+        <div>
+          <strong>{t.training.musclesNeglected}</strong>
+          <span className="muted">{muscles.neglected.length ? muscles.neglected.map(name).join(", ") : t.training.musclesNone}</span>
+        </div>
+        {muscles.neglected.length > 0 && <span className="training-pill" data-kind="try">{muscles.neglected.length}</span>}
+      </div>
     </section>
   );
 }
@@ -220,6 +283,9 @@ function Recent({ recent, today }: { recent: TrainingView["recent"]; today: stri
 export function TrainingPage() {
   const query = useTraining();
   const data = query.data;
+  const source = data?.source ?? null;
+  const label = source?.label ?? "Hevy";
+  const planned = source?.id === "opengym";
   // "Full Body A" for the lift subtitles, from the week and recent workouts
   const routineTitles = new Map<string, string>();
   for (const w of [...(data?.recent ?? [])].reverse()) if (w.letter) routineTitles.set(w.letter, w.title.split(/\s+[—–-]\s+/)[0]!);
@@ -230,8 +296,8 @@ export function TrainingPage() {
       <header className="section-header">
         <div className="page-heading">
           <p className="page-date">
-            <span className="title-phone">{t.training.subtitle}</span>
-            <span className="title-wide">{t.training.subtitleWide(data?.week.total ?? 0)}</span>
+            <span className="title-phone">{t.training.subtitle(label)}</span>
+            <span className="title-wide">{t.training.subtitleWide(label, data?.week.total ?? 0, !planned)}</span>
           </p>
           <TrendsTitle page={t.training.title} />
         </div>
@@ -241,13 +307,14 @@ export function TrainingPage() {
       {query.isPending && <div className="card skeleton" style={{ height: 260 }} />}
       {query.isError && <p className="notice" data-kind="error">{t.training.loadFailed}</p>}
       {data && !data.configured && <p className="card trend-empty muted">{t.training.notConfigured}</p>}
-      {data?.hevyUnavailable && <p className="notice" data-kind="error">{t.training.unavailable}</p>}
+      {data?.hevyUnavailable && <p className="notice" data-kind="error">{t.training.unavailable(label)}</p>}
       {data && data.configured && !data.hevyUnavailable && !data.next && data.recent.length === 0 && <p className="card trend-empty muted">{t.training.empty}</p>}
 
       {data && data.configured && !data.hevyUnavailable && (data.next || data.recent.length > 0) && (
         <div className="training-flow">
-          {data.next && <NextRoutine next={data.next} today={data.today} />}
-          {data.week.days.length > 0 && <Week week={data.week} />}
+          {data.next && source && <NextRoutine next={data.next} today={data.today} source={source} />}
+          {data.week.days.length > 0 && <Week week={data.week} planned={planned} />}
+          {data.muscles && <Muscles muscles={data.muscles} />}
           {data.lifts.length > 0 && <Progress lifts={data.lifts} routineTitles={routineTitles} />}
           {data.recent.length > 0 && <Recent recent={data.recent} today={data.today} />}
           {/* Desktop and iPad: one card per lift after the recent workouts (AllenamentiDesktop) */}

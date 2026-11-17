@@ -4,6 +4,7 @@ import { ActivityCard } from "../components/ActivityCard";
 import { CalorieCard } from "../components/CalorieCard";
 import { DayCurve } from "../components/DayCurve";
 import { ScoreRings } from "../components/ScoreRings";
+import { TodayTrainingCard } from "../components/TodayTrainingCard";
 import { DayScreen } from "../components/DayScreen";
 import { InsightCard } from "../components/InsightCard";
 import { MacroCard } from "../components/MacroCard";
@@ -65,6 +66,7 @@ function Summary({ view, selected, onAdd }: { view: DayView; selected: string; o
       </div>
       <div className="today-side">
         <NextMealCard view={view} onAdd={onAdd} />
+        {view.isToday && <TodayTrainingCard date={view.date} />}
         <DayPlanCard view={view} />
         <ActivityCard date={view.date} />
         {view.isToday && <InsightCard />}

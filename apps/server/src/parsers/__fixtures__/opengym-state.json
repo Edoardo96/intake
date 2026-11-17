@@ -1,0 +1,4390 @@
+{
+  "state": {
+    "unit": "kg",
+    "week": {
+      "0": [
+        "rt002"
+      ],
+      "2": [
+        "rt004"
+      ],
+      "3": [
+        "rt003"
+      ],
+      "5": [
+        "rt001"
+      ]
+    },
+    "routines": [
+      {
+        "id": "rt001",
+        "name": "2 · Unilaterale & Cavi",
+        "ex": [
+          {
+            "id": "0410",
+            "sets": 3,
+            "reps": 10,
+            "repsMin": 8,
+            "weight": 20,
+            "mode": "reps",
+            "warmupSets": 1
+          },
+          {
+            "id": "1269",
+            "sets": 3,
+            "reps": 12,
+            "repsMin": 10,
+            "weight": 10,
+            "mode": "reps"
+          },
+          {
+            "id": "3200",
+            "sets": 3,
+            "reps": 10,
+            "repsMin": 8,
+            "weight": 53.5,
+            "mode": "reps"
+          },
+          {
+            "id": "4347",
+            "sets": 2,
+            "reps": 12,
+            "repsMin": 8,
+            "weight": 10,
+            "mode": "reps"
+          },
+          {
+            "id": "0150",
+            "sets": 2,
+            "reps": 10,
+            "repsMin": 8,
+            "weight": 40,
+            "mode": "reps"
+          },
+          {
+            "id": "0312",
+            "sets": 2,
+            "reps": 10,
+            "repsMin": 8,
+            "weight": 28,
+            "mode": "reps"
+          },
+          {
+            "id": "0200",
+            "sets": 2,
+            "reps": 12,
+            "repsMin": 10,
+            "weight": 15,
+            "mode": "reps"
+          },
+          {
+            "id": "0175",
+            "sets": 2,
+            "reps": 12,
+            "repsMin": 10,
+            "weight": 25,
+            "mode": "reps"
+          }
+        ]
+      },
+      {
+        "id": "rt002",
+        "name": "3 · Glutei & Spalle",
+        "ex": [
+          {
+            "id": "4742",
+            "sets": 3,
+            "reps": 12,
+            "repsMin": 10,
+            "weight": 12,
+            "mode": "reps",
+            "warmupSets": 1
+          },
+          {
+            "id": "0314",
+            "sets": 3,
+            "reps": 10,
+            "repsMin": 8,
+            "weight": 44,
+            "mode": "reps"
+          },
+          {
+            "id": "0180",
+            "sets": 3,
+            "reps": 12,
+            "repsMin": 8,
+            "weight": 25,
+            "mode": "reps"
+          },
+          {
+            "id": "1760",
+            "sets": 2,
+            "reps": 10,
+            "repsMin": 8,
+            "weight": 26,
+            "mode": "reps"
+          },
+          {
+            "id": "0405",
+            "sets": 3,
+            "reps": 10,
+            "repsMin": 8,
+            "weight": 40,
+            "mode": "reps"
+          },
+          {
+            "id": "0294",
+            "sets": 2,
+            "reps": 10,
+            "repsMin": 8,
+            "weight": 28,
+            "mode": "reps"
+          },
+          {
+            "id": "0334",
+            "sets": 2,
+            "reps": 12,
+            "repsMin": 10,
+            "weight": 16,
+            "mode": "reps"
+          },
+          {
+            "id": "0417",
+            "sets": 2,
+            "reps": 12,
+            "repsMin": 10,
+            "weight": 8,
+            "mode": "reps"
+          }
+        ]
+      },
+      {
+        "id": "rt003",
+        "name": "1 · Forza — Squat & Panca",
+        "ex": [
+          {
+            "id": "0043",
+            "sets": 3,
+            "reps": 8,
+            "repsMin": 6,
+            "weight": 53.5,
+            "mode": "reps",
+            "warmupSets": 1
+          },
+          {
+            "id": "0025",
+            "sets": 3,
+            "reps": 8,
+            "repsMin": 6,
+            "weight": 53.5,
+            "mode": "reps",
+            "warmupSets": 1
+          },
+          {
+            "id": "0150",
+            "sets": 3,
+            "reps": 12,
+            "repsMin": 8,
+            "weight": 35,
+            "mode": "reps"
+          },
+          {
+            "id": "imo0jisakymv",
+            "sets": 2,
+            "reps": 10,
+            "repsMin": 8,
+            "weight": 23.5,
+            "mode": "reps"
+          },
+          {
+            "id": "0178",
+            "sets": 2,
+            "reps": 12,
+            "repsMin": 10,
+            "weight": 0,
+            "mode": "reps"
+          },
+          {
+            "id": "5033",
+            "sets": 2,
+            "reps": 10,
+            "repsMin": 8,
+            "weight": 5,
+            "mode": "reps"
+          },
+          {
+            "id": "0175",
+            "sets": 2,
+            "reps": 12,
+            "repsMin": 10,
+            "weight": 25,
+            "mode": "reps"
+          }
+        ]
+      },
+      {
+        "id": "rt004",
+        "name": "Cyclette — Zona 2",
+        "ex": [
+          {
+            "id": "2138",
+            "sets": 1
+          }
+        ]
+      }
+    ],
+    "customEx": {
+      "0": {
+        "id": "imo0jisakymv",
+        "n": "landmine romanian deadlift",
+        "custom": true,
+        "bp": "upper legs"
+      },
+      "1": {
+        "id": "im2duowu4nya",
+        "n": "standing cable glute kickbacks",
+        "custom": true,
+        "bp": "upper legs"
+      }
+    },
+    "workouts": {
+      "wk0001": {
+        "id": "wk0001",
+        "d": "2026-11-17",
+        "start": 1794916321071,
+        "end": 1794916331391,
+        "routineId": "rt004",
+        "name": "Cyclette — Zona 2",
+        "entries": [],
+        "prs": [],
+        "vol": 0
+      },
+      "wk0002": {
+        "id": "wk0002",
+        "d": "2026-11-13",
+        "start": 1794584910000,
+        "end": 1794587344000,
+        "routineId": null,
+        "name": "Full Body C — Split Squat + Croci + Cavi",
+        "entries": [
+          {
+            "id": "0410",
+            "sets": [
+              {
+                "w": 20,
+                "r": 8,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 9
+              },
+              {
+                "w": 20,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 20,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "1269",
+            "sets": [
+              {
+                "w": 10,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 12.5,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 12.5,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "3200",
+            "sets": [
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "4347",
+            "sets": [
+              {
+                "w": 10,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 10,
+                "r": 1,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0150",
+            "sets": [
+              {
+                "w": 40,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 40,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0312",
+            "sets": [
+              {
+                "w": 28,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 28,
+                "r": 9,
+                "done": true,
+                "rpe": 10
+              }
+            ]
+          },
+          {
+            "id": "0200",
+            "sets": [
+              {
+                "w": 15,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 17.5,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0175",
+            "sets": [
+              {
+                "w": 25,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 25,
+                "r": 11,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 4190
+      },
+      "wk0003": {
+        "id": "wk0003",
+        "d": "2026-11-11",
+        "start": 1794382647000,
+        "end": 1794385669000,
+        "routineId": null,
+        "name": "Full Body B — Catena posteriore + Schiena",
+        "entries": [
+          {
+            "id": "4742",
+            "sets": [
+              {
+                "w": 5,
+                "r": 8,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 7.5
+              },
+              {
+                "w": 12,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 12,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 12,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0314",
+            "sets": [
+              {
+                "w": 40,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 40,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 40,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0180",
+            "sets": [
+              {
+                "w": 12.5,
+                "r": 12,
+                "done": true,
+                "rpe": 7
+              },
+              {
+                "w": 22.5,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 25,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "1760",
+            "sets": [
+              {
+                "w": 26,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 26,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0405",
+            "sets": [
+              {
+                "w": 36,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 36,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 36,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "0294",
+            "sets": [
+              {
+                "w": 28,
+                "r": 9,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 28,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0334",
+            "sets": [
+              {
+                "w": 16,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 16,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0417",
+            "sets": [
+              {
+                "w": 16,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 16,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 4988
+      },
+      "wk0004": {
+        "id": "wk0004",
+        "d": "2026-11-09",
+        "start": 1794227530000,
+        "end": 1794230598000,
+        "routineId": null,
+        "name": "Full Body A — Squat + Panca",
+        "entries": [
+          {
+            "id": "0043",
+            "sets": [
+              {
+                "w": 13.5,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 6
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 63.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9.5
+              },
+              {
+                "w": 63.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0025",
+            "sets": [
+              {
+                "w": 33.5,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 6
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 53.5,
+                "r": 9,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 53.5,
+                "r": 10,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "0150",
+            "sets": [
+              {
+                "w": 35,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 37.5,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 37.5,
+                "r": 12,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "imo0jisakymv",
+            "sets": [
+              {
+                "w": 23.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 23.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0334",
+            "sets": [
+              {
+                "w": 10,
+                "r": 8,
+                "done": true,
+                "rpe": 7.5
+              },
+              {
+                "w": 10,
+                "r": 12,
+                "done": true,
+                "rpe": 7.5
+              }
+            ]
+          },
+          {
+            "id": "5033",
+            "sets": [
+              {
+                "w": 5,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 7.5,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "0175",
+            "sets": [
+              {
+                "w": 25,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 25,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 5524.5
+      },
+      "wk0005": {
+        "id": "wk0005",
+        "d": "2026-11-06",
+        "start": 1793950687000,
+        "end": 1793954125000,
+        "routineId": null,
+        "name": "Full Body C — Split Squat + Croci + Cavi",
+        "entries": [
+          {
+            "id": "0410",
+            "sets": [
+              {
+                "w": 10,
+                "r": 8,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 10,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 10,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 10,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "1269",
+            "sets": [
+              {
+                "w": 15,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 15,
+                "r": 10,
+                "done": true,
+                "rpe": 7.5
+              },
+              {
+                "w": 15,
+                "r": 10,
+                "done": true,
+                "rpe": 7.5
+              }
+            ]
+          },
+          {
+            "id": "3200",
+            "sets": [
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "4347",
+            "sets": [
+              {
+                "w": 10,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 10,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "0150",
+            "sets": [
+              {
+                "w": 35,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 35,
+                "r": 10,
+                "done": true,
+                "rpe": 7.5
+              },
+              {
+                "w": 37.5,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "0312",
+            "sets": [
+              {
+                "w": 28,
+                "r": 9,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 28,
+                "r": 9,
+                "done": true,
+                "rpe": 10
+              }
+            ]
+          },
+          {
+            "id": "0175",
+            "sets": [
+              {
+                "w": 22.5,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 22.5,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 3833
+      },
+      "wk0006": {
+        "id": "wk0006",
+        "d": "2026-11-05",
+        "start": 1793892562000,
+        "end": 1793895530000,
+        "routineId": null,
+        "name": "Full Body B — Catena posteriore + Schiena",
+        "entries": [
+          {
+            "id": "4742",
+            "sets": [
+              {
+                "w": 10,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 10,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 10,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 10,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "0314",
+            "sets": [
+              {
+                "w": 40,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 40,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 40,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0180",
+            "sets": [
+              {
+                "w": 17.5,
+                "r": 10,
+                "done": true,
+                "rpe": 7.5
+              },
+              {
+                "w": 22.5,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 25,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "1760",
+            "sets": [
+              {
+                "w": 26,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 26,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0405",
+            "sets": [
+              {
+                "w": 44,
+                "r": 8,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 9.5
+              },
+              {
+                "w": 44,
+                "r": 10,
+                "done": true,
+                "rpe": 10
+              },
+              {
+                "w": 44,
+                "r": 10,
+                "done": true,
+                "rpe": 10
+              }
+            ]
+          },
+          {
+            "id": "0294",
+            "sets": [
+              {
+                "w": 28,
+                "r": 9,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 28,
+                "r": 9,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 3940
+      },
+      "wk0007": {
+        "id": "wk0007",
+        "d": "2026-11-04",
+        "start": 1793795033000,
+        "end": 1793798954000,
+        "routineId": null,
+        "name": "Full Body A — Squat + Panca",
+        "entries": [
+          {
+            "id": "0043",
+            "sets": [
+              {
+                "w": 13.5,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 6
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 63.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 63.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0025",
+            "sets": [
+              {
+                "w": 33.5,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 6
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0150",
+            "sets": [
+              {
+                "w": 35,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 35,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 35,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "5033",
+            "sets": [
+              {
+                "w": 7.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 7.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 3968
+      },
+      "wk0008": {
+        "id": "wk0008",
+        "d": "2026-10-31",
+        "start": 1793442647000,
+        "end": 1793445876000,
+        "routineId": null,
+        "name": "Full Body C — Squat + Inclinata + Cavi",
+        "entries": [
+          {
+            "id": "1760",
+            "sets": [
+              {
+                "w": 16,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 6
+              },
+              {
+                "w": 24,
+                "r": 10,
+                "done": true,
+                "rpe": 7.5
+              },
+              {
+                "w": 26,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 26,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0314",
+            "sets": [
+              {
+                "w": 20,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8.5
+              },
+              {
+                "w": 20,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 20,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 20,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "3200",
+            "sets": [
+              {
+                "w": 43.5,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 43.5,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 43.5,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 43.5,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "0150",
+            "sets": [
+              {
+                "w": 35,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 35,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 35,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "0312",
+            "sets": [
+              {
+                "w": 28,
+                "r": 8,
+                "done": true
+              },
+              {
+                "w": 28,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 28,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 4584
+      },
+      "wk0009": {
+        "id": "wk0009",
+        "d": "2026-10-24",
+        "start": 1792834593000,
+        "end": 1792839341000,
+        "routineId": null,
+        "name": "Full Body 2",
+        "entries": [
+          {
+            "id": "0027",
+            "sets": [
+              {
+                "w": 33.5,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8.5
+              },
+              {
+                "w": 38.5,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 38.5,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 38.5,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "1760",
+            "sets": [
+              {
+                "w": 14,
+                "r": 11,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 6
+              },
+              {
+                "w": 26,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 26,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 26,
+                "r": 12,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0405",
+            "sets": [
+              {
+                "w": 44,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 44,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 44,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "1757",
+            "sets": [
+              {
+                "w": 10,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 10,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 10,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0652",
+            "sets": [
+              {
+                "w": 0,
+                "r": 7,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 0,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 0,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0832",
+            "sets": [
+              {
+                "w": 10,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 10,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 10,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 3959
+      },
+      "wk0010": {
+        "id": "wk0010",
+        "d": "2026-10-21",
+        "start": 1792600027000,
+        "end": 1792603544000,
+        "routineId": null,
+        "name": "Full Body 1",
+        "entries": [
+          {
+            "id": "0043",
+            "sets": [
+              {
+                "w": 13.5,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8.5
+              },
+              {
+                "w": 53.5,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8.5
+              },
+              {
+                "w": 53.5,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 58.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 58.5,
+                "r": 9,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0025",
+            "sets": [
+              {
+                "w": 13.5,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 6
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9.5
+              },
+              {
+                "w": 53.5,
+                "r": 9,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "0150",
+            "sets": [
+              {
+                "w": 30,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 35,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 20,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "1269",
+            "sets": [
+              {
+                "w": 12.5,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 12.5,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 12.5,
+                "r": 10,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "0294",
+            "sets": [
+              {
+                "w": 28,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 28,
+                "r": 11,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 28,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0201",
+            "sets": [
+              {
+                "w": 20,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 20,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 20,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0175",
+            "sets": [
+              {
+                "w": 20,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 20,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 20,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 6494
+      },
+      "wk0011": {
+        "id": "wk0011",
+        "d": "2026-10-19",
+        "start": 1792423750000,
+        "end": 1792427015000,
+        "routineId": null,
+        "name": "Full Body 3",
+        "entries": [
+          {
+            "id": "4742",
+            "sets": [
+              {
+                "w": 10,
+                "r": 12,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 10,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 10,
+                "r": 9,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 10,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0314",
+            "sets": [
+              {
+                "w": 36,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 9
+              },
+              {
+                "w": 36,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 40,
+                "r": 12,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 40,
+                "r": 12,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "3200",
+            "sets": [
+              {
+                "w": 20,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 35,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 35,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 35,
+                "r": 8,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "0308",
+            "sets": [
+              {
+                "w": 24,
+                "r": 12,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 24,
+                "r": 12,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 24,
+                "r": 12,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0194",
+            "sets": [
+              {
+                "w": 12.5,
+                "r": 12,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 12.5,
+                "r": 12,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 12.5,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0312",
+            "sets": [
+              {
+                "w": 28,
+                "r": 12,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 28,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 28,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 4867
+      },
+      "wk0012": {
+        "id": "wk0012",
+        "d": "2026-10-15",
+        "start": 1792063504000,
+        "end": 1792066426000,
+        "routineId": null,
+        "name": "Full Body 2",
+        "entries": [
+          {
+            "id": "0027",
+            "sets": [
+              {
+                "w": 13.5,
+                "r": 12,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 6
+              },
+              {
+                "w": 33.5,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 38.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 38.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "1760",
+            "sets": [
+              {
+                "w": 14,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 7.5
+              },
+              {
+                "w": 26,
+                "r": 9,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 26,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 26,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0405",
+            "sets": [
+              {
+                "w": 44,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 44,
+                "r": 8,
+                "done": true,
+                "rpe": 9.5
+              },
+              {
+                "w": 44,
+                "r": 8,
+                "done": true,
+                "rpe": 10
+              }
+            ]
+          },
+          {
+            "id": "1757",
+            "sets": [
+              {
+                "w": 10,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 10,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 10,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0652",
+            "sets": [
+              {
+                "w": 0,
+                "r": 6,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 0,
+                "r": 7,
+                "done": true,
+                "rpe": 9.5
+              },
+              {
+                "w": 0,
+                "r": 6,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "0832",
+            "sets": [
+              {
+                "w": 10,
+                "r": 15,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 10,
+                "r": 15,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 10,
+                "r": 15,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 3399
+      },
+      "wk0013": {
+        "id": "wk0013",
+        "d": "2026-10-12",
+        "start": 1791805755000,
+        "end": 1791808619000,
+        "routineId": null,
+        "name": "Full Body 1",
+        "entries": [
+          {
+            "id": "0043",
+            "sets": [
+              {
+                "w": 13.5,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 6
+              },
+              {
+                "w": 33.5,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 53.5,
+                "r": 7,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0025",
+            "sets": [
+              {
+                "w": 13.5,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 6
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0150",
+            "sets": [
+              {
+                "w": 35,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8.5
+              },
+              {
+                "w": 35,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 35,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 35,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "1269",
+            "sets": [
+              {
+                "w": 12.5,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 12.5,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 12.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "0294",
+            "sets": [
+              {
+                "w": 28,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 28,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 28,
+                "r": 10,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "0201",
+            "sets": [
+              {
+                "w": 20,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 20,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 5122.5
+      },
+      "wk0014": {
+        "id": "wk0014",
+        "d": "2026-10-09",
+        "start": 1791544438000,
+        "end": 1791549808000,
+        "routineId": null,
+        "name": "Full Body 3",
+        "entries": [
+          {
+            "id": "1206",
+            "sets": [
+              {
+                "w": 10,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 6
+              },
+              {
+                "w": 10,
+                "r": 9,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8.5
+              },
+              {
+                "w": 10,
+                "r": 11,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 15,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 15,
+                "r": 11,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "0314",
+            "sets": [
+              {
+                "w": 36,
+                "r": 11,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8.5
+              },
+              {
+                "w": 36,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 36,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 36,
+                "r": 14,
+                "done": true,
+                "rpe": 7.5
+              }
+            ]
+          },
+          {
+            "id": "3200",
+            "sets": [
+              {
+                "w": 30,
+                "r": 8,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8.5
+              },
+              {
+                "w": 30,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 30,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 30,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "0308",
+            "sets": [
+              {
+                "w": 24,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 24,
+                "r": 12,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 24,
+                "r": 11,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "0312",
+            "sets": [
+              {
+                "w": 28,
+                "r": 9,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 3905
+      },
+      "wk0015": {
+        "id": "wk0015",
+        "d": "2026-10-07",
+        "start": 1791371995000,
+        "end": 1791374846000,
+        "routineId": null,
+        "name": "Full Body 2",
+        "entries": [
+          {
+            "id": "0027",
+            "sets": [
+              {
+                "w": 13.5,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 6
+              },
+              {
+                "w": 33.5,
+                "r": 8,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 38.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 38.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 38.5,
+                "r": 8,
+                "done": true,
+                "rpe": 10
+              }
+            ]
+          },
+          {
+            "id": "1760",
+            "sets": [
+              {
+                "w": 14,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 7
+              },
+              {
+                "w": 26,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 26,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 26,
+                "r": 8,
+                "done": true,
+                "rpe": 10
+              }
+            ]
+          },
+          {
+            "id": "0405",
+            "sets": [
+              {
+                "w": 20,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 20,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 20,
+                "r": 8,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "1459",
+            "sets": [
+              {
+                "w": 32,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 32,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 32,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0652",
+            "sets": [
+              {
+                "w": 0,
+                "r": 7,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 0,
+                "r": 6,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 0,
+                "r": 3,
+                "done": true,
+                "rpe": 10
+              }
+            ]
+          },
+          {
+            "id": "0832",
+            "sets": [
+              {
+                "w": 10,
+                "r": 15,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 10,
+                "r": 15,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 10,
+                "r": 20,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 3296
+      },
+      "wk0016": {
+        "id": "wk0016",
+        "d": "2026-10-03",
+        "start": 1791020215000,
+        "end": 1791024088000,
+        "routineId": null,
+        "name": "Full Body 1",
+        "entries": [
+          {
+            "id": "0043",
+            "sets": [
+              {
+                "w": 13.5,
+                "r": 9,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 6
+              },
+              {
+                "w": 33.5,
+                "r": 9,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0025",
+            "sets": [
+              {
+                "w": 13.5,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 6
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9.5
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9.5
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "0150",
+            "sets": [
+              {
+                "w": 32.5,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 7.5
+              },
+              {
+                "w": 35,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 35,
+                "r": 9,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 35,
+                "r": 9,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "1269",
+            "sets": [
+              {
+                "w": 12.5,
+                "r": 9,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 12.5,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 12.5,
+                "r": 11,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0294",
+            "sets": [
+              {
+                "w": 28,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 28,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 28,
+                "r": 7,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0201",
+            "sets": [
+              {
+                "w": 20,
+                "r": 11,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 20,
+                "r": 9,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 20,
+                "r": 12,
+                "done": true,
+                "rpe": 10
+              }
+            ]
+          },
+          {
+            "id": "0175",
+            "sets": [
+              {
+                "w": 20,
+                "r": 12,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 20,
+                "r": 12,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 20,
+                "r": 12,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 5927
+      },
+      "wk0017": {
+        "id": "wk0017",
+        "d": "2026-09-29",
+        "start": 1790679623000,
+        "end": 1790683026000,
+        "routineId": null,
+        "name": "Full Body 3",
+        "entries": [
+          {
+            "id": "1757",
+            "sets": [
+              {
+                "w": 5,
+                "r": 8,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 7.5
+              },
+              {
+                "w": 5,
+                "r": 8,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 7.5
+              },
+              {
+                "w": 8,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 8,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 8,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0314",
+            "sets": [
+              {
+                "w": 18,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8.5
+              },
+              {
+                "w": 18,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 18,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 18,
+                "r": 12,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "3200",
+            "sets": [
+              {
+                "w": 20,
+                "r": 12,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 30,
+                "r": 9,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 30,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 30,
+                "r": 12,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0308",
+            "sets": [
+              {
+                "w": 12,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 12,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 12,
+                "r": 9,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0194",
+            "sets": [
+              {
+                "w": 12.5,
+                "r": 9,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 12.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 12.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "0312",
+            "sets": [
+              {
+                "w": 28,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 28,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 28,
+                "r": 8,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "0334",
+            "sets": [
+              {
+                "w": 20,
+                "r": 9,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 20,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 20,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 3530.5
+      },
+      "wk0018": {
+        "id": "wk0018",
+        "d": "2026-09-26",
+        "start": 1790440646000,
+        "end": 1790443873000,
+        "routineId": null,
+        "name": "Full Body 2",
+        "entries": [
+          {
+            "id": "0027",
+            "sets": [
+              {
+                "w": 33.5,
+                "r": 8,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 33.5,
+                "r": 8,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 38.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 38.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 38.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "1760",
+            "sets": [
+              {
+                "w": 20,
+                "r": 8,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 24,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 24,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 24,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0405",
+            "sets": [
+              {
+                "w": 40,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 40,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 40,
+                "r": 10,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "1459",
+            "sets": [
+              {
+                "w": 32,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 32,
+                "r": 6,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 32,
+                "r": 6,
+                "done": true,
+                "rpe": 10
+              }
+            ]
+          },
+          {
+            "id": "0652",
+            "sets": [
+              {
+                "w": 0,
+                "r": 5,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 0,
+                "r": 4,
+                "done": true,
+                "rpe": 9.5
+              },
+              {
+                "w": 0,
+                "r": 5,
+                "done": true,
+                "rpe": 10
+              }
+            ]
+          },
+          {
+            "id": "0832",
+            "sets": [
+              {
+                "w": 10,
+                "r": 20,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 10,
+                "r": 20,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 10,
+                "r": 20,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 3940
+      },
+      "wk0019": {
+        "id": "wk0019",
+        "d": "2026-09-23",
+        "start": 1790160912000,
+        "end": 1790164520000,
+        "routineId": null,
+        "name": "Full Body 1",
+        "entries": [
+          {
+            "id": "0043",
+            "sets": [
+              {
+                "w": 13.5,
+                "r": 12,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 6
+              },
+              {
+                "w": 33.5,
+                "r": 8,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 7.5
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 58.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "0025",
+            "sets": [
+              {
+                "w": 13.5,
+                "r": 8,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 6
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "0150",
+            "sets": [
+              {
+                "w": 25,
+                "r": 12,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 30,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 30,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 30,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "1269",
+            "sets": [
+              {
+                "w": 12.5,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 12.5,
+                "r": 11,
+                "done": true,
+                "rpe": 9.5
+              },
+              {
+                "w": 12.5,
+                "r": 9,
+                "done": true,
+                "rpe": 10
+              }
+            ]
+          },
+          {
+            "id": "0294",
+            "sets": [
+              {
+                "w": 14,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 14,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 28,
+                "r": 10,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "0201",
+            "sets": [
+              {
+                "w": 20,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 20,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 20,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "0175",
+            "sets": [
+              {
+                "w": 20,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 20,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 20,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 5915
+      },
+      "wk0020": {
+        "id": "wk0020",
+        "d": "2026-09-21",
+        "start": 1789996303000,
+        "end": 1790000028000,
+        "routineId": null,
+        "name": "Full Body 3",
+        "entries": [
+          {
+            "id": "1757",
+            "sets": [
+              {
+                "w": 5,
+                "r": 8,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 5,
+                "r": 8,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 5,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 5,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "0314",
+            "sets": [
+              {
+                "w": 16,
+                "r": 8,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 16,
+                "r": 10,
+                "done": true,
+                "rpe": 7.5
+              },
+              {
+                "w": 16,
+                "r": 10,
+                "done": true,
+                "rpe": 7.5
+              },
+              {
+                "w": 16,
+                "r": 10,
+                "done": true,
+                "rpe": 7.5
+              }
+            ]
+          },
+          {
+            "id": "3200",
+            "sets": [
+              {
+                "w": 10,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 7.5
+              },
+              {
+                "w": 20,
+                "r": 10,
+                "done": true,
+                "rpe": 7.5
+              },
+              {
+                "w": 25,
+                "r": 9,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 28,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "0308",
+            "sets": [
+              {
+                "w": 12,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 12,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 12,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0194",
+            "sets": [
+              {
+                "w": 12.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 12.5,
+                "r": 9,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 12.5,
+                "r": 10,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "0312",
+            "sets": [
+              {
+                "w": 12,
+                "r": 10,
+                "done": true,
+                "rpe": 7
+              },
+              {
+                "w": 14,
+                "r": 9,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 14,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0334",
+            "sets": [
+              {
+                "w": 10,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 10,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 10,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 2656.5
+      },
+      "wk0021": {
+        "id": "wk0021",
+        "d": "2026-09-19",
+        "start": 1789804758000,
+        "end": 1789808370000,
+        "routineId": null,
+        "name": "Full Body 2",
+        "entries": [
+          {
+            "id": "0027",
+            "sets": [
+              {
+                "w": 13.5,
+                "r": 8,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 6
+              },
+              {
+                "w": 33.5,
+                "r": 8,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 38.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 38.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 38.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "1760",
+            "sets": [
+              {
+                "w": 16,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 7
+              },
+              {
+                "w": 22,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 22,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 22,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0405",
+            "sets": [
+              {
+                "w": 20,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 20,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 20,
+                "r": 8,
+                "done": true,
+                "rpe": 10
+              }
+            ]
+          },
+          {
+            "id": "1459",
+            "sets": [
+              {
+                "w": 16,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 16,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 16,
+                "r": 6,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "0832",
+            "sets": [
+              {
+                "w": 10,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 10,
+                "r": 15,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 10,
+                "r": 15,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 2704
+      },
+      "wk0022": {
+        "id": "wk0022",
+        "d": "2026-09-16",
+        "start": 1789540911000,
+        "end": 1789544574000,
+        "routineId": null,
+        "name": "Full Body 1",
+        "entries": [
+          {
+            "id": "0043",
+            "sets": [
+              {
+                "w": 13.5,
+                "r": 9,
+                "done": true,
+                "phase": "warmup"
+              },
+              {
+                "w": 33.5,
+                "r": 9,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 7
+              },
+              {
+                "w": 43.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 48.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0025",
+            "sets": [
+              {
+                "w": 33.3,
+                "r": 9,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 7.5
+              },
+              {
+                "w": 43.5,
+                "r": 8,
+                "done": true,
+                "rpe": 7.5
+              },
+              {
+                "w": 48.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 53.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0150",
+            "sets": [
+              {
+                "w": 25,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 30,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 30,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 30,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "1269",
+            "sets": [
+              {
+                "w": 10,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 10,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 10,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0294",
+            "sets": [
+              {
+                "w": 12,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 12,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 12,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0201",
+            "sets": [
+              {
+                "w": 17.5,
+                "r": 9,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 20,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 20,
+                "r": 9,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0175",
+            "sets": [
+              {
+                "w": 20,
+                "r": 9,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 20,
+                "r": 9,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 20,
+                "r": 9,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 4877.5
+      },
+      "wk0023": {
+        "id": "wk0023",
+        "d": "2026-09-11",
+        "start": 1789126262000,
+        "end": 1789131081000,
+        "routineId": null,
+        "name": "Full Body 3",
+        "entries": [
+          {
+            "id": "1459",
+            "sets": [
+              {
+                "w": 14,
+                "r": 8,
+                "done": true,
+                "phase": "warmup"
+              },
+              {
+                "w": 14,
+                "r": 8,
+                "done": true,
+                "phase": "warmup"
+              },
+              {
+                "w": 14,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 14,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0314",
+            "sets": [
+              {
+                "w": 14,
+                "r": 12,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 7
+              },
+              {
+                "w": 16,
+                "r": 9,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 16,
+                "r": 12,
+                "done": true,
+                "rpe": 7.5
+              },
+              {
+                "w": 18,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "3200",
+            "sets": [
+              {
+                "w": 10,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 7
+              },
+              {
+                "w": 20,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 20,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 20,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "0308",
+            "sets": [
+              {
+                "w": 10,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 12,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 12,
+                "r": 12,
+                "done": true,
+                "rpe": 8
+              }
+            ]
+          },
+          {
+            "id": "0194",
+            "sets": [
+              {
+                "w": 12.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 12.5,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 12.5,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0312",
+            "sets": [
+              {
+                "w": 12,
+                "r": 10,
+                "done": true,
+                "rpe": 7.5
+              },
+              {
+                "w": 14,
+                "r": 9,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 14,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0334",
+            "sets": [
+              {
+                "w": 10,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 10,
+                "r": 8,
+                "done": true
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 2450
+      },
+      "wk0024": {
+        "id": "wk0024",
+        "d": "2026-09-09",
+        "start": 1788952719000,
+        "end": 1788955671000,
+        "routineId": null,
+        "name": "Full Body 2",
+        "entries": [
+          {
+            "id": "0027",
+            "sets": [
+              {
+                "w": 13.5,
+                "r": 12,
+                "done": true,
+                "phase": "warmup"
+              },
+              {
+                "w": 33,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 8
+              },
+              {
+                "w": 33.5,
+                "r": 10,
+                "done": true,
+                "rpe": 7.5
+              },
+              {
+                "w": 38.5,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 38.5,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "1760",
+            "sets": [
+              {
+                "w": 16,
+                "r": 13,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 7.5
+              },
+              {
+                "w": 22,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 22,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 22,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              }
+            ]
+          },
+          {
+            "id": "0405",
+            "sets": [
+              {
+                "w": 20,
+                "r": 10,
+                "done": true,
+                "rpe": 10
+              },
+              {
+                "w": 18,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 18,
+                "r": 9,
+                "done": true,
+                "rpe": 10
+              }
+            ]
+          },
+          {
+            "id": "1459",
+            "sets": [
+              {
+                "w": 14,
+                "r": 8,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 14,
+                "r": 8,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 14,
+                "r": 8,
+                "done": true
+              }
+            ]
+          },
+          {
+            "id": "0336",
+            "sets": [
+              {
+                "w": 14,
+                "r": 8,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 14,
+                "r": 8,
+                "done": true,
+                "rpe": 9.5
+              },
+              {
+                "w": 14,
+                "r": 8,
+                "done": true,
+                "rpe": 10
+              }
+            ]
+          },
+          {
+            "id": "0832",
+            "sets": [
+              {
+                "w": 10,
+                "r": 16,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 10,
+                "r": 15,
+                "done": true,
+                "rpe": 10
+              },
+              {
+                "w": 10,
+                "r": 15,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 3439
+      },
+      "wk0025": {
+        "id": "wk0025",
+        "d": "2026-09-07",
+        "start": 1788778676000,
+        "end": 1788782352000,
+        "routineId": null,
+        "name": "Full Body 1",
+        "entries": [
+          {
+            "id": "0043",
+            "sets": [
+              {
+                "w": 13.5,
+                "r": 10,
+                "done": true,
+                "phase": "warmup"
+              },
+              {
+                "w": 33.5,
+                "r": 10,
+                "done": true,
+                "phase": "warmup"
+              },
+              {
+                "w": 43.5,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 43.5,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 48.5,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "0025",
+            "sets": [
+              {
+                "w": 33.5,
+                "r": 10,
+                "done": true,
+                "phase": "warmup"
+              },
+              {
+                "w": 43.5,
+                "r": 9,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 43.5,
+                "r": 9,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 48.5,
+                "r": 8,
+                "done": true,
+                "rpe": 10
+              }
+            ]
+          },
+          {
+            "id": "0150",
+            "sets": [
+              {
+                "w": 20,
+                "r": 10,
+                "done": true,
+                "phase": "warmup",
+                "rpe": 7
+              },
+              {
+                "w": 20,
+                "r": 13,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 22.5,
+                "r": 15,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 22.5,
+                "r": 20,
+                "done": true,
+                "rpe": 9
+              }
+            ]
+          },
+          {
+            "id": "1269",
+            "sets": [
+              {
+                "w": 15,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 15,
+                "r": 12,
+                "done": true,
+                "rpe": 7.5
+              },
+              {
+                "w": 15,
+                "r": 12,
+                "done": true,
+                "rpe": 7.5
+              }
+            ]
+          },
+          {
+            "id": "0294",
+            "sets": [
+              {
+                "w": 12,
+                "r": 10,
+                "done": true,
+                "rpe": 8
+              },
+              {
+                "w": 12,
+                "r": 10,
+                "done": true
+              },
+              {
+                "w": 12,
+                "r": 10,
+                "done": true,
+                "rpe": 10
+              }
+            ]
+          },
+          {
+            "id": "0201",
+            "sets": [
+              {
+                "w": 12.5,
+                "r": 12,
+                "done": true,
+                "rpe": 7.5
+              },
+              {
+                "w": 15,
+                "r": 10,
+                "done": true,
+                "rpe": 9
+              },
+              {
+                "w": 15,
+                "r": 12,
+                "done": true,
+                "rpe": 9.5
+              }
+            ]
+          },
+          {
+            "id": "0175",
+            "sets": [
+              {
+                "w": 17.5,
+                "r": 10,
+                "done": true,
+                "rpe": 8.5
+              },
+              {
+                "w": 17.5,
+                "r": 10,
+                "done": true,
+                "rpe": 7
+              },
+              {
+                "w": 17.5,
+                "r": 12,
+                "done": true
+              }
+            ]
+          }
+        ],
+        "prs": [],
+        "vol": 5483.5
+      }
+    }
+  },
+  "rev": 1,
+  "wid": "w1"
+}

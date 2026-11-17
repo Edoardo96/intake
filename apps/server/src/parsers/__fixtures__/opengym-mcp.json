@@ -1,0 +1,1748 @@
+{
+  "get_week_plan": {
+    "today": "2026-11-17",
+    "today_routine_id": "rt004",
+    "today_routine_name": "Cyclette — Zona 2",
+    "today_routine_ids": [
+      "rt004"
+    ],
+    "today_routine_names": [
+      "Cyclette — Zona 2"
+    ],
+    "coach_week": null,
+    "days": [
+      {
+        "date": "2026-11-17",
+        "weekday": 2,
+        "weekday_name": "Tuesday",
+        "routine_ids": [
+          "rt004"
+        ],
+        "routine_names": [
+          "Cyclette — Zona 2"
+        ],
+        "planned_by": "weekday"
+      },
+      {
+        "date": "2026-11-18",
+        "weekday": 3,
+        "weekday_name": "Wednesday",
+        "routine_ids": [
+          "rt003"
+        ],
+        "routine_names": [
+          "1 · Forza — Squat & Panca"
+        ],
+        "planned_by": "weekday"
+      },
+      {
+        "date": "2026-11-19",
+        "weekday": 4,
+        "weekday_name": "Thursday",
+        "routine_ids": [],
+        "routine_names": [],
+        "planned_by": "rest"
+      },
+      {
+        "date": "2026-11-20",
+        "weekday": 5,
+        "weekday_name": "Friday",
+        "routine_ids": [
+          "rt001"
+        ],
+        "routine_names": [
+          "2 · Unilaterale & Cavi"
+        ],
+        "planned_by": "weekday"
+      },
+      {
+        "date": "2026-11-21",
+        "weekday": 6,
+        "weekday_name": "Saturday",
+        "routine_ids": [],
+        "routine_names": [],
+        "planned_by": "rest"
+      },
+      {
+        "date": "2026-11-22",
+        "weekday": 0,
+        "weekday_name": "Sunday",
+        "routine_ids": [
+          "rt002"
+        ],
+        "routine_names": [
+          "3 · Glutei & Spalle"
+        ],
+        "planned_by": "weekday"
+      },
+      {
+        "date": "2026-11-23",
+        "weekday": 1,
+        "weekday_name": "Monday",
+        "routine_ids": [],
+        "routine_names": [],
+        "planned_by": "rest"
+      }
+    ],
+    "weekdays": [
+      {
+        "weekday": 0,
+        "weekday_name": "Sunday",
+        "routine_ids": [
+          "rt002"
+        ],
+        "routine_names": [
+          "3 · Glutei & Spalle"
+        ],
+        "routine_id": "rt002",
+        "routine_name": "3 · Glutei & Spalle",
+        "routine_emoji": "figureStrength",
+        "override_for_today_or_null": null
+      },
+      {
+        "weekday": 1,
+        "weekday_name": "Monday",
+        "routine_ids": [],
+        "routine_names": [],
+        "routine_id": null,
+        "routine_name": null,
+        "routine_emoji": null,
+        "override_for_today_or_null": null
+      },
+      {
+        "weekday": 2,
+        "weekday_name": "Tuesday",
+        "routine_ids": [
+          "rt004"
+        ],
+        "routine_names": [
+          "Cyclette — Zona 2"
+        ],
+        "routine_id": "rt004",
+        "routine_name": "Cyclette — Zona 2",
+        "routine_emoji": "figureStrength",
+        "override_for_today_or_null": null
+      },
+      {
+        "weekday": 3,
+        "weekday_name": "Wednesday",
+        "routine_ids": [
+          "rt003"
+        ],
+        "routine_names": [
+          "1 · Forza — Squat & Panca"
+        ],
+        "routine_id": "rt003",
+        "routine_name": "1 · Forza — Squat & Panca",
+        "routine_emoji": "figureStrength",
+        "override_for_today_or_null": null
+      },
+      {
+        "weekday": 4,
+        "weekday_name": "Thursday",
+        "routine_ids": [],
+        "routine_names": [],
+        "routine_id": null,
+        "routine_name": null,
+        "routine_emoji": null,
+        "override_for_today_or_null": null
+      },
+      {
+        "weekday": 5,
+        "weekday_name": "Friday",
+        "routine_ids": [
+          "rt001"
+        ],
+        "routine_names": [
+          "2 · Unilaterale & Cavi"
+        ],
+        "routine_id": "rt001",
+        "routine_name": "2 · Unilaterale & Cavi",
+        "routine_emoji": "figureStrength",
+        "override_for_today_or_null": null
+      },
+      {
+        "weekday": 6,
+        "weekday_name": "Saturday",
+        "routine_ids": [],
+        "routine_names": [],
+        "routine_id": null,
+        "routine_name": null,
+        "routine_emoji": null,
+        "override_for_today_or_null": null
+      }
+    ]
+  },
+  "list_routines": {
+    "unit": "kg",
+    "revision": 76,
+    "routines": [
+      {
+        "id": "rt001",
+        "name": "2 · Unilaterale & Cavi",
+        "emoji": "figureStrength",
+        "exercise_count": 8,
+        "superset_groups": 1,
+        "policy": "linear",
+        "exclude_from_progression": false
+      },
+      {
+        "id": "rt002",
+        "name": "3 · Glutei & Spalle",
+        "emoji": "figureStrength",
+        "exercise_count": 8,
+        "superset_groups": 1,
+        "policy": "linear",
+        "exclude_from_progression": false
+      },
+      {
+        "id": "rt003",
+        "name": "1 · Forza — Squat & Panca",
+        "emoji": "figureStrength",
+        "exercise_count": 7,
+        "superset_groups": 1,
+        "policy": "linear",
+        "exclude_from_progression": false
+      },
+      {
+        "id": "rt004",
+        "name": "Cyclette — Zona 2",
+        "emoji": "figureStrength",
+        "exercise_count": 1,
+        "superset_groups": 0,
+        "policy": "linear",
+        "exclude_from_progression": false
+      }
+    ]
+  },
+  "get_workout": {
+    "id": "wk0002",
+    "date": "2026-11-13",
+    "routine_id": null,
+    "routine_name": "Full Body C — Split Squat + Croci + Cavi",
+    "unit": "kg",
+    "bodyweight_at_workout": null,
+    "gym": null,
+    "volume": 4190,
+    "sets_done": 19,
+    "sets_planned": 19,
+    "duration": "40 min",
+    "prs": [],
+    "entries": [
+      {
+        "id": "0410",
+        "name": "dumbbell single leg split squat",
+        "body_part": "upper legs",
+        "mode": "reps",
+        "target": null,
+        "sets": [
+          {
+            "done": true,
+            "label": "20×8 (RPE 9)",
+            "w": 20,
+            "r": 8,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "done": true,
+            "label": "20×8 (RPE 9)",
+            "w": 20,
+            "r": 8,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "done": true,
+            "label": "20×8 (RPE 9)",
+            "w": 20,
+            "r": 8,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          }
+        ]
+      },
+      {
+        "id": "1269",
+        "name": "cable standing up straight crossovers",
+        "body_part": "chest",
+        "mode": "reps",
+        "target": null,
+        "sets": [
+          {
+            "done": true,
+            "label": "10×10 (RPE 8)",
+            "w": 10,
+            "r": 10,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "done": true,
+            "label": "12.5×10 (RPE 8)",
+            "w": 12.5,
+            "r": 10,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "done": true,
+            "label": "12.5×10 (RPE 9)",
+            "w": 12.5,
+            "r": 10,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          }
+        ]
+      },
+      {
+        "id": "3200",
+        "name": "lever bent-over row with v-bar",
+        "body_part": "back",
+        "mode": "reps",
+        "target": null,
+        "sets": [
+          {
+            "done": true,
+            "label": "53.5×8 (RPE 9)",
+            "w": 53.5,
+            "r": 8,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "done": true,
+            "label": "53.5×8 (RPE 9)",
+            "w": 53.5,
+            "r": 8,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "done": true,
+            "label": "53.5×8 (RPE 9)",
+            "w": 53.5,
+            "r": 8,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          }
+        ]
+      },
+      {
+        "id": "4347",
+        "name": "lever standing leg curl",
+        "body_part": "upper legs",
+        "mode": "reps",
+        "target": null,
+        "sets": [
+          {
+            "done": true,
+            "label": "10×10 (RPE 8.5)",
+            "w": 10,
+            "r": 10,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "done": true,
+            "label": "10×1 (RPE 8.5)",
+            "w": 10,
+            "r": 1,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          }
+        ]
+      },
+      {
+        "id": "0150",
+        "name": "cable bar lateral pulldown",
+        "body_part": "back",
+        "mode": "reps",
+        "target": null,
+        "sets": [
+          {
+            "done": true,
+            "label": "40×10 (RPE 8.5)",
+            "w": 40,
+            "r": 10,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "done": true,
+            "label": "40×10 (RPE 8.5)",
+            "w": 40,
+            "r": 10,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          }
+        ]
+      },
+      {
+        "id": "0312",
+        "name": "dumbbell hammer curl v. 2",
+        "body_part": "upper arms",
+        "mode": "reps",
+        "target": null,
+        "sets": [
+          {
+            "done": true,
+            "label": "28×8 (RPE 9)",
+            "w": 28,
+            "r": 8,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "done": true,
+            "label": "28×9 (RPE 10)",
+            "w": 28,
+            "r": 9,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          }
+        ]
+      },
+      {
+        "id": "0200",
+        "name": "cable pushdown (with rope attachment)",
+        "body_part": "upper arms",
+        "mode": "reps",
+        "target": null,
+        "sets": [
+          {
+            "done": true,
+            "label": "15×10 (RPE 8.5)",
+            "w": 15,
+            "r": 10,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "done": true,
+            "label": "17.5×10 (RPE 8.5)",
+            "w": 17.5,
+            "r": 10,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          }
+        ]
+      },
+      {
+        "id": "0175",
+        "name": "cable kneeling crunch",
+        "body_part": "waist",
+        "mode": "reps",
+        "target": null,
+        "sets": [
+          {
+            "done": true,
+            "label": "25×10 (RPE 8.5)",
+            "w": 25,
+            "r": 10,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "done": true,
+            "label": "25×11 (RPE 9)",
+            "w": 25,
+            "r": 11,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          }
+        ]
+      }
+    ]
+  },
+  "preview_session": {
+    "date": "2026-11-18",
+    "routine_id": "rt003",
+    "routine_name": "1 · Forza — Squat & Panca",
+    "unit": "kg",
+    "starts_from": "plan",
+    "policy": "linear",
+    "policy_name": "Linear progression",
+    "exercises": [
+      {
+        "position": 1,
+        "id": "0043",
+        "name": "barbell full squat",
+        "mode": "reps",
+        "policy": "double",
+        "policy_name": "Double progression",
+        "planned": {
+          "sets": 3,
+          "reps": 8,
+          "weight": 53.5,
+          "summary": "3 × 6–8 · 53.5 kg"
+        },
+        "prescription": {
+          "kind": "hold",
+          "weight": 63.5,
+          "reps": 8,
+          "why": "First time in this routine, so starting from its own target."
+        },
+        "opening_sets": [
+          {
+            "phase": "warmup",
+            "type": "straight",
+            "label": "30×8",
+            "w": 30,
+            "r": 8,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "phase": "work",
+            "type": "straight",
+            "label": "63.5×8",
+            "w": 63.5,
+            "r": 8,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "phase": "work",
+            "type": "straight",
+            "label": "63.5×8",
+            "w": 63.5,
+            "r": 8,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "phase": "work",
+            "type": "straight",
+            "label": "63.5×8",
+            "w": 63.5,
+            "r": 8,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          }
+        ],
+        "weight_source": "progression",
+        "weight_source_text": "the progression policy overrode the routine",
+        "reps_source": "routine_plan",
+        "reps_source_text": "the routine's own target",
+        "changed": [
+          "weight"
+        ],
+        "differs_from_plan": true
+      },
+      {
+        "position": 2,
+        "id": "0025",
+        "name": "barbell bench press",
+        "mode": "reps",
+        "policy": "double",
+        "policy_name": "Double progression",
+        "planned": {
+          "sets": 3,
+          "reps": 8,
+          "weight": 53.5,
+          "summary": "3 × 6–8 · 53.5 kg"
+        },
+        "prescription": {
+          "kind": "hold",
+          "weight": 53.5,
+          "reps": 8,
+          "why": "First time in this routine, so starting from its own target."
+        },
+        "opening_sets": [
+          {
+            "phase": "warmup",
+            "type": "straight",
+            "label": "25×8",
+            "w": 25,
+            "r": 8,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "phase": "work",
+            "type": "straight",
+            "label": "53.5×8",
+            "w": 53.5,
+            "r": 8,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "phase": "work",
+            "type": "straight",
+            "label": "53.5×8",
+            "w": 53.5,
+            "r": 8,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "phase": "work",
+            "type": "straight",
+            "label": "53.5×8",
+            "w": 53.5,
+            "r": 8,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          }
+        ],
+        "weight_source": "progression",
+        "weight_source_text": "the progression policy overrode the routine",
+        "reps_source": "routine_plan",
+        "reps_source_text": "the routine's own target",
+        "changed": [],
+        "differs_from_plan": false
+      },
+      {
+        "position": 3,
+        "id": "0150",
+        "name": "cable bar lateral pulldown",
+        "mode": "reps",
+        "policy": "double",
+        "policy_name": "Double progression",
+        "planned": {
+          "sets": 3,
+          "reps": 12,
+          "weight": 35,
+          "summary": "3 × 8–12 · 35 kg"
+        },
+        "prescription": {
+          "kind": "hold",
+          "weight": 40,
+          "reps": 11,
+          "why": "First time in this routine, so starting from its own target."
+        },
+        "opening_sets": [
+          {
+            "phase": "work",
+            "type": "straight",
+            "label": "40×11",
+            "w": 40,
+            "r": 11,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "phase": "work",
+            "type": "straight",
+            "label": "40×11",
+            "w": 40,
+            "r": 11,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "phase": "work",
+            "type": "straight",
+            "label": "40×11",
+            "w": 40,
+            "r": 11,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          }
+        ],
+        "weight_source": "progression",
+        "weight_source_text": "the progression policy overrode the routine",
+        "reps_source": "progression",
+        "reps_source_text": "the progression policy overrode the routine",
+        "changed": [
+          "weight",
+          "reps"
+        ],
+        "differs_from_plan": true
+      },
+      {
+        "position": 4,
+        "id": "imo0jisakymv",
+        "name": "landmine romanian deadlift",
+        "mode": "reps",
+        "policy": "double",
+        "policy_name": "Double progression",
+        "planned": {
+          "sets": 2,
+          "reps": 10,
+          "weight": 23.5,
+          "summary": "2 × 8–10 · 23.5 kg"
+        },
+        "prescription": {
+          "kind": "hold",
+          "weight": 23.5,
+          "reps": 9,
+          "why": "First time in this routine, so starting from its own target."
+        },
+        "opening_sets": [
+          {
+            "phase": "work",
+            "type": "straight",
+            "label": "23.5×9",
+            "w": 23.5,
+            "r": 9,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "phase": "work",
+            "type": "straight",
+            "label": "23.5×9",
+            "w": 23.5,
+            "r": 9,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          }
+        ],
+        "weight_source": "progression",
+        "weight_source_text": "the progression policy overrode the routine",
+        "reps_source": "progression",
+        "reps_source_text": "the progression policy overrode the routine",
+        "changed": [
+          "reps"
+        ],
+        "differs_from_plan": true
+      },
+      {
+        "position": 5,
+        "id": "0178",
+        "name": "cable lateral raise",
+        "mode": "reps",
+        "policy": "double",
+        "policy_name": "Double progression",
+        "planned": {
+          "sets": 2,
+          "reps": 12,
+          "weight": 0,
+          "summary": "2 × 10–12"
+        },
+        "prescription": {
+          "kind": "first",
+          "why": "Nothing logged yet, so this session sets the baseline."
+        },
+        "opening_sets": [
+          {
+            "phase": "work",
+            "type": "straight",
+            "label": "0×12",
+            "w": 0,
+            "r": 12,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "phase": "work",
+            "type": "straight",
+            "label": "0×12",
+            "w": 0,
+            "r": 12,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          }
+        ],
+        "weight_source": "routine_plan",
+        "weight_source_text": "the routine's own target",
+        "reps_source": "routine_plan",
+        "reps_source_text": "the routine's own target",
+        "changed": [],
+        "differs_from_plan": false
+      },
+      {
+        "position": 6,
+        "id": "5033",
+        "name": "cable single arm triceps pushdown (rope attachment)",
+        "mode": "reps",
+        "policy": "double",
+        "policy_name": "Double progression",
+        "planned": {
+          "sets": 2,
+          "reps": 10,
+          "weight": 5,
+          "summary": "2 × 8–10 · 5 kg"
+        },
+        "prescription": {
+          "kind": "hold",
+          "weight": 7.5,
+          "reps": 10,
+          "why": "First time in this routine, so starting from its own target."
+        },
+        "opening_sets": [
+          {
+            "phase": "work",
+            "type": "straight",
+            "label": "7.5×10",
+            "w": 7.5,
+            "r": 10,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "phase": "work",
+            "type": "straight",
+            "label": "7.5×10",
+            "w": 7.5,
+            "r": 10,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          }
+        ],
+        "weight_source": "progression",
+        "weight_source_text": "the progression policy overrode the routine",
+        "reps_source": "routine_plan",
+        "reps_source_text": "the routine's own target",
+        "changed": [
+          "weight"
+        ],
+        "differs_from_plan": true
+      },
+      {
+        "position": 7,
+        "id": "0175",
+        "name": "cable kneeling crunch",
+        "mode": "reps",
+        "policy": "double",
+        "policy_name": "Double progression",
+        "planned": {
+          "sets": 2,
+          "reps": 12,
+          "weight": 25,
+          "summary": "2 × 10–12 · 25 kg"
+        },
+        "prescription": {
+          "kind": "hold",
+          "weight": 25,
+          "reps": 11,
+          "why": "First time in this routine, so starting from its own target."
+        },
+        "opening_sets": [
+          {
+            "phase": "work",
+            "type": "straight",
+            "label": "25×11",
+            "w": 25,
+            "r": 11,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          },
+          {
+            "phase": "work",
+            "type": "straight",
+            "label": "25×11",
+            "w": 25,
+            "r": 11,
+            "sec": 0,
+            "min": 0,
+            "speed": 0
+          }
+        ],
+        "weight_source": "progression",
+        "weight_source_text": "the progression policy overrode the routine",
+        "reps_source": "progression",
+        "reps_source_text": "the progression policy overrode the routine",
+        "changed": [
+          "reps"
+        ],
+        "differs_from_plan": true
+      }
+    ],
+    "overridden_count": 5,
+    "overridden": [
+      {
+        "name": "barbell full squat",
+        "planned_weight": 53.5,
+        "opening_weight": 63.5,
+        "planned_reps": 8,
+        "opening_reps": 8,
+        "opening_sec": 0,
+        "opening_min": 0,
+        "changed": [
+          "weight"
+        ],
+        "reason": "First time in this routine, so starting from its own target."
+      },
+      {
+        "name": "cable bar lateral pulldown",
+        "planned_weight": 35,
+        "opening_weight": 40,
+        "planned_reps": 12,
+        "opening_reps": 11,
+        "opening_sec": 0,
+        "opening_min": 0,
+        "changed": [
+          "weight",
+          "reps"
+        ],
+        "reason": "First time in this routine, so starting from its own target."
+      },
+      {
+        "name": "landmine romanian deadlift",
+        "planned_weight": 23.5,
+        "opening_weight": 23.5,
+        "planned_reps": 10,
+        "opening_reps": 9,
+        "opening_sec": 0,
+        "opening_min": 0,
+        "changed": [
+          "reps"
+        ],
+        "reason": "First time in this routine, so starting from its own target."
+      },
+      {
+        "name": "cable single arm triceps pushdown (rope attachment)",
+        "planned_weight": 5,
+        "opening_weight": 7.5,
+        "planned_reps": 10,
+        "opening_reps": 10,
+        "opening_sec": 0,
+        "opening_min": 0,
+        "changed": [
+          "weight"
+        ],
+        "reason": "First time in this routine, so starting from its own target."
+      },
+      {
+        "name": "cable kneeling crunch",
+        "planned_weight": 25,
+        "opening_weight": 25,
+        "planned_reps": 12,
+        "opening_reps": 11,
+        "opening_sec": 0,
+        "opening_min": 0,
+        "changed": [
+          "reps"
+        ],
+        "reason": "First time in this routine, so starting from its own target."
+      }
+    ]
+  },
+  "muscle_balance": {
+    "period": "month",
+    "cutoff_iso": "2026-10-19",
+    "workouts_in_period": 11,
+    "worked": [
+      {
+        "slug": "chest",
+        "name": "Chest",
+        "level": 4,
+        "effective_sets": 36.2
+      },
+      {
+        "slug": "gluteal",
+        "name": "Glutes",
+        "level": 4,
+        "effective_sets": 35.1
+      },
+      {
+        "slug": "biceps",
+        "name": "Biceps",
+        "level": 4,
+        "effective_sets": 33
+      },
+      {
+        "slug": "lats",
+        "name": "Lats",
+        "level": 4,
+        "effective_sets": 32.2
+      },
+      {
+        "slug": "quadriceps",
+        "name": "Quads",
+        "level": 4,
+        "effective_sets": 29.6
+      },
+      {
+        "slug": "forearm",
+        "name": "Forearms",
+        "level": 3,
+        "effective_sets": 26.4
+      },
+      {
+        "slug": "upper-back",
+        "name": "Upper back",
+        "level": 3,
+        "effective_sets": 25.6
+      },
+      {
+        "slug": "triceps",
+        "name": "Triceps",
+        "level": 3,
+        "effective_sets": 23.6
+      },
+      {
+        "slug": "abs",
+        "name": "Abs",
+        "level": 3,
+        "effective_sets": 23.2
+      },
+      {
+        "slug": "hamstring",
+        "name": "Hamstrings",
+        "level": 3,
+        "effective_sets": 20.9
+      },
+      {
+        "slug": "front-delts",
+        "name": "Front delts",
+        "level": 3,
+        "effective_sets": 20.4
+      },
+      {
+        "slug": "adductors",
+        "name": "Adductors",
+        "level": 3,
+        "effective_sets": 20.2
+      },
+      {
+        "slug": "trapezius",
+        "name": "Traps",
+        "level": 3,
+        "effective_sets": 19.6
+      },
+      {
+        "slug": "rear-delts",
+        "name": "Rear delts",
+        "level": 2,
+        "effective_sets": 16
+      },
+      {
+        "slug": "calves",
+        "name": "Calves",
+        "level": 2,
+        "effective_sets": 14.4
+      },
+      {
+        "slug": "obliques",
+        "name": "Obliques",
+        "level": 2,
+        "effective_sets": 12.4
+      },
+      {
+        "slug": "lower-back",
+        "name": "Lower back",
+        "level": 1,
+        "effective_sets": 8.8
+      },
+      {
+        "slug": "side-delts",
+        "name": "Side delts",
+        "level": 1,
+        "effective_sets": 7.2
+      },
+      {
+        "slug": "serratus",
+        "name": "Serratus",
+        "level": 1,
+        "effective_sets": 3.2
+      }
+    ],
+    "neglected": [
+      {
+        "slug": "hip-flexors",
+        "name": "Hip flexors"
+      },
+      {
+        "slug": "tibialis",
+        "name": "Shins"
+      }
+    ],
+    "muscle_order_head_to_toe": [
+      "trapezius",
+      "front-delts",
+      "side-delts",
+      "rear-delts",
+      "chest",
+      "lats",
+      "upper-back",
+      "serratus",
+      "biceps",
+      "triceps",
+      "forearm",
+      "abs",
+      "obliques",
+      "lower-back",
+      "gluteal",
+      "quadriceps",
+      "hamstring",
+      "adductors",
+      "hip-flexors",
+      "calves",
+      "tibialis"
+    ]
+  },
+  "estimate_1rm": {
+    "exercise": {
+      "id": "0043",
+      "name": "barbell full squat",
+      "body_part": "upper legs"
+    },
+    "formula": "epley",
+    "formula_note": "Estimates use the epley formula. Cap at 12 reps applies; r=1 is treated as the measurement, not an estimate.",
+    "best": {
+      "est": 80.4,
+      "w": 63.5,
+      "r": 8,
+      "date": "2026-11-04"
+    },
+    "no_estimate_reason": null,
+    "trend": [
+      {
+        "date": "2026-05-05",
+        "est": 32.9,
+        "w": 23.5,
+        "r": 12
+      },
+      {
+        "date": "2026-05-10",
+        "est": 38,
+        "w": 28.5,
+        "r": 10
+      },
+      {
+        "date": "2026-05-20",
+        "est": 44.7,
+        "w": 33.5,
+        "r": 10
+      },
+      {
+        "date": "2026-05-25",
+        "est": 41,
+        "w": 30,
+        "r": 11
+      },
+      {
+        "date": "2026-06-02",
+        "est": 42.9,
+        "w": 33,
+        "r": 9
+      },
+      {
+        "date": "2026-06-09",
+        "est": 38,
+        "w": 30,
+        "r": 8
+      },
+      {
+        "date": "2026-06-19",
+        "est": 64,
+        "w": 48,
+        "r": 10
+      },
+      {
+        "date": "2026-06-26",
+        "est": 68.9,
+        "w": 53,
+        "r": 9
+      },
+      {
+        "date": "2026-07-03",
+        "est": 74.2,
+        "w": 53,
+        "r": 12
+      },
+      {
+        "date": "2026-07-19",
+        "est": 70.7,
+        "w": 53,
+        "r": 10
+      },
+      {
+        "date": "2026-09-07",
+        "est": 64.7,
+        "w": 48.5,
+        "r": 10
+      },
+      {
+        "date": "2026-09-16",
+        "est": 67.8,
+        "w": 53.5,
+        "r": 8
+      },
+      {
+        "date": "2026-09-23",
+        "est": 74.1,
+        "w": 58.5,
+        "r": 8
+      },
+      {
+        "date": "2026-10-03",
+        "est": 67.8,
+        "w": 53.5,
+        "r": 8
+      },
+      {
+        "date": "2026-10-12",
+        "est": 67.8,
+        "w": 53.5,
+        "r": 8
+      },
+      {
+        "date": "2026-10-21",
+        "est": 76.1,
+        "w": 58.5,
+        "r": 9
+      },
+      {
+        "date": "2026-11-04",
+        "est": 80.4,
+        "w": 63.5,
+        "r": 8
+      },
+      {
+        "date": "2026-11-09",
+        "est": 80.4,
+        "w": 63.5,
+        "r": 8
+      }
+    ]
+  },
+  "list_workouts": {
+    "unit": "kg",
+    "total_count": 53,
+    "matching_count": 53,
+    "returned_count": 12,
+    "truncated": true,
+    "workouts": [
+      {
+        "id": "wk0001",
+        "date": "2026-11-17",
+        "routine_id": "rt004",
+        "routine_name": "Cyclette — Zona 2",
+        "exercise_count": 0,
+        "sets_done": 0,
+        "sets_planned": 0,
+        "sets_ratio": "0/0",
+        "volume": 0,
+        "duration_ms": 10320,
+        "duration": "0 min",
+        "prs": 0,
+        "bodyweight_at_workout": null,
+        "gym": null
+      },
+      {
+        "id": "wk0002",
+        "date": "2026-11-13",
+        "routine_id": null,
+        "routine_name": "Full Body C — Split Squat + Croci + Cavi",
+        "exercise_count": 8,
+        "sets_done": 19,
+        "sets_planned": 19,
+        "sets_ratio": "19/19",
+        "volume": 4190,
+        "duration_ms": 2434000,
+        "duration": "40 min",
+        "prs": 0,
+        "bodyweight_at_workout": null,
+        "gym": null
+      },
+      {
+        "id": "wk0003",
+        "date": "2026-11-11",
+        "routine_id": null,
+        "routine_name": "Full Body B — Catena posteriore + Schiena",
+        "exercise_count": 8,
+        "sets_done": 21,
+        "sets_planned": 21,
+        "sets_ratio": "21/21",
+        "volume": 4988,
+        "duration_ms": 3022000,
+        "duration": "50 min",
+        "prs": 0,
+        "bodyweight_at_workout": null,
+        "gym": null
+      },
+      {
+        "id": "wk0004",
+        "date": "2026-11-09",
+        "routine_id": null,
+        "routine_name": "Full Body A — Squat + Panca",
+        "exercise_count": 7,
+        "sets_done": 19,
+        "sets_planned": 19,
+        "sets_ratio": "19/19",
+        "volume": 5524.5,
+        "duration_ms": 3068000,
+        "duration": "51 min",
+        "prs": 0,
+        "bodyweight_at_workout": null,
+        "gym": null
+      },
+      {
+        "id": "wk0005",
+        "date": "2026-11-06",
+        "routine_id": null,
+        "routine_name": "Full Body C — Split Squat + Croci + Cavi",
+        "exercise_count": 7,
+        "sets_done": 19,
+        "sets_planned": 19,
+        "sets_ratio": "19/19",
+        "volume": 3833,
+        "duration_ms": 3438000,
+        "duration": "57 min",
+        "prs": 0,
+        "bodyweight_at_workout": null,
+        "gym": null
+      },
+      {
+        "id": "wk0006",
+        "date": "2026-11-05",
+        "routine_id": null,
+        "routine_name": "Full Body B — Catena posteriore + Schiena",
+        "exercise_count": 6,
+        "sets_done": 17,
+        "sets_planned": 17,
+        "sets_ratio": "17/17",
+        "volume": 3940,
+        "duration_ms": 2968000,
+        "duration": "49 min",
+        "prs": 0,
+        "bodyweight_at_workout": null,
+        "gym": null
+      },
+      {
+        "id": "wk0007",
+        "date": "2026-11-04",
+        "routine_id": null,
+        "routine_name": "Full Body A — Squat + Panca",
+        "exercise_count": 4,
+        "sets_done": 13,
+        "sets_planned": 13,
+        "sets_ratio": "13/13",
+        "volume": 3968,
+        "duration_ms": 3921000,
+        "duration": "1h 5m",
+        "prs": 0,
+        "bodyweight_at_workout": null,
+        "gym": null
+      },
+      {
+        "id": "wk0008",
+        "date": "2026-10-31",
+        "routine_id": null,
+        "routine_name": "Full Body C — Squat + Inclinata + Cavi",
+        "exercise_count": 5,
+        "sets_done": 18,
+        "sets_planned": 18,
+        "sets_ratio": "18/18",
+        "volume": 4584,
+        "duration_ms": 3229000,
+        "duration": "53 min",
+        "prs": 0,
+        "bodyweight_at_workout": null,
+        "gym": null
+      },
+      {
+        "id": "wk0009",
+        "date": "2026-10-24",
+        "routine_id": null,
+        "routine_name": "Full Body 2",
+        "exercise_count": 6,
+        "sets_done": 20,
+        "sets_planned": 20,
+        "sets_ratio": "20/20",
+        "volume": 3959,
+        "duration_ms": 4748000,
+        "duration": "1h 19m",
+        "prs": 0,
+        "bodyweight_at_workout": null,
+        "gym": null
+      },
+      {
+        "id": "wk0010",
+        "date": "2026-10-21",
+        "routine_id": null,
+        "routine_name": "Full Body 1",
+        "exercise_count": 7,
+        "sets_done": 24,
+        "sets_planned": 24,
+        "sets_ratio": "24/24",
+        "volume": 6494,
+        "duration_ms": 3517000,
+        "duration": "58 min",
+        "prs": 0,
+        "bodyweight_at_workout": null,
+        "gym": null
+      },
+      {
+        "id": "wk0011",
+        "date": "2026-10-19",
+        "routine_id": null,
+        "routine_name": "Full Body 3",
+        "exercise_count": 6,
+        "sets_done": 21,
+        "sets_planned": 21,
+        "sets_ratio": "21/21",
+        "volume": 4867,
+        "duration_ms": 3265000,
+        "duration": "54 min",
+        "prs": 0,
+        "bodyweight_at_workout": null,
+        "gym": null
+      },
+      {
+        "id": "wk0012",
+        "date": "2026-10-15",
+        "routine_id": null,
+        "routine_name": "Full Body 2",
+        "exercise_count": 6,
+        "sets_done": 20,
+        "sets_planned": 20,
+        "sets_ratio": "20/20",
+        "volume": 3399,
+        "duration_ms": 2922000,
+        "duration": "48 min",
+        "prs": 0,
+        "bodyweight_at_workout": null,
+        "gym": null
+      }
+    ]
+  },
+  "get_routine": {
+    "rt001": {
+      "id": "rt001",
+      "name": "2 · Unilaterale & Cavi",
+      "unit": "kg",
+      "exercises": [
+        {
+          "position": 1,
+          "id": "0410",
+          "name": "dumbbell single leg split squat",
+          "mode": "reps",
+          "sets": 3,
+          "reps": 10,
+          "reps_min": 8,
+          "weight": 20,
+          "superset_group": null,
+          "summary": "3 × 8–10 · 20 kg"
+        },
+        {
+          "position": 2,
+          "id": "1269",
+          "name": "cable standing up straight crossovers",
+          "mode": "reps",
+          "sets": 3,
+          "reps": 12,
+          "reps_min": 10,
+          "weight": 10,
+          "superset_group": null,
+          "summary": "3 × 10–12 · 10 kg"
+        },
+        {
+          "position": 3,
+          "id": "3200",
+          "name": "lever bent-over row with v-bar",
+          "mode": "reps",
+          "sets": 3,
+          "reps": 10,
+          "reps_min": 8,
+          "weight": 53.5,
+          "superset_group": null,
+          "summary": "3 × 8–10 · 53.5 kg"
+        },
+        {
+          "position": 4,
+          "id": "4347",
+          "name": "lever standing leg curl",
+          "mode": "reps",
+          "sets": 2,
+          "reps": 12,
+          "reps_min": 8,
+          "weight": 10,
+          "superset_group": null,
+          "summary": "2 × 8–12 · 10 kg"
+        },
+        {
+          "position": 5,
+          "id": "0150",
+          "name": "cable bar lateral pulldown",
+          "mode": "reps",
+          "sets": 2,
+          "reps": 10,
+          "reps_min": 8,
+          "weight": 40,
+          "superset_group": null,
+          "summary": "2 × 8–10 · 40 kg"
+        },
+        {
+          "position": 6,
+          "id": "0312",
+          "name": "dumbbell hammer curl v. 2",
+          "mode": "reps",
+          "sets": 2,
+          "reps": 10,
+          "reps_min": 8,
+          "weight": 28,
+          "superset_group": "hsmwkk9rrw07cef",
+          "summary": "2 × 8–10 · 28 kg"
+        },
+        {
+          "position": 7,
+          "id": "0200",
+          "name": "cable pushdown (with rope attachment)",
+          "mode": "reps",
+          "sets": 2,
+          "reps": 12,
+          "reps_min": 10,
+          "weight": 15,
+          "superset_group": "hsmwkk9rrw07cef",
+          "summary": "2 × 10–12 · 15 kg"
+        },
+        {
+          "position": 8,
+          "id": "0175",
+          "name": "cable kneeling crunch",
+          "mode": "reps",
+          "sets": 2,
+          "reps": 12,
+          "reps_min": 10,
+          "weight": 25,
+          "superset_group": null,
+          "summary": "2 × 10–12 · 25 kg"
+        }
+      ]
+    },
+    "rt002": {
+      "id": "rt002",
+      "name": "3 · Glutei & Spalle",
+      "unit": "kg",
+      "exercises": [
+        {
+          "position": 1,
+          "id": "4742",
+          "name": "dumbbell hip thrust",
+          "mode": "reps",
+          "sets": 3,
+          "reps": 12,
+          "reps_min": 10,
+          "weight": 12,
+          "superset_group": null,
+          "summary": "3 × 10–12 · 12 kg"
+        },
+        {
+          "position": 2,
+          "id": "0314",
+          "name": "dumbbell incline bench press",
+          "mode": "reps",
+          "sets": 3,
+          "reps": 10,
+          "reps_min": 8,
+          "weight": 44,
+          "superset_group": null,
+          "summary": "3 × 8–10 · 44 kg"
+        },
+        {
+          "position": 3,
+          "id": "0180",
+          "name": "cable low seated row",
+          "mode": "reps",
+          "sets": 3,
+          "reps": 12,
+          "reps_min": 8,
+          "weight": 25,
+          "superset_group": null,
+          "summary": "3 × 8–12 · 25 kg"
+        },
+        {
+          "position": 4,
+          "id": "1760",
+          "name": "dumbbell goblet squat",
+          "mode": "reps",
+          "sets": 2,
+          "reps": 10,
+          "reps_min": 8,
+          "weight": 26,
+          "superset_group": null,
+          "summary": "2 × 8–10 · 26 kg"
+        },
+        {
+          "position": 5,
+          "id": "0405",
+          "name": "dumbbell seated shoulder press",
+          "mode": "reps",
+          "sets": 3,
+          "reps": 10,
+          "reps_min": 8,
+          "weight": 40,
+          "superset_group": null,
+          "summary": "3 × 8–10 · 40 kg"
+        },
+        {
+          "position": 6,
+          "id": "0294",
+          "name": "dumbbell biceps curl",
+          "mode": "reps",
+          "sets": 2,
+          "reps": 10,
+          "reps_min": 8,
+          "weight": 28,
+          "superset_group": null,
+          "summary": "2 × 8–10 · 28 kg"
+        },
+        {
+          "position": 7,
+          "id": "0334",
+          "name": "dumbbell lateral raise",
+          "mode": "reps",
+          "sets": 2,
+          "reps": 12,
+          "reps_min": 10,
+          "weight": 16,
+          "superset_group": "hsmwkk9rrws7c6f",
+          "summary": "2 × 10–12 · 16 kg"
+        },
+        {
+          "position": 8,
+          "id": "0417",
+          "name": "dumbbell standing calf raise",
+          "mode": "reps",
+          "sets": 2,
+          "reps": 12,
+          "reps_min": 10,
+          "weight": 8,
+          "superset_group": "hsmwkk9rrws7c6f",
+          "summary": "2 × 10–12 · 8 kg"
+        }
+      ]
+    },
+    "rt003": {
+      "id": "rt003",
+      "name": "1 · Forza — Squat & Panca",
+      "unit": "kg",
+      "exercises": [
+        {
+          "position": 1,
+          "id": "0043",
+          "name": "barbell full squat",
+          "mode": "reps",
+          "sets": 3,
+          "reps": 8,
+          "reps_min": 6,
+          "weight": 53.5,
+          "superset_group": null,
+          "summary": "3 × 6–8 · 53.5 kg"
+        },
+        {
+          "position": 2,
+          "id": "0025",
+          "name": "barbell bench press",
+          "mode": "reps",
+          "sets": 3,
+          "reps": 8,
+          "reps_min": 6,
+          "weight": 53.5,
+          "superset_group": null,
+          "summary": "3 × 6–8 · 53.5 kg"
+        },
+        {
+          "position": 3,
+          "id": "0150",
+          "name": "cable bar lateral pulldown",
+          "mode": "reps",
+          "sets": 3,
+          "reps": 12,
+          "reps_min": 8,
+          "weight": 35,
+          "superset_group": null,
+          "summary": "3 × 8–12 · 35 kg"
+        },
+        {
+          "position": 4,
+          "id": "imo0jisakymv",
+          "name": "landmine romanian deadlift",
+          "mode": "reps",
+          "sets": 2,
+          "reps": 10,
+          "reps_min": 8,
+          "weight": 23.5,
+          "superset_group": null,
+          "summary": "2 × 8–10 · 23.5 kg"
+        },
+        {
+          "position": 5,
+          "id": "0178",
+          "name": "cable lateral raise",
+          "mode": "reps",
+          "sets": 2,
+          "reps": 12,
+          "reps_min": 10,
+          "weight": 0,
+          "superset_group": "hsmwkk9rrwkc2ir",
+          "summary": "2 × 10–12"
+        },
+        {
+          "position": 6,
+          "id": "5033",
+          "name": "cable single arm triceps pushdown (rope attachment)",
+          "mode": "reps",
+          "sets": 2,
+          "reps": 10,
+          "reps_min": 8,
+          "weight": 5,
+          "superset_group": "hsmwkk9rrwkc2ir",
+          "summary": "2 × 8–10 · 5 kg"
+        },
+        {
+          "position": 7,
+          "id": "0175",
+          "name": "cable kneeling crunch",
+          "mode": "reps",
+          "sets": 2,
+          "reps": 12,
+          "reps_min": 10,
+          "weight": 25,
+          "superset_group": null,
+          "summary": "2 × 10–12 · 25 kg"
+        }
+      ]
+    },
+    "rt004": {
+      "id": "rt004",
+      "name": "Cyclette — Zona 2",
+      "unit": "kg",
+      "exercises": [
+        {
+          "position": 1,
+          "id": "2138",
+          "name": "stationary bike run v. 3",
+          "mode": "cardio",
+          "sets": 1,
+          "superset_group": null,
+          "summary": "1 × 20 min @ 20 km/h"
+        }
+      ]
+    }
+  }
+}

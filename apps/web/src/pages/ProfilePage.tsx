@@ -1,7 +1,7 @@
-import type { ProfileView } from "@intake/shared";
+import type { ProfileView, TrainingSourceId } from "@intake/shared";
 import { useState } from "react";
 import { Link } from "wouter";
-import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useSignOut, type User } from "../api/queries";
+import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useSignOut, type User, useSetTrainingSource, useTrainingSource } from "../api/queries";
 import { Avatar } from "../components/ProfileLink";
 import { RemindersSheet } from "../components/RemindersSheet";
 import { BackIcon } from "../components/icons";
@@ -165,7 +165,7 @@ function GoalsCard({ goals, stepGoal }: { goals: ProfileView["goals"] | null; st
   );
 }
 
-type LinkState = "connected" | "warning" | "off";
+type LinkState = "connected" | "warning" | "off" | "standby";
 
 function ConnectionRow({ name, note, state, href }: { name: string; note: string; state: LinkState; href?: string }) {
   const body = (
@@ -192,6 +192,44 @@ function ConnectionRow({ name, note, state, href }: { name: string; note: string
     </Link>
   ) : (
     <div className="profile-row-item connection-row">{body}</div>
+  );
+}
+
+/** Hevy and openGym rows, with the workout source switch when both are configured (one source at a time). */
+function GymRows() {
+  const status = useTrainingSource();
+  const setSource = useSetTrainingSource();
+  const data = status.data;
+  if (!data) return null;
+  const state = (id: TrainingSourceId): LinkState => (!data.available.includes(id) ? "off" : data.active === id ? "connected" : "standby");
+  return (
+    <>
+      <ConnectionRow name={t.profile.hevy} note={data.available.includes("hevy") ? t.profile.hevyNote : t.profile.hevyMissing} state={state("hevy")} />
+      <ConnectionRow name={t.profile.openGym} note={data.available.includes("opengym") ? t.profile.openGymNote : t.profile.openGymMissing} state={state("opengym")} />
+      {data.available.length > 1 && (
+        <div className="profile-row-item source-switch">
+          <span className="connection-text">
+            <strong id="training-source-label">{t.profile.trainingSource}</strong>
+            <span className="muted">{setSource.isError ? t.profile.trainingSourceFailed : t.profile.trainingSourceNote}</span>
+          </span>
+          <div className="segmented" role="radiogroup" aria-labelledby="training-source-label">
+            {data.available.map((id) => (
+              <button
+                key={id}
+                type="button"
+                role="radio"
+                aria-checked={data.active === id}
+                className="segmented-option"
+                disabled={setSource.isPending}
+                onClick={() => data.active !== id && setSource.mutate(id)}
+              >
+                {id === "hevy" ? t.profile.hevy : t.profile.openGym}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -241,7 +279,7 @@ export function ProfilePage({ user }: { user: User }) {
               state={healthState}
               href="/profilo/salute"
             />
-            {data && <ConnectionRow name={t.profile.hevy} note={data.hevyConfigured ? t.profile.hevyNote : t.profile.hevyMissing} state={data.hevyConfigured ? "connected" : "off"} />}
+            <GymRows />
           </section>
 
           <section className="card profile-card profile-list" aria-label={t.profile.reminders}>

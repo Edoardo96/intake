@@ -44,21 +44,21 @@ function matches(hevy: HevyWorkout, session: MergedWorkout): number {
   return share >= 0.5 ? share : 0;
 }
 
-function fromHevy(raw: HevyWorkout, session: MergedWorkout | null, timeZone: string): Workout {
+function fromHevy(raw: HevyWorkout, session: MergedWorkout | null, timeZone: string, appLabel: string): Workout {
   const workout = toWorkout(raw, timeZone);
-  const healthSources = (session?.sources ?? []).filter((s) => s.label !== "Hevy");
+  const healthSources = (session?.sources ?? []).filter((s) => s.label !== appLabel);
   return {
     ...workout,
-    origin: "hevy",
+    origin: "app",
     type: session?.label ?? "Forza",
     family: session?.family ?? "Forza",
-    source: "Hevy",
+    source: appLabel,
     kcal: session?.kcal ?? null,
     distanceKm: null,
     hrAvg: session?.hrAvg ?? null,
     hrMax: session?.hrMax ?? null,
     heartRate: session ? heartRateCurve(session.heartRate, workout.start, workout.durationMinutes) : [],
-    sources: [{ label: "Hevy", used: true }, ...healthSources],
+    sources: [{ label: appLabel, used: true }, ...healthSources],
     heartRateFrom: session?.heartRateFrom ?? null,
     kcalFrom: session?.kcalFrom ?? null,
   };
@@ -90,8 +90,11 @@ function fromHealth(session: MergedWorkout): Workout {
   };
 }
 
-/** Hevy and Health workouts of a range, each session once, oldest first. */
-export function combineWorkouts(hevy: HevyWorkout[], sessions: MergedWorkout[], timeZone: string): Workout[] {
+/**
+ * Gym-app workouts (Hevy, or openGym mapped to the same shape) and Health workouts of a range, each session once,
+ * oldest first. `appLabel` names the gym app in the source line.
+ */
+export function combineWorkouts(hevy: HevyWorkout[], sessions: MergedWorkout[], timeZone: string, appLabel = "Hevy"): Workout[] {
   const used = new Set<MergedWorkout>();
   const fromHevyApi = hevy.map((raw) => {
     let best: MergedWorkout | null = null;
@@ -102,7 +105,7 @@ export function combineWorkouts(hevy: HevyWorkout[], sessions: MergedWorkout[], 
       if (share > bestShare) [best, bestShare] = [session, share];
     }
     if (best) used.add(best);
-    return fromHevy(raw, best, timeZone);
+    return fromHevy(raw, best, timeZone, appLabel);
   });
   const healthOnly = sessions.filter((s) => !used.has(s)).map(fromHealth);
   return [...fromHevyApi, ...healthOnly].sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));

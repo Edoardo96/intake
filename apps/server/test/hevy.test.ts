@@ -62,7 +62,7 @@ describe("HevyApi", () => {
 describe("workout routes", () => {
   async function setup(hevy: { workoutsSince: (since: string) => Promise<typeof page.workouts> } | null) {
     const api = { clock: async () => ({ timezone: "Europe/Rome", localDate: "2026-11-06", localTime: "12:00:00", utc: "" }) };
-    const app = await buildApp({ auth: authOptions(), workouts: { hevy, api } });
+    const app = await buildApp({ auth: authOptions(), workouts: { gym: () => (hevy ? { label: "Hevy", workoutsSince: hevy.workoutsSince } : null), api } });
     const { cookie } = await signIn(app);
     return { app, headers: { cookie } };
   }
@@ -123,7 +123,7 @@ describe("Hevy and Apple Health workouts together", () => {
   it("enriches the Hevy workout with heart rate and kcal and keeps the other sessions", () => {
     const workouts = combineWorkouts(page.workouts.slice(0, 1), mergeWorkouts(health), "Europe/Rome");
     expect(workouts.map((w) => `${w.origin} ${w.start} ${w.title}`)).toEqual([
-      "hevy 08:38 Full Body C — Split Squat + Croci + Cavi",
+      "app 08:38 Full Body C — Split Squat + Croci + Cavi",
       "health 15:00 Cyclette",
     ]);
     const [strength, bike] = workouts;
@@ -154,20 +154,20 @@ describe("Hevy and Apple Health workouts together", () => {
     const short = record({ id: "late", start: "2026-11-06T09:25:00+01:00", end: "2026-11-06T10:30:00+01:00", hrAvg: 100 });
     const walk = record({ id: "walk", name: "Camminata", hrAvg: 90 });
     const workouts = combineWorkouts(page.workouts.slice(0, 1), mergeWorkouts([short, walk]), "Europe/Rome");
-    expect(workouts.map((w) => `${w.origin} ${w.title}`)).toEqual(["hevy Full Body C — Split Squat + Croci + Cavi", "health Camminata", "health Forza"]);
+    expect(workouts.map((w) => `${w.origin} ${w.title}`)).toEqual(["app Full Body C — Split Squat + Croci + Cavi", "health Camminata", "health Forza"]);
     expect(workouts[0]!.hrAvg).toBeNull();
   });
 
   it("lists Apple Health workouts without Hevy and when Hevy is down", async () => {
     const api = { clock: async () => ({ timezone: "Europe/Rome", localDate: "2026-11-06", localTime: "12:00:00", utc: "" }) };
     const store = { workouts: (from: string, to: string) => health.filter((w) => w.date >= from && w.date <= to) };
-    const off = await buildApp({ auth: authOptions(), workouts: { hevy: null, health: store, api } });
+    const off = await buildApp({ auth: authOptions(), workouts: { gym: () => null, health: store, api } });
     const offHeaders = { cookie: (await signIn(off)).cookie };
     const body = (await off.inject({ method: "GET", url: "/api/workouts?from=2026-11-06&to=2026-11-06", headers: offHeaders })).json();
     expect(body.configured).toBe(false);
     expect(body.workouts.map((w: { title: string; source: string }) => `${w.title} ${w.source}`)).toEqual(["Forza Fitbit", "Cyclette MERACH"]);
 
-    const down = await buildApp({ auth: authOptions(), workouts: { hevy: { workoutsSince: async () => Promise.reject(new HevyError("down")) }, health: store, api } });
+    const down = await buildApp({ auth: authOptions(), workouts: { gym: () => ({ label: "Hevy", workoutsSince: async () => Promise.reject(new HevyError("down")) }), health: store, api } });
     const downHeaders = { cookie: (await signIn(down)).cookie };
     const response = await down.inject({ method: "GET", url: "/api/workouts?from=2026-11-06&to=2026-11-06", headers: downHeaders });
     expect(response.statusCode).toBe(200);
