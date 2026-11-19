@@ -1,4 +1,4 @@
-import type { ClockInfo, GoalsUpdate, NutritionGoals } from "@intake/shared";
+import type { ClockInfo, GoalsUpdate, NutritionGoals, SavedMeal } from "@intake/shared";
 import {
   parseClock,
   parseGoalProgress,
@@ -6,6 +6,7 @@ import {
   parseMealPatterns,
   parseMeals,
   parseNutritionSummary,
+  parseSavedMeals,
   parseWeightTrends,
   parseExportLink,
   type ExportLink,
@@ -193,6 +194,17 @@ export class NutritionApi {
   /** Saves a logged meal as a favorite ("saved meal") on Nutrition. */
   async saveMeal(name: string, fromMealId: string): Promise<void> {
     await this.call("save_meal", { name, from_meal_id: fromMealId });
+  }
+
+  /** Saved meals ("preferiti") with their figures per serving. */
+  savedMeals(): Promise<SavedMeal[]> {
+    return this.callText("get_saved_meals", {}, parseSavedMeals);
+  }
+
+  /** Logs a saved meal now, as an ordinary meal entry. meal_type falls back to the saved meal's default. */
+  async logSavedMeal(id: string, idempotencyKey: string, mealType?: string): Promise<{ id: string | null }> {
+    const result = await this.call("log_saved_meal", { saved_meal: id, idempotency_key: idempotencyKey, ...(mealType ? { meal_type: mealType } : {}) });
+    return { id: UUID.exec(result.text)?.[0] ?? null };
   }
 
   /** Logs a meal; returns its id when the response carries one. */

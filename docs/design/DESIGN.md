@@ -223,13 +223,13 @@ All of these map to existing Nutrition MCP tools:
 | Water +250 / +500 ml | `log_water` |
 | Today's plan meals not yet logged | `log_meal` with the plan's full nutrients, then link plan entry ↔ meal in SQLite |
 | Repeat a recent meal | `get_meals_by_date_range` → `log_meal` with the same items |
-| Saved meals | `get_saved_meals` → `log_saved_meal` |
+| Saved meals (section "PREFERITI": name · kcal, description, "Registra"; one tap logs it now and closes the sheet; the type is the saved meal's default, else the time of day on the profile clock; with none, a row in ALTRO CIBO explains how to save one) | `get_saved_meals` → `log_saved_meal` |
 | Search food + quantity | `search_foods`, `get_food_macros` → `log_meal` |
 | Barcode scan | camera scan in the browser (JS library such as ZXing; Safari has no `BarcodeDetector`) → `lookup_barcode` → `log_meal` |
 
 Not in the app: photo recognition and free-text descriptions ("I had a margherita pizza").
 They need an LLM; the user keeps doing those through Claude, which writes to the same Nutrition account.
-Suggested order: water + plan meals + repeat recent in v1; saved meals, search and barcode in phase 2.
+Suggested order: water + plan meals + repeat recent in v1, then saved meals; search and barcode in phase 2.
 
 ## Design tokens
 

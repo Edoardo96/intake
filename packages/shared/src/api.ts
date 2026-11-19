@@ -794,3 +794,21 @@ export interface BackupStatus {
   lastRun: { at: string; error: string | null } | null;
   running: boolean;
 }
+
+/** A saved meal ("pasto preferito") on Nutrition, from get_saved_meals; figures are per serving. */
+export interface SavedMeal {
+  id: string;
+  name: string;
+  description: string;
+  /** Nutrition meal type used when it is logged, e.g. "breakfast"; null when the saved meal has none. */
+  mealType: string | null;
+  kcal: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fat: number | null;
+}
+
+/** GET /api/meals/saved */
+export interface SavedMealsResponse {
+  meals: SavedMeal[];
+}
