@@ -93,7 +93,7 @@ describe("buildNotification", () => {
 });
 
 describe("ReminderScheduler", () => {
-  function setup(now: string, meals: Meal[] = []) {
+  function setup(now: string, meals: Meal[] = [], waterEnabled?: () => boolean) {
     const db = openDatabase(":memory:");
     const store = new ReminderStore(db);
     const plans = new PlanStore(db);
@@ -105,10 +105,21 @@ describe("ReminderScheduler", () => {
       goalProgress: vi.fn(async () => ({ date: "2026-11-05", goals, totals: totals(1200, 500) })),
     };
     const log = { warn: vi.fn(), info: vi.fn() };
-    const scheduler = new ReminderScheduler({ store, plans, api, sender, log });
+    const scheduler = new ReminderScheduler({ store, plans, api, sender, log, waterEnabled });
     return { store, sender, api, scheduler };
   }
   const device = { endpoint: "https://push.example/1", keys: { p256dh: "p", auth: "a" } };
+
+  it("sends no water reminder while the Acqua part is off", async () => {
+    let water = false;
+    const { store, scheduler, sender } = setup("16:02", [], () => water);
+    store.addSubscription(device);
+    store.setSettings({ meal: false, todo: false, water: true, summary: false });
+    expect(await scheduler.tick()).toBe(0);
+    expect(sender.send).not.toHaveBeenCalled();
+    water = true;
+    expect(await scheduler.tick()).toBe(1);
+  });
 
   it("does nothing, not even reading the clock, without subscribed devices", async () => {
     const { scheduler, api } = setup("13:00");

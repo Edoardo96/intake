@@ -1,7 +1,7 @@
 import type { ProfileView, TrainingSourceId } from "@intake/shared";
 import { type ReactNode, useState } from "react";
 import { Link } from "wouter";
-import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeatures, useSetFeatures, useSetLanguage, useSetGoals } from "../api/queries";
+import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeature, useFeatures, useSetFeatures, useSetLanguage, useSetGoals } from "../api/queries";
 import { LANGUAGES, parseGoalInput, weightUnitOf, type FeatureKey, type GoalsUpdate, type WeightUnit } from "@intake/shared";
 import { Avatar } from "../components/ProfileLink";
 import { RemindersSheet } from "../components/RemindersSheet";
@@ -156,6 +156,8 @@ function GoalsCard({
   stepGoal: number | null;
 }) {
   const setGoals = useSetGoals();
+  // While the Acqua part is off the water goal is neither shown nor edited (it stays in Nutrition)
+  const water = useFeature("water");
   const [draft, setDraft] = useState<Record<GoalField, string> | null>(null);
   const [invalid, setInvalid] = useState(false);
   const names = t.profile.goalNames;
@@ -167,7 +169,9 @@ function GoalsCard({
         { key: "carbs", label: names.carbs, value: grams(goals.carbs), unit: "g", decimals: false },
         { key: "fat", label: names.fat, value: grams(goals.fat), unit: "g", decimals: false },
         { key: "fiber", label: names.fiber, value: grams(goals.fiber), unit: "g", decimals: false },
-        { key: "water", label: names.water, value: goals.waterMl === null ? t.profile.notSet : formatWater(goals.waterMl), unit: "L", decimals: true },
+        ...(water
+          ? [{ key: "water" as const, label: names.water, value: goals.waterMl === null ? t.profile.notSet : formatWater(goals.waterMl), unit: "L", decimals: true }]
+          : []),
       ]
     : [];
   // The target weight is shown in Peso; it is edited here with the goals, since Nutrition keeps it with them
@@ -462,7 +466,7 @@ function HevySyncRow() {
   );
 }
 
-const FEATURE_ROWS: FeatureKey[] = ["training", "health", "reminders"];
+const FEATURE_ROWS: FeatureKey[] = ["water", "training", "health", "reminders"];
 
 /** Profilo › Funzioni (docs/features.md): Alimentazione always on, a switch for each optional part. */
 function FeaturesCard() {

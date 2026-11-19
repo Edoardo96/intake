@@ -56,14 +56,16 @@ function Summary({ view, selected, onAdd }: { view: DayView; selected: string; o
           <DayCurve view={view} />
         </CalorieCard>
         <MacroCard totals={view.totals} goals={view.goals} />
-        <WaterCard
-          totalMl={view.totals.waterMl}
-          goalMl={view.goals.waterMl}
-          canAdd={view.isToday}
-          adding={addWater.isPending}
-          failed={addWater.isError}
-          onAdd={(amount) => addWater.mutate(amount)}
-        />
+        {features?.water && (
+          <WaterCard
+            totalMl={view.totals.waterMl}
+            goalMl={view.goals.waterMl}
+            canAdd={view.isToday}
+            adding={addWater.isPending}
+            failed={addWater.isError}
+            onAdd={(amount) => addWater.mutate(amount)}
+          />
+        )}
       </div>
       <div className="today-side">
         <NextMealCard view={view} onAdd={onAdd} />

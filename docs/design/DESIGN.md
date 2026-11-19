@@ -44,7 +44,7 @@ All UI copy is designed in Italian (the default language; English and Dutch tran
 
 ## Optional parts and first-run setup (19 Nov)
 
-- Alimentazione is always on; Allenamenti, Apple Salute and Promemoria can be switched off (docs/features.md). Navigation, Today and Profile show only the parts that are on; the Andamento switch is hidden when only Alimentazione is left.
+- Alimentazione is always on; Acqua, Allenamenti, Apple Salute and Promemoria can be switched off (docs/features.md); with Acqua off the water card, the water shortcuts of the add sheet, the water rows of Andamento and the water goal are left out. Navigation, Today and Profile show only the parts that are on; the Andamento switch is hidden when only Alimentazione is left.
 - First-run setup: a focus page like the Nutrition connection (eyebrow "PRIMA CONFIGURAZIONE · PASSO N DI 2"). Step 1: three radio cards (title + one line), the selected one with the accent border and soft accent background, "Avanti" at the bottom. Step 2: a card with one row per chosen part and the reminders switch, "Indietro" / "Inizia", footnote pointing to Profilo › Funzioni.
 - Profilo › Funzioni: third card of Impostazioni (see below); Alimentazione with a "sempre attiva" pill, then one switch row per part, and a last row with the muted note and a small secondary "Rifai la configurazione" button.
 

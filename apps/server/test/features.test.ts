@@ -14,7 +14,7 @@ describe("feature switches", () => {
   it("starts a new installation with only Alimentazione, waiting for the setup", () => {
     const features = new FeatureStore(openDatabase(":memory:"));
     features.adoptExisting({ gymConfigured: true });
-    expect(features.get()).toEqual({ setupDone: false, training: false, health: false, reminders: false });
+    expect(features.get()).toEqual({ setupDone: false, training: false, health: false, reminders: false, water: true });
     expect(features.set({ setupDone: true, training: true })).toMatchObject({ setupDone: true, training: true, health: false });
     expect(features.enabled("training")).toBe(true);
   });
@@ -24,7 +24,7 @@ describe("feature switches", () => {
     new HealthStore(db).save({ daily: [{ date: "2026-11-19", metric: "steps", value: 4000 }], sleep: [], workouts: [], ignored: { metrics: [], sections: {}, routes: 0 } } as unknown as HealthExport, "sync");
     const features = new FeatureStore(db);
     features.adoptExisting({ gymConfigured: true });
-    expect(features.get()).toEqual({ setupDone: true, training: true, health: true, reminders: true });
+    expect(features.get()).toEqual({ setupDone: true, training: true, health: true, reminders: true, water: true });
     // A stored choice is never overwritten
     features.set({ training: false });
     new FeatureStore(db).adoptExisting({ gymConfigured: true });
@@ -43,6 +43,8 @@ describe("feature switches", () => {
     expect(blockedBy("/api/health/ingest", only("training"))).toBe("health");
     expect(blockedBy("/api/health", only())).toBeNull();
     expect(blockedBy("/api/push/subscriptions", only())).toBe("reminders");
+    expect(blockedBy("/api/water", only())).toBe("water");
+    expect(blockedBy("/api/water", only("water"))).toBeNull();
     expect(blockedBy("/api/days/2026-11-19", only())).toBeNull();
     expect(blockedBy("/api/trainingx", only())).toBeNull();
   });
@@ -60,6 +62,7 @@ describe("feature switches", () => {
       training: false,
       health: false,
       reminders: false,
+      water: true,
       gymApps,
     });
     const off = await app.inject({ method: "GET", url: "/api/health/status", headers: { cookie } });
@@ -72,6 +75,12 @@ describe("feature switches", () => {
     expect(put.json()).toMatchObject({ setupDone: true, health: true, training: false });
     expect((await app.inject({ method: "GET", url: "/api/health/status", headers: { cookie } })).statusCode).toBe(200);
     expect((await app.inject({ method: "PUT", url: "/api/features", headers: { cookie }, payload: { nutrition: false } })).statusCode).toBe(400);
+
+    // Acqua off: the water route is hidden
+    expect((await app.inject({ method: "PUT", url: "/api/features", headers: { cookie }, payload: { water: false } })).json()).toMatchObject({ water: false });
+    const water = await app.inject({ method: "POST", url: "/api/water", headers: { cookie }, payload: { amountMl: 250 } });
+    expect(water.statusCode).toBe(404);
+    expect(water.json()).toEqual({ error: "feature_disabled", feature: "water" });
   });
 
   it("gives the other screens no Apple Health data while Salute is off", () => {

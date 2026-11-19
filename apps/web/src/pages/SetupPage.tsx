@@ -21,6 +21,7 @@ export function SetupPage({ features }: { features: FeaturesResponse }) {
   const [step, setStep] = useState<1 | 2>(1);
   const [choice, setChoice] = useState<Choice>(() => choiceOf(features));
   const [reminders, setReminders] = useState(features.setupDone ? features.reminders : true);
+  const [water, setWater] = useState(features.water);
   const training = choice !== "nutrition";
   const health = choice === "all";
   const apps = [features.gymApps.hevy && "Hevy", features.gymApps.opengym && "openGym"].filter(Boolean).join(" · ");
@@ -71,6 +72,13 @@ export function SetupPage({ features }: { features: FeaturesResponse }) {
             )}
             <label className="profile-row-item setup-switch-row">
               <span className="connection-text">
+                <strong>{s.waterTitle}</strong>
+                <span className="muted">{s.waterNote}</span>
+              </span>
+              <input type="checkbox" role="switch" className="switch" checked={water} onChange={(event) => setWater(event.target.checked)} />
+            </label>
+            <label className="profile-row-item setup-switch-row">
+              <span className="connection-text">
                 <strong>{s.remindersTitle}</strong>
                 <span className="muted">{s.remindersNote}</span>
               </span>
@@ -87,7 +95,7 @@ export function SetupPage({ features }: { features: FeaturesResponse }) {
               type="button"
               className="button-primary-inline"
               disabled={save.isPending}
-              onClick={() => save.mutate({ setupDone: true, training, health, reminders })}
+              onClick={() => save.mutate({ setupDone: true, training, health, reminders, water })}
             >
               {s.start}
             </button>

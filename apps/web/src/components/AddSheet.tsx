@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useAddWater, useDay, useLogPlanned, useRecentMeals, useRepeatMeal } from "../api/queries";
+import { useAddWater, useDay, useFeature, useLogPlanned, useRecentMeals, useRepeatMeal } from "../api/queries";
 import { formatKcal, formatShortDate } from "../lib/format";
 import { t } from "../lib/strings";
 import { CloseIcon } from "./icons";
@@ -38,6 +38,7 @@ const WATER_AMOUNTS = [200, 250];
  */
 export function AddSheet({ onClose }: Props) {
   const addWater = useAddWater("today");
+  const water = useFeature("water");
   const today = useDay("today");
   const logPlanned = useLogPlanned("today");
   const [showRecent, setShowRecent] = useState(false);
@@ -70,21 +71,23 @@ export function AddSheet({ onClose }: Props) {
           </button>
         </div>
 
-        <div className="sheet-water">
-          {WATER_AMOUNTS.map((amount, i) => (
-            <button
-              key={amount}
-              ref={i === 0 ? firstButton : undefined}
-              type="button"
-              className="sheet-water-button"
-              disabled={addWater.isPending}
-              onClick={() => addWater.mutate(amount, { onSuccess: onClose })}
-            >
-              {t.water.addLong(`${amount} ml`)}
-            </button>
-          ))}
-        </div>
-        {addWater.isError && <p className="error-text">{t.errors.waterFailed}</p>}
+        {water && (
+          <div className="sheet-water">
+            {WATER_AMOUNTS.map((amount, i) => (
+              <button
+                key={amount}
+                ref={i === 0 ? firstButton : undefined}
+                type="button"
+                className="sheet-water-button"
+                disabled={addWater.isPending}
+                onClick={() => addWater.mutate(amount, { onSuccess: onClose })}
+              >
+                {t.water.addLong(`${amount} ml`)}
+              </button>
+            ))}
+          </div>
+        )}
+        {water && addWater.isError && <p className="error-text">{t.errors.waterFailed}</p>}
 
         {planMeals.length > 0 && today.data && (
           <>

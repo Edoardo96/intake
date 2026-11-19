@@ -1,7 +1,7 @@
 import type { WeekView, Workout } from "@intake/shared";
 import { useState } from "react";
 import { Link } from "wouter";
-import { useWeek, useWorkouts } from "../api/queries";
+import { useFeature, useWeek, useWorkouts } from "../api/queries";
 import { netLabel } from "../components/ActivityCard";
 import { WeekPlanCard } from "../components/PlanCompare";
 import { TrendsSwitch, TrendsTitle } from "../components/TrendsSwitch";
@@ -192,6 +192,7 @@ function KpiRow({ week }: { week: WeekView }) {
   const { goals, consistency } = week;
   const proteinGap = avg && goals.protein ? goals.protein - avg.protein : null;
   const allLogged = consistency.logged.days.length === consistency.logged.total;
+  const water = useFeature("water");
   return (
     <section className="kpi-row" aria-label={t.week.kpi}>
       <Kpi
@@ -211,7 +212,7 @@ function KpiRow({ week }: { week: WeekView }) {
         note={goals.fiber && consistency.fiber.total > 0 ? t.week.daysAtGoal(`${formatKcal(goals.fiber)} g`, consistency.fiber.hit, consistency.fiber.total) : null}
         accent={consistency.fiber.total > 0 && consistency.fiber.hit === consistency.fiber.total}
       />
-      <Kpi wide label={t.week.avgWater} value={avg ? formatWater(avg.waterMl) : "–"} note={goals.waterMl ? t.week.goalNote(formatWater(goals.waterMl)) : null} />
+      {water && <Kpi wide label={t.week.avgWater} value={avg ? formatWater(avg.waterMl) : "–"} note={goals.waterMl ? t.week.goalNote(formatWater(goals.waterMl)) : null} />}
       <Kpi
         wide
         label={t.week.loggedDays}
@@ -302,6 +303,7 @@ function ProteinCard({ week }: { week: WeekView }) {
 
 function ConsistencyCard({ week }: { week: WeekView }) {
   const c = week.consistency;
+  const water = useFeature("water");
   const almost = (value: number, goal: number | null) => (goal && value < goal && value >= goal * 0.85 ? t.week.almost : "");
   const targetNote = (target: WeekView["consistency"]["protein"], format: (v: number) => string) =>
     target.best ? `${lower(target.best.date)} ${format(target.best.value)}${almost(target.best.value, target.goal)}` : t.week.noCompletedDays;
@@ -311,11 +313,15 @@ function ConsistencyCard({ week }: { week: WeekView }) {
     { label: t.week.loggedDays, note: allLogged ? t.week.allLogged : t.week.missing(missing), value: `${c.logged.days.length}/${c.logged.total}`, accent: allLogged },
     { label: t.week.proteinTarget, note: targetNote(c.protein, (v) => `${formatKcal(v)} g`), value: `${c.protein.hit}/${c.protein.total}` },
     ...(c.fiber.goal ? [{ label: t.week.fiberTarget, note: targetNote(c.fiber, (v) => `${formatKcal(v)} g`), value: `${c.fiber.hit}/${c.fiber.total}` }] : []),
-    {
-      label: t.week.waterTarget,
-      note: c.water.best && c.water.goal ? `${t.week.bestOf(lower(c.water.best.date), formatWater(c.water.best.value), formatWater(c.water.goal))}${almost(c.water.best.value, c.water.goal)}` : t.week.noCompletedDays,
-      value: `${c.water.hit}/${c.water.total}`,
-    },
+    ...(water
+      ? [
+          {
+            label: t.week.waterTarget,
+            note: c.water.best && c.water.goal ? `${t.week.bestOf(lower(c.water.best.date), formatWater(c.water.best.value), formatWater(c.water.goal))}${almost(c.water.best.value, c.water.goal)}` : t.week.noCompletedDays,
+            value: `${c.water.hit}/${c.water.total}`,
+          },
+        ]
+      : []),
     { label: t.week.asPlanned, note: t.week.asPlannedNote(c.skipped), value: String(c.asPlanned) },
   ];
   return (

@@ -20,6 +20,8 @@ export interface ReminderSchedulerDeps {
   enabled?: () => boolean;
   /** Installation language of the notification text (Profilo › Lingua); Italian when missing. */
   language?: () => Language;
+  /** False while the Acqua part is off: no water reminders. */
+  waterEnabled?: () => boolean;
 }
 
 /**
@@ -63,7 +65,8 @@ export class ReminderScheduler {
   private async check(): Promise<number> {
     const { store, plans, api } = this.deps;
     if (store.subscriptions().length === 0) return 0;
-    const settings = store.settings();
+    const stored = store.settings();
+    const settings = this.deps.waterEnabled?.() === false ? { ...stored, water: false } : stored;
     if (!Object.values(settings).some(Boolean)) return 0;
 
     const clock = await api.clock();

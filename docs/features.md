@@ -1,6 +1,6 @@
 # Optional parts (feature switches)
 
-Intake can run as a nutrition-only app or with workouts and Apple Health too. **Alimentazione** is always on; three
+Intake can run as a nutrition-only app or with workouts and Apple Health too. **Alimentazione** is always on; four
 parts can be switched on or off for the whole installation.
 
 | Part | Key | What it includes |
@@ -8,8 +8,9 @@ parts can be switched on or off for the whole installation.
 | Allenamenti | `training` | Training page and recap, Today's training card, Trends › Training, the Hevy or openGym source, the openGym → Hevy copy |
 | Salute (Apple Salute) | `health` | Activity and rest, sleep, Effort / Recovery / Sleep rings, Trends › Health, eaten-vs-burned balance, Health Auto Export uploads |
 | Promemoria | `reminders` | Web Push reminders for the meals of the plan |
+| Acqua | `water` | Water card on Today, water shortcuts in the add sheet, water KPI and consistency row in Trends › Nutrition, the water goal in Profile, water reminders. On by default |
 
-Alimentazione: Today with the timeline and macros, meals, water, weight, meal plans, the daily insight, Trends ›
+Alimentazione: Today with the timeline and macros, meals, weight, meal plans, the daily insight, Trends ›
 Nutrition and Weight.
 
 ## Rules
@@ -17,7 +18,7 @@ Nutrition and Weight.
 - The choice is stored once per installation in the `settings` table (key `features`), not per device.
 - A part that is off:
   - answers `404 { "error": "feature_disabled", "feature": "<key>" }` on its API routes
-    (`/api/training*`, `/api/hevy-sync*` · `/api/health/*` including `/api/health/ingest` · `/api/push*`);
+    (`/api/training*`, `/api/hevy-sync*` · `/api/health/*` including `/api/health/ingest` · `/api/push*` · `/api/water`);
     `/api/health` (the server's own liveness check) is not part of Salute. `/api/workouts` serves both parts: it is
     hidden only when Allenamenti and Salute are both off, and lists only Apple Health sessions while Allenamenti is off;
   - stops its background work: the openGym → Hevy copy for Allenamenti, the reminder checks for Promemoria;
@@ -40,7 +41,7 @@ Nutrition and Weight.
 - **First-run setup** (`SetupPage`), shown after the Nutrition connection while `setupDone` is false:
   1. "Cosa vuoi seguire?": Solo alimentazione · Alimentazione e allenamenti · Tutto, anche Apple Salute.
   2. "Ultimi dettagli": for Allenamenti, which workout apps are configured (or which environment variables to add);
-     for Apple Salute, where to connect Health Auto Export; a switch for the meal reminders. "Inizia" saves.
+     for Apple Salute, where to connect Health Auto Export; a switch for water and one for the meal reminders. "Inizia" saves.
 - **Profilo › Funzioni**: Alimentazione (always on) and a switch for each optional part, a note that the data is
   kept, and "Rifai la configurazione" (sets `setupDone` back to false, so the setup opens again with the current
   choice preselected).
@@ -51,5 +52,5 @@ Nutrition and Weight.
 
 ## API
 
-- `GET /api/features` → `{ setupDone, training, health, reminders, gymApps: { hevy, opengym } }`
-- `PUT /api/features` with any subset of `{ setupDone, training, health, reminders }` → the same shape.
+- `GET /api/features` → `{ setupDone, training, health, reminders, water, gymApps: { hevy, opengym } }`
+- `PUT /api/features` with any subset of `{ setupDone, training, health, reminders, water }` → the same shape.
