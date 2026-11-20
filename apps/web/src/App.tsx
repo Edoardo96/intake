@@ -1,3 +1,4 @@
+import { ViewportDiag } from "./components/ViewportDiag";
 import "@fontsource-variable/manrope";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
@@ -119,6 +120,7 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Root />
+      <ViewportDiag />
     </QueryClientProvider>
   );
 }
