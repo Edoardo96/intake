@@ -3698,6 +3698,15 @@ button.next-meal-primary {
   height: 100lvh;
 }
 
+/*
+ * Installed app on an iPhone whose page starts below the status bar (lib/viewport.ts, trackStatusBar): there
+ * 100lvh is the whole screen, taller than the page by the status bar, and the tab bar ended below the screen
+ * edge. 100svh is the page height there, before and after rotating or switching apps.
+ */
+:root[data-standalone][data-below-status-bar] .shell {
+  height: 100svh;
+}
+
 /* ================= Apple Salute (Profile) ================= */
 
 .health-page {
