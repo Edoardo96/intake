@@ -10,6 +10,7 @@ import { NeedsAdvisor } from "../src/services/needsAdvisor.js";
 import { authOptions, signIn } from "./helpers.js";
 
 const today = "2026-11-20";
+const limits = { saturatedFat: null, sugar: null, addedSugar: null, alcohol: null, caffeineMg: null, sodiumMg: null };
 const profile: NeedsProfile = {
   sex: "male",
   age: 30,
@@ -27,7 +28,7 @@ const profile: NeedsProfile = {
 function fakeApi(overrides: Partial<NeedsRoutesOptions["api"]> = {}): NeedsRoutesOptions["api"] {
   return {
     clock: async () => ({ timezone: "Europe/Rome", localDate: today, localTime: "09:00:00", utc: "" }),
-    goals: async () => ({ kcal: 2200, protein: 150, carbs: 250, fat: 70, fiber: 30, waterMl: 2500 }),
+    goals: async () => ({ kcal: 2200, protein: 150, carbs: 250, fat: 70, fiber: 30, waterMl: 2500, limits, targetWeight: null }),
     weightTrends: async () => ({ unit: "kg", target: null, entries: [0, 7, 14, 20].map((d) => ({ date: addDaysTo(today, -21 + d), weight: 80 - (0.5 * d) / 7 })) }),
     summary: async () => ({
       goals: { kcal: 2200, protein: 150, fiber: 30, waterMl: 2500 },
@@ -77,7 +78,7 @@ describe("needs routes", () => {
   });
 
   it("applies goals within the safety limits and remembers where they came from", async () => {
-    let goals = { kcal: 2200, protein: 150, carbs: 250, fat: 70, fiber: 30, waterMl: 2500 };
+    let goals = { kcal: 2200, protein: 150, carbs: 250, fat: 70, fiber: 30, waterMl: 2500, limits, targetWeight: null };
     const setGoals = vi.fn(async (update: Partial<typeof goals>) => void (goals = { ...goals, ...update }));
     const { app, headers, store } = await signedIn({ api: fakeApi({ setGoals, goals: async () => goals }) });
     expect((await app.inject({ method: "POST", url: "/api/needs/apply", headers, payload: { source: "standard", targets: { kcal: 2080, protein: 175, carbs: 210, fat: 60 } } })).statusCode).toBe(409);

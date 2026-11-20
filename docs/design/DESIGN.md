@@ -239,17 +239,19 @@ A card at the top of Piano, above the week's plan, with three bands divided by a
 2. "VERIFICA SUI TUOI DATI": one sentence with the average calories, the weight trend and the real maintenance, then
    "✓ in linea con l'obiettivo" (accent pill) or "Per il tuo obiettivo: X kcal" with "Applica"; a muted note that it
    is plain arithmetic, no AI. With too few data, one muted sentence with what is missing.
-3. "IL PARERE DELL'IA" with the sparkles: date, the first three lines of the opinion, "Aggiorna il parere".
+3. "IL PARERE DELL'IA" with the sparkles, separate from the settings: the last opinion (date, summary, a
+   three-column table Calcolo / Proposta IA with the differing AI values in bold, tips collapsed, "Tieni il calcolo" /
+   "Usa la proposta" or "✓ Proposta dell'IA in uso"), then "Chiedi" (asks again from the card, with a spinner
+   while it waits).
 
 Without saved fields: the title, one sentence, "Calcola il tuo fabbisogno" and band 2 without the suggestion.
 
 The page (`/piano/fabbisogno`) follows the new-meal layout (Annulla · title): sections Tu (sex as a segmented
 control, age, height, the weight from Nutrition read-only), Vita di tutti i giorni (work segmented, steps),
 Allenamenti (times a week, average length, type segmented), Obiettivo (2 × 2 cards with name and one-line hint, the
-selected one with an accent border and soft accent fill; Ritmo segmented for cut and bulk), then the calculation
-card (calories, macros, basal and maintenance, weekly change, "Applica agli obiettivi"), then Il parere dell'IA
-(notes, the AI button, and the opinion card: summary, a three-column table Calcolo / Proposta IA with the differing
-AI values in bold, tips, "Tieni il calcolo" / "Usa la proposta"). Rules in `docs/needs.md`.
+selected one with an accent border and soft accent fill; Ritmo segmented for cut and bulk), Note per l'IA (with the
+sparkles, only while the AI can be used), then the calculation card (calories, macros, basal and maintenance, weekly
+change, "Salva" / "Applica agli obiettivi"). The AI is asked from the card only. Rules in `docs/needs.md`.
 
 ## Add sheet (`+`) — what is really possible
 

@@ -10,8 +10,8 @@ few fields, check the active goal against the real data, and, on request, ask th
    "proposta IA", "dai tuoi dati"). Calories and macros come live from Nutrition. A short line gives the weight, the
    workouts a week and the estimated maintenance.
 2. **Verifica sui tuoi dati**: arithmetic only, no AI. See [the check](#the-check-on-the-data).
-3. **Il parere dell'IA**: the date and the start of the last opinion, and "Chiedi un parere all'IA" or "Aggiorna il
-   parere" (opens the page at the AI part). Shown only while the AI can be used.
+3. **Il parere dell'IA**, separate from the settings: "Chiedi" asks the AI from the card with the saved fields, and
+   the last opinion is shown there (see [the AI opinion](#the-ai-opinion)). Shown only while the AI can be used.
 
 Without saved fields the card shows "Calcola il tuo fabbisogno" and the data check, without a suggestion.
 
@@ -25,7 +25,9 @@ Without saved fields the card shows "Calcola il tuo fabbisogno" and the data che
 | Obiettivo | goal and, for cut and bulk, the pace (steady, fast) | — |
 | Note per l'IA | free text, at most 500 characters, used only by the AI opinion | — |
 
-The prefill is used only before the first save. Without a weigh-in the page asks to log one in Profile.
+The prefill is used only before the first save. Without a weigh-in the page asks to log one in Profile. Under the
+fields, the standard calculation updates while typing, with "Salva" (keeps the fields) and "Applica agli obiettivi"
+(keeps the fields and sets the goals). The page has no AI part apart from the notes.
 
 ## The calculation
 
@@ -65,8 +67,9 @@ and page hide the AI part and the last opinion.
 - The proposal always goes through `limitTargets`: calories between the floor and maintenance −25% / +20%, protein
   0.8–3 g/kg, fat at least 0.5 g/kg, carbohydrates recomputed so the grams add up. When anything changed the page
   says so.
-- The page shows the standard calculation and the proposal side by side: "Tieni il calcolo" or "Usa la proposta".
-  Nothing changes in Nutrition until one is chosen. The last opinion is kept until the next one.
+- The card shows the summary, the standard calculation and the proposal side by side, the tips (collapsed) and
+  "Tieni il calcolo" / "Usa la proposta" ("✓ Proposta dell'IA in uso" once applied). Nothing changes in Nutrition
+  until one is chosen. The last opinion is kept until the next one.
 
 ## Applying a goal
 

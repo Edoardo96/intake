@@ -13,12 +13,11 @@ import {
 } from "@intake/shared";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { useApplyNeeds, useAskNeedsAi, useNeeds, useSaveNeedsProfile } from "../api/queries";
+import { useApplyNeeds, useNeeds, useSaveNeedsProfile } from "../api/queries";
 import { signedKg } from "../components/NeedsCard";
 import { SparklesIcon } from "../components/icons";
-import { formatKcal, formatMediumDate, formatWeight } from "../lib/format";
+import { formatKcal, formatWeight } from "../lib/format";
 import { t } from "../lib/strings";
-import { errorText } from "./NewMealPage";
 
 /** The form as typed: numbers stay text until saved, so a field can be emptied while editing. */
 interface Draft {
@@ -103,46 +102,27 @@ function NumberRow({ label, unit, value, onChange }: { label: string; unit?: str
   );
 }
 
-function CompareRow({ label, unit, standard, ai }: { label: string; unit: string; standard: number; ai: number }) {
-  return (
-    <>
-      <span className="muted">{label}</span>
-      <span>
-        {formatKcal(standard)} {unit}
-      </span>
-      <span data-differs={standard !== ai || undefined}>
-        {formatKcal(ai)} {unit}
-      </span>
-    </>
-  );
-}
-
 /**
- * Piano › Il tuo fabbisogno: the fields (you, everyday life, workouts, goal), the standard calculation computed while
- * typing, and the AI opinion compared side by side. Nothing changes in Nutrition until a goal is applied.
+ * Piano › Il tuo fabbisogno: the settings (you, everyday life, workouts, goal, notes for the AI) and the standard
+ * calculation computed while typing. The AI opinion is asked from the card, separately. Nothing changes in Nutrition
+ * until a goal is applied.
  */
 export function NeedsPage() {
   const needs = useNeeds();
   const [, navigate] = useLocation();
   const save = useSaveNeedsProfile();
   const apply = useApplyNeeds();
-  const askAi = useAskNeedsAi();
   const [draft, setDraft] = useState<Draft | null>(null);
 
   useEffect(() => {
     if (needs.data && !draft) setDraft(draftOf(needs.data));
   }, [needs.data, draft]);
 
-  // "Aggiorna il parere" on the card opens the page at the AI part
-  useEffect(() => {
-    if (draft && window.location.hash === "#ia") document.getElementById("ia")?.scrollIntoView({ block: "start" });
-  }, [draft]);
-
   const view = needs.data;
   const profile = draft ? profileOf(draft) : null;
   const weightKg = view?.weightKg ?? null;
   const result = useMemo(() => (profile && weightKg !== null ? computeNeeds(profile, weightKg) : null), [profile, weightKg]);
-  const busy = save.isPending || apply.isPending || askAi.isPending;
+  const busy = save.isPending || apply.isPending;
 
   if (!view || !draft) {
     return (
@@ -162,13 +142,12 @@ export function NeedsPage() {
     navigate("/piano");
   }
 
-  async function ask() {
+  async function saveOnly() {
     if (!profile) return;
     await save.mutateAsync(profile);
-    askAi.mutate();
+    navigate("/piano");
   }
 
-  const ai = view.ai;
   const cut = draft.goal === "cut" || draft.goal === "bulk";
 
   return (
@@ -219,6 +198,19 @@ export function NeedsPage() {
       </div>
       {cut && <Segmented label={t.needs.pace} options={NEEDS_PACES} names={t.needs.paces} value={draft.pace} onChange={(pace) => set({ pace })} />}
 
+      {view.aiAvailable && (
+        <>
+          <label className="form-card text-entry needs-notes">
+            <span className="sheet-section ai-label">
+              <SparklesIcon size={14} />
+              {t.needs.notes}
+            </span>
+            <textarea value={draft.notes} rows={3} maxLength={500} placeholder={t.needs.notesPlaceholder} onChange={(e) => set({ notes: e.target.value })} />
+          </label>
+          <p className="sheet-note">{t.needs.notesHint}</p>
+        </>
+      )}
+
       {invalid && <p className="notice" data-kind="error">{t.needs.invalid}</p>}
 
       {result && (
@@ -231,75 +223,18 @@ export function NeedsPage() {
           <span className="muted">{t.needs.resultNote(formatKcal(result.bmr), formatKcal(result.maintenance))}</span>
           <span className="muted">{Math.abs(result.weeklyChangeKg) < 0.05 ? t.needs.weeklyNone : t.needs.weekly(signedKg(result.weeklyChangeKg))}</span>
           {result.limited && <span className="needs-status" data-kind="warn">{t.needs.limited}</span>}
-          <button type="button" className="button-primary" disabled={busy} onClick={() => void applyTargets("standard", result)}>
-            {t.needs.apply}
-          </button>
+          <div className="goals-actions">
+            <button type="button" className="button-secondary" disabled={busy || !profile} onClick={() => void saveOnly()}>
+              {t.needs.save}
+            </button>
+            <button type="button" className="button-primary-inline" disabled={busy} onClick={() => void applyTargets("standard", result)}>
+              {t.needs.apply}
+            </button>
+          </div>
         </section>
       )}
       {apply.isError && <p className="notice" data-kind="error">{t.needs.applyFailed}</p>}
 
-      {view.aiAvailable && (
-        <section id="ia" className="needs-ai" aria-labelledby="needs-ai-title">
-          <span className="sheet-section ai-label" id="needs-ai-title">
-            <SparklesIcon size={16} />
-            {t.needs.ai}
-          </span>
-          <label className="form-card text-entry">
-            <span className="sheet-section">{t.needs.notes}</span>
-            <textarea value={draft.notes} rows={3} maxLength={500} placeholder={t.needs.notesPlaceholder} onChange={(e) => set({ notes: e.target.value })} />
-          </label>
-          <p className="sheet-note">{t.needs.aiNote}</p>
-          {askAi.isPending ? (
-            <div className="card recognize-wait" aria-live="polite" aria-busy="true">
-              <span className="recognize-spinner" aria-hidden="true" />
-              <strong>{t.needs.aiAsking}</strong>
-            </div>
-          ) : (
-            <button type="button" className="button-primary button-ai" disabled={!result || busy} onClick={() => void ask()}>
-              <SparklesIcon size={18} />
-              {ai ? t.needs.aiRefresh : t.needs.aiAsk}
-            </button>
-          )}
-          {askAi.isError && <p className="notice" data-kind="error">{errorText(askAi.error)}</p>}
-
-          {ai && result && !askAi.isPending && (
-            <div className="card needs-opinion">
-              <span className="muted">{t.needs.aiOf(formatMediumDate(ai.at.slice(0, 10)))}</span>
-              <p>{ai.summary}</p>
-              <div className="needs-compare">
-                <span />
-                <strong>{t.needs.compare.standard}</strong>
-                <strong className="ai-label">
-                  <SparklesIcon size={14} />
-                  {t.needs.compare.ai}
-                </strong>
-                {(["kcal", "protein", "carbs", "fat"] as const).map((key) => (
-                  <CompareRow key={key} label={t.needs[key]} unit={key === "kcal" ? "kcal" : "g"} standard={result[key]} ai={ai.targets[key]} />
-                ))}
-              </div>
-              {ai.limited && <span className="needs-status" data-kind="warn">{t.needs.aiLimited}</span>}
-              {ai.tips.length > 0 && (
-                <>
-                  <span className="needs-band-title">{t.needs.tips}</span>
-                  <ul className="needs-tips">
-                    {ai.tips.map((tip, i) => (
-                      <li key={i}>{tip}</li>
-                    ))}
-                  </ul>
-                </>
-              )}
-              <div className="goals-actions">
-                <button type="button" className="button-secondary" disabled={busy} onClick={() => void applyTargets("standard", result)}>
-                  {t.needs.keepStandard}
-                </button>
-                <button type="button" className="button-primary-inline" disabled={busy} onClick={() => void applyTargets("ai", ai.targets)}>
-                  {t.needs.useAi}
-                </button>
-              </div>
-            </div>
-          )}
-        </section>
-      )}
     </div>
   );
 }

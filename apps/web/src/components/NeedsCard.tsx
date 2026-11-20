@@ -1,8 +1,9 @@
-import { macrosFor, type NeedsView } from "@intake/shared";
+import { macrosFor, type NeedsTargets, type NeedsView } from "@intake/shared";
 import { Link } from "wouter";
-import { useApplyNeeds, useNeeds } from "../api/queries";
+import { useApplyNeeds, useAskNeedsAi, useNeeds } from "../api/queries";
 import { formatKcal, formatMediumDate, formatOneDecimal, formatWeight } from "../lib/format";
 import { t } from "../lib/strings";
+import { errorText } from "../pages/NewMealPage";
 import { SparklesIcon } from "./icons";
 
 export const NEEDS_PATH = "/piano/fabbisogno";
@@ -53,9 +54,103 @@ function CheckBand({ view }: { view: NeedsView }) {
   );
 }
 
+function CompareRow({ label, unit, standard, ai }: { label: string; unit: string; standard: number; ai: number }) {
+  return (
+    <>
+      <span className="muted">{label}</span>
+      <span>
+        {formatKcal(standard)} {unit}
+      </span>
+      <span data-differs={standard !== ai || undefined}>
+        {formatKcal(ai)} {unit}
+      </span>
+    </>
+  );
+}
+
+const sameGoal = (goals: NeedsView["goals"], targets: NeedsTargets) => goals.kcal === targets.kcal && goals.protein === targets.protein;
+
+/**
+ * "Il parere dell'IA", separate from the settings: "Chiedi" asks the AI from here with the saved fields, and the
+ * opinion is compared with the standard calculation before anything changes.
+ */
+function AiBand({ view }: { view: NeedsView }) {
+  const ask = useAskNeedsAi();
+  const apply = useApplyNeeds();
+  const { ai, result, goals } = view;
+  const busy = ask.isPending || apply.isPending;
+  return (
+    <div className="needs-band" aria-busy={ask.isPending}>
+      <span className="needs-band-title ai-label">
+        <SparklesIcon size={16} />
+        {t.needs.ai}
+      </span>
+      {ask.isPending ? (
+        <span className="needs-ai-wait" aria-live="polite">
+          <span className="recognize-spinner" aria-hidden="true" />
+          {t.needs.aiAsking}
+        </span>
+      ) : (
+        ai && (
+          <>
+            <span className="muted">{t.needs.aiOf(formatMediumDate(ai.at.slice(0, 10)))}</span>
+            <p>{ai.summary}</p>
+            {result && (
+              <div className="needs-compare">
+                <span />
+                <strong>{t.needs.compare.standard}</strong>
+                <strong className="ai-label">
+                  <SparklesIcon size={14} />
+                  {t.needs.compare.ai}
+                </strong>
+                {(["kcal", "protein", "carbs", "fat"] as const).map((key) => (
+                  <CompareRow key={key} label={t.needs[key]} unit={key === "kcal" ? "kcal" : "g"} standard={result[key]} ai={ai.targets[key]} />
+                ))}
+              </div>
+            )}
+            {ai.limited && <span className="needs-status" data-kind="warn">{t.needs.aiLimited}</span>}
+            {ai.tips.length > 0 && (
+              <details className="needs-tips-box">
+                <summary>{t.needs.tips}</summary>
+                <ul className="needs-tips">
+                  {ai.tips.map((tip, i) => (
+                    <li key={i}>{tip}</li>
+                  ))}
+                </ul>
+              </details>
+            )}
+            {sameGoal(goals, ai.targets) ? (
+              <span className="needs-status" data-kind="ok">
+                {t.needs.aiInUse}
+              </span>
+            ) : (
+              <div className="needs-ai-actions">
+                {result && !sameGoal(goals, result) && (
+                  <button type="button" className="button-secondary-small" disabled={busy} onClick={() => apply.mutate({ source: "standard", targets: result })}>
+                    {t.needs.keepStandard}
+                  </button>
+                )}
+                <button type="button" className="button-primary-small" disabled={busy} onClick={() => apply.mutate({ source: "ai", targets: ai.targets })}>
+                  {t.needs.useAi}
+                </button>
+              </div>
+            )}
+          </>
+        )
+      )}
+      {ask.isError && <p className="error-text">{errorText(ask.error)}</p>}
+      {apply.isError && <p className="error-text">{t.needs.applyFailed}</p>}
+      <button type="button" className="button-secondary-small needs-ai-link" disabled={busy || !result} onClick={() => ask.mutate()}>
+        <SparklesIcon size={16} />
+        {t.needs.aiAsk}
+      </button>
+    </div>
+  );
+}
+
 /**
  * Piano › "Il tuo fabbisogno": the active goal with where it came from, the check on the real data (no AI) and the
- * last AI opinion. The form and the comparison are on NeedsPage.
+ * AI opinion. The settings and the standard calculation are on NeedsPage.
  */
 export function NeedsCard() {
   const needs = useNeeds();
@@ -110,26 +205,7 @@ export function NeedsCard() {
 
       <CheckBand view={view} />
 
-      {view.aiAvailable && (
-        <div className="needs-band">
-          <span className="needs-band-title ai-label">
-            <SparklesIcon size={16} />
-            {t.needs.ai}
-          </span>
-          {ai ? (
-            <>
-              <span className="muted">{t.needs.aiOf(formatMediumDate(ai.at.slice(0, 10)))}</span>
-              <p className="needs-ai-summary">{ai.summary}</p>
-            </>
-          ) : (
-            <p className="muted">{t.needs.aiIntro}</p>
-          )}
-          <Link href={`${NEEDS_PATH}#ia`} className="button-secondary-small needs-ai-link">
-            <SparklesIcon size={16} />
-            {ai ? t.needs.aiRefresh : t.needs.aiAsk}
-          </Link>
-        </div>
-      )}
+      {view.aiAvailable && <AiBand view={view} />}
     </section>
   );
 }

@@ -7646,13 +7646,6 @@ div.connection-row {
   padding: 0 16px;
 }
 
-.needs-ai-summary {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
 .needs-start,
 .needs-ai-link {
   align-self: flex-start;
@@ -7799,4 +7792,42 @@ div.connection-row {
   flex-direction: column;
   gap: 4px;
   padding-left: 18px;
+}
+
+.needs-ai-wait {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.needs-ai-wait .recognize-spinner {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.needs-ai-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.needs-ai-actions button {
+  height: 40px;
+  padding: 0 16px;
+}
+
+.needs-tips-box summary {
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.needs-tips-box .needs-tips {
+  margin-top: 6px;
+}
+
+.needs-ai-link:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
