@@ -3,7 +3,8 @@ import { isStandalone } from "./push";
 /**
  * Layout height of the app shell.
  *
- * Installed home-screen app: the shell is a normal block of height 100lvh, sized by CSS alone.
+ * Installed home-screen app: the shell is a normal block of height 100lvh, sized by CSS alone, except when the
+ * page starts below the status bar (trackStatusBar): then 100svh.
  * There is no browser toolbar, so the large viewport is the whole screen. On a foldable iPhone,
  * after rotating or switching apps, iOS reports a height 82 px short through innerHeight, the
  * visual viewport, fixed elements and svh, and 100dvh can stay stuck on an intermediate value;
@@ -32,9 +33,7 @@ export function trackViewportHeight(): () => void {
   if (isStandalone()) {
     root.dataset.standalone = "";
     root.style.removeProperty("--app-height");
-    return () => {
-      delete root.dataset.standalone;
-    };
+    return trackStatusBar(root);
   }
 
   const timers: number[] = [];
@@ -87,6 +86,48 @@ export function trackViewportHeight(): () => void {
     document.removeEventListener("visibilitychange", onVisible);
     document.removeEventListener("focusout", onFocusOut);
     window.visualViewport?.removeEventListener("resize", update);
+  };
+}
+
+/** Height in CSS pixels of an invisible element with the given style, or 0 when it can't be measured. */
+function probeHeight(css: string): number {
+  const el = document.createElement("div");
+  el.style.cssText = `position:fixed;left:0;top:0;width:1px;visibility:hidden;pointer-events:none;${css}`;
+  document.body.appendChild(el);
+  const height = el.getBoundingClientRect().height;
+  el.remove();
+  return height;
+}
+
+/**
+ * Installed app: whether the page starts below the status bar. With the "default" status bar style, iOS 18 on an
+ * iPhone with a notch places the page below the status bar (safe-area-inset-top 0) but still reports 100lvh as the
+ * whole screen: on an iPhone 402 × 874 the page is 812 high and 100lvh is 874, so a shell of 100lvh put the tab bar
+ * 62 px below the screen edge, and after switching apps the document scrolled by those 62 px. Only then
+ * (`data-below-status-bar`) the shell uses 100svh, the height of the page; everywhere else, including the foldable
+ * iPhone whose page reaches the top of the screen, it stays 100lvh (base.css).
+ */
+function trackStatusBar(root: HTMLElement): () => void {
+  const check = () => {
+    if (document.visibilityState !== "visible") return;
+    const safeTop = probeHeight("height:env(safe-area-inset-top)");
+    const large = probeHeight("height:100lvh");
+    const small = probeHeight("height:100svh");
+    const below = safeTop === 0 && small >= MIN_HEIGHT && large - small >= 1;
+    if (below) root.dataset.belowStatusBar = "";
+    else delete root.dataset.belowStatusBar;
+    // The document never scrolls (only .shell-main does); undo an offset left from before the shell fitted
+    if (window.scrollY !== 0) window.scrollTo(0, 0);
+  };
+  const events = ["resize", "orientationchange", "pageshow"] as const;
+  for (const name of events) window.addEventListener(name, check);
+  document.addEventListener("visibilitychange", check);
+  check();
+  return () => {
+    for (const name of events) window.removeEventListener(name, check);
+    document.removeEventListener("visibilitychange", check);
+    delete root.dataset.standalone;
+    delete root.dataset.belowStatusBar;
   };
 }
 

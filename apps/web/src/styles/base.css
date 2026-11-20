@@ -91,6 +91,17 @@ strong,
   overscroll-behavior-y: contain;
 }
 
+/* Touch screens: no grey scroll indicator on the right of the page while scrolling (desktop keeps its scrollbar) */
+@media (pointer: coarse) {
+  .shell-main {
+    scrollbar-width: none;
+  }
+
+  .shell-main::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* Pull to refresh (components/PullToRefresh.tsx): grows with the pull, springs back when released */
 .ptr {
   overflow: hidden;
@@ -3696,6 +3707,24 @@ button.next-meal-primary {
 :root[data-standalone] .shell {
   position: relative;
   height: 100lvh;
+}
+
+/*
+ * Installed app on an iPhone whose page starts below the status bar (lib/viewport.ts, trackStatusBar): there
+ * 100lvh is the whole screen, taller than the page by the status bar, and the tab bar ended below the screen
+ * edge. 100svh is the page height there, before and after rotating or switching apps.
+ */
+:root[data-standalone][data-below-status-bar] .shell {
+  height: 100svh;
+}
+
+/*
+ * Installed app: the home indicator already leaves room below the icons, so the full safe area plus 10 px made the
+ * tab bar tall, with much more space under the icons than above them. Padding only, on every installed iPhone.
+ */
+:root[data-standalone] .tabbar {
+  padding-top: 8px;
+  padding-bottom: max(8px, calc(env(safe-area-inset-bottom) - 14px));
 }
 
 /* ================= Apple Salute (Profile) ================= */
