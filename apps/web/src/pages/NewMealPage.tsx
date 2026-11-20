@@ -67,7 +67,8 @@ function typeForTime(time: string): NutritionMealType {
   return "dinner";
 }
 
-function errorText(error: unknown): string {
+/** Message for a failed recognition (also used by "Aggiungi alimento" in Modifica pasto). */
+export function errorText(error: unknown): string {
   const code = error instanceof ApiError ? error.code : null;
   return (code && t.newMeal.errors[code]) || t.newMeal.errors.recognition_failed!;
 }

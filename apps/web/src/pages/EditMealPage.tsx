@@ -1,12 +1,13 @@
-import { MEAL_TYPES, NUTRITION_MEAL_TYPES, type Meal, type MealItemInput, type Nutrients, type NutritionMealType } from "@intake/shared";
+import { MEAL_TYPES, NUTRITION_MEAL_TYPES, type Meal, type MealItemInput, type Nutrients, type NutritionMealType, type RecognizedItem } from "@intake/shared";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { useDay, useUpdateMeal } from "../api/queries";
+import { useDay, useFeatures, useRecognizeMeal, useUpdateMeal } from "../api/queries";
 import { ConfirmDeleteSheet } from "../components/ConfirmDeleteSheet";
 import { CloseIcon } from "../components/icons";
 import { formatGrams, formatKcal } from "../lib/format";
 import { t } from "../lib/strings";
 import { dayHref } from "./MealPage";
+import { errorText } from "./NewMealPage";
 
 interface ItemDraft {
   key: number;
@@ -53,6 +54,13 @@ function itemNutrients(item: ItemDraft): Nutrients {
   return scale(item.base, quantity / item.baseQuantity);
 }
 
+/** A food recognized by Claude, as an item of the meal: its grams and the values for those grams, scaled like the others. */
+function draftFromRecognized(item: RecognizedItem, key: number): ItemDraft {
+  const p = item.per100g;
+  const base = scale({ ...emptyNutrients(p.kcal, p.protein, p.carbs, p.fat), fiber: p.fiber, sugar: p.sugar, addedSugar: p.addedSugar }, item.grams / 100);
+  return { key, name: item.name, quantity: decimal(item.grams), unit: "g", base, baseQuantity: item.grams, manual: null };
+}
+
 function draftsFrom(meal: Meal): ItemDraft[] {
   return meal.items.map((item, key) => ({
     key,
@@ -77,6 +85,11 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
   const [totals, setTotals] = useState({ kcal: "", protein: "", carbs: "", fat: "" });
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [loadedId, setLoadedId] = useState<string | null>(null);
+  // "+ Aggiungi alimento" with Pasti da foto on: the food is described in words and Claude fills in its values
+  const canRecognize = useFeatures().data?.recognition === true;
+  const recognizeFood = useRecognizeMeal();
+  const [adding, setAdding] = useState(false);
+  const [foodText, setFoodText] = useState("");
 
   useEffect(() => {
     if (!meal || loadedId === meal.id) return;
@@ -111,6 +124,35 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
 
   const itemsChanged = JSON.stringify(items.map((i) => [i.name, i.quantity])) !== JSON.stringify(draftsFrom(meal).map((i) => [i.name, i.quantity]));
   const validItems = items.filter((item) => item.name.trim() !== "");
+
+  /** A new row whose values are typed by hand (without Pasti da foto, or chosen with "Inserisci a mano"). */
+  function addManualFood() {
+    setItems((list) => [
+      ...list,
+      { key: Date.now(), name: "", quantity: "", unit: "g", base: null, baseQuantity: null, manual: { kcal: "", protein: "", carbs: "", fat: "" } },
+    ]);
+    setAdding(false);
+    recognizeFood.reset();
+  }
+
+  /** The foods Claude found in the description, added as rows with their grams; nothing is saved until "Salva". */
+  function addRecognizedFood() {
+    const text = foodText.trim();
+    if (!text) return;
+    recognizeFood.mutate(
+      { text },
+      {
+        onSuccess: (recognized) => {
+          setItems((list) => {
+            const room = Math.max(0, 30 - list.length);
+            return [...list, ...recognized.items.slice(0, room).map((item, i) => draftFromRecognized(item, Date.now() + i))];
+          });
+          setFoodText("");
+          setAdding(false);
+        },
+      },
+    );
+  }
 
   function save() {
     if (!meal) return;
@@ -221,19 +263,46 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
                 )}
               </div>
             ))}
-            <button
-              type="button"
-              className="text-button text-button-strong add-food"
-              disabled={items.length >= 30}
-              onClick={() =>
-                setItems((list) => [
-                  ...list,
-                  { key: Date.now(), name: "", quantity: "", unit: "g", base: null, baseQuantity: null, manual: { kcal: "", protein: "", carbs: "", fat: "" } },
-                ])
-              }
-            >
-              {t.edit.addFood}
-            </button>
+            {adding ? (
+              <form
+                className="add-food-row edit-add-food"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  addRecognizedFood();
+                }}
+              >
+                <label className="muted" htmlFor="edit-add-food-text">
+                  {t.edit.addFoodPrompt}
+                </label>
+                <input
+                  id="edit-add-food-text"
+                  className="note-input"
+                  value={foodText}
+                  maxLength={300}
+                  autoFocus
+                  enterKeyHint="done"
+                  placeholder={t.newMeal.addFoodPlaceholder}
+                  disabled={recognizeFood.isPending}
+                  onChange={(e) => setFoodText(e.target.value)}
+                />
+                <button type="submit" className="button-primary edit-add-food-claude" disabled={recognizeFood.isPending || !foodText.trim()}>
+                  {recognizeFood.isPending ? t.newMeal.addFoodPending : t.edit.addWithClaude}
+                </button>
+                <button type="button" className="text-button" disabled={recognizeFood.isPending} onClick={addManualFood}>
+                  {t.edit.addManually}
+                </button>
+                {recognizeFood.isError && <p className="error-text">{errorText(recognizeFood.error)}</p>}
+              </form>
+            ) : (
+              <button
+                type="button"
+                className="text-button text-button-strong add-food"
+                disabled={items.length >= 30}
+                onClick={() => (canRecognize ? setAdding(true) : addManualFood())}
+              >
+                {t.edit.addFood}
+              </button>
+            )}
           </div>
         </>
       )}

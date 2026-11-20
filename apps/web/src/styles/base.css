@@ -7296,6 +7296,37 @@ div.connection-row {
   min-width: 0;
 }
 
+/* Modifica pasto › "+ Aggiungi alimento" with Claude: the question, the description, then Claude or by hand */
+.edit-add-food {
+  flex-wrap: wrap;
+  padding: 12px 0;
+}
+
+.edit-add-food label {
+  flex-basis: 100%;
+  font-size: 13px;
+}
+
+.edit-add-food .note-input {
+  flex-basis: 100%;
+  border: 1px solid var(--color-divider);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.edit-add-food .note-input:focus {
+  border-color: var(--color-accent);
+}
+
+.edit-add-food-claude {
+  flex: 1;
+}
+
+.edit-add-food .error-text {
+  flex-basis: 100%;
+  margin: 0;
+}
+
 .favorite-name {
   border-top: 1px solid var(--color-divider);
 }

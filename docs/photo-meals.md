@@ -18,6 +18,9 @@ keeps "Chiedi a Claude" as before.
    installation language.
 4. The confirmation screen lets the user change the type, time and grams, remove foods, add a missed one in words
    ("+ Aggiungi alimento", recognized the same way) and also save the meal as a favorite.
+   The same "+ Aggiungi alimento" in **Modifica pasto** (an already logged meal) asks "Cosa hai aggiunto?": the
+   foods Claude finds become rows with their grams and values, scaled like the others, and are saved with "Salva";
+   "Inserisci a mano" keeps the typed values of before.
 5. Only "Registra pasto" writes to Nutrition (`POST /api/meals` → `log_meal`, with an idempotency key). Fiber, sugar
    and added sugar are sent all-or-none across items, as Nutrition requires.
 
@@ -26,7 +29,7 @@ keeps "Chiedi a Claude" as before.
 - The model is chosen in **Impostazioni › Funzioni**, under Pasti da foto: **Haiku 5.5 (default)** or Sonnet 5.5
   (settings key `recognition_model`, `db/recognitionModelStore.ts`). `RECOGNITION_MODEL` in `.env` sets the starting
   model and, if it names another one, adds it to the choice. The change applies to the next request.
-- One request per "Analizza" or "+ Aggiungi alimento"; nothing runs in the background. The SDK retries 429, 529 and
+- One request per "Analizza" or "+ Aggiungi alimento" (new or edited meal); nothing runs in the background. The SDK retries 429, 529 and
   connection errors twice by itself; each attempt times out after 60 s.
 - Thinking is on by default on the 5.5 models and cannot be turned off on Sonnet 5.5; its tokens are billed as output
   and count against `max_tokens`. The request asks for **`effort: "low"`** (portion estimation needs little
