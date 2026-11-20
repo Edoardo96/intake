@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { mealPhotoUrl, useDay, useFeatures, useMealPhotos, useRecognizeMeal, useSaveMealPhotos, useUpdateMeal } from "../api/queries";
 import { ConfirmDeleteSheet } from "../components/ConfirmDeleteSheet";
-import { CloseIcon } from "../components/icons";
+import { CloseIcon, SparklesIcon } from "../components/icons";
 import { PhotoCarousel } from "../components/PhotoCarousel";
 import { photoForRecognition } from "../lib/image";
 import { formatGrams, formatKcal } from "../lib/format";
@@ -299,7 +299,8 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
               <span className="muted">{t.photos.newPhotoNote}</span>
               <input className="note-input" value={photoNote} maxLength={300} placeholder={t.newMeal.notePlaceholder} aria-label={t.newMeal.notePlaceholder} disabled={recognizePhoto.isPending} onChange={(e) => setPhotoNote(e.target.value)} />
               <div className="new-photo-actions">
-                <button type="button" className="button-primary-inline" disabled={recognizePhoto.isPending} onClick={recognizeNewPhoto}>
+                <button type="button" className="button-primary-inline button-ai" disabled={recognizePhoto.isPending} onClick={recognizeNewPhoto}>
+                  <SparklesIcon size={18} />
                   {recognizePhoto.isPending ? t.newMeal.analyzing : t.photos.recognize}
                 </button>
                 <button type="button" className="button-secondary" disabled={recognizePhoto.isPending} onClick={() => setAskPhoto(null)}>
@@ -394,8 +395,9 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
                   disabled={recognizeFood.isPending}
                   onChange={(e) => setFoodText(e.target.value)}
                 />
-                <button type="submit" className="button-primary edit-add-food-claude" disabled={recognizeFood.isPending || !foodText.trim()}>
-                  {recognizeFood.isPending ? t.newMeal.addFoodPending : t.edit.addWithClaude}
+                <button type="submit" className="button-primary button-ai edit-add-food-claude" disabled={recognizeFood.isPending || !foodText.trim()}>
+                  <SparklesIcon size={18} />
+                  {recognizeFood.isPending ? t.newMeal.addFoodPending : t.edit.addWithAi}
                 </button>
                 <button type="button" className="text-button" disabled={recognizeFood.isPending} onClick={addManualFood}>
                   {t.edit.addManually}

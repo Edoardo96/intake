@@ -5,7 +5,7 @@ import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStat
 import { BACKUP_KEEP, LANGUAGES, parseGoalInput, weightUnitOf, type FeatureKey, type GoalsUpdate, type WeightUnit } from "@intake/shared";
 import { Avatar } from "../components/ProfileLink";
 import { RemindersSheet } from "../components/RemindersSheet";
-import { BackIcon } from "../components/icons";
+import { BackIcon, SparklesIcon } from "../components/icons";
 import { formatClock, formatDayLongMonth, formatMegabytes, formatKcal, formatOneDecimal, formatShortDate, formatWater, formatWeight, formatWeekdayDay } from "../lib/format";
 import { LANGUAGE_NAMES, language, t } from "../lib/strings";
 import { exerciseName } from "./TrainingPage";
@@ -491,7 +491,10 @@ function FeaturesCard() {
         <Fragment key={key}>
           <label className="profile-row-item feature-row">
             <span className="connection-text">
-              <strong>{s[key]}</strong>
+              <strong className={key === "photoMeals" ? "ai-label" : undefined}>
+                {key === "photoMeals" && <SparklesIcon size={16} />}
+                {s[key]}
+              </strong>
               <span className="muted">{key === "photoMeals" && !data.recognitionConfigured ? s.photoMealsMissing : s[`${key}Note`]}</span>
             </span>
             <input
@@ -534,7 +537,10 @@ function RecognitionModelRow() {
   return (
     <div className="profile-row-item settings-row recognition-model-row">
       <span className="connection-text">
-        <strong id="recognition-model-label">{s.recognitionModel}</strong>
+        <strong id="recognition-model-label" className="ai-label">
+          <SparklesIcon size={16} />
+          {s.recognitionModel}
+        </strong>
         <span className="muted">{save.isError ? s.recognitionModelFailed : s.recognitionModelNote}</span>
       </span>
       <div className="segmented settings-segmented" role="radiogroup" aria-labelledby="recognition-model-label">

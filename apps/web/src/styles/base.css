@@ -7200,6 +7200,7 @@ div.connection-row {
 }
 
 .capture-tile {
+  position: relative;
   min-height: 112px;
   padding: 14px;
   border-radius: var(--radius-card-sm);
@@ -7210,6 +7211,33 @@ div.connection-row {
   justify-content: space-between;
   gap: 10px;
   text-decoration: none;
+}
+
+/* Sparkles: everything that asks the AI carries them (tiles, Analizza, Aggiungi con IA, the AI settings) */
+.capture-tile .ai-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+}
+
+.button-ai,
+.add-food-row button[type="submit"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.ai-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-label svg {
+  flex: none;
+  color: var(--color-accent);
 }
 
 .capture-tile svg {
