@@ -96,7 +96,7 @@ const ANSWER_JSON_SCHEMA = {
   },
 } as const;
 
-const LANGUAGE_NAMES: Record<Language, string> = { it: "Italian", en: "English", nl: "Dutch" };
+export const LANGUAGE_NAMES: Record<Language, string> = { it: "Italian", en: "English", nl: "Dutch" };
 
 const system = (language: Language) => [
   "You estimate what a person ate from a photo of their plate and/or a short description, for a personal food diary.",
@@ -127,7 +127,7 @@ const MAX_TOKENS = 16_000;
 const TIMEOUT_MS = 60_000;
 
 /** The SDK error of a failed request, as the reason shown in the app. */
-function failureOf(error: unknown): RecognitionFailure {
+export function failureOf(error: unknown): RecognitionFailure {
   if (error instanceof AuthenticationError || error instanceof PermissionDeniedError) return "auth";
   if (error instanceof PaymentRequiredError || (error instanceof APIError && error.type === "billing_error")) return "credit";
   if (error instanceof RateLimitError || error instanceof InternalServerError) return "busy";

@@ -29,7 +29,7 @@ const recognizeSchema = z
   })
   .refine((body) => body.image || body.text, "A photo or a description is required");
 
-const RECOGNITION_STATUS: Record<RecognitionFailure, number> = { auth: 502, credit: 402, busy: 503, refused: 422, unreadable: 502, failed: 502 };
+export const RECOGNITION_STATUS: Record<RecognitionFailure, number> = { auth: 502, credit: 402, busy: 503, refused: 422, unreadable: 502, failed: 502 };
 
 const date = z.string().refine(isValidDate, "Invalid date");
 const nullableNumber = z.number().nonnegative().nullable();

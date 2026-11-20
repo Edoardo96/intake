@@ -13,6 +13,7 @@ import { ReminderScheduler } from "./services/reminderScheduler.js";
 import { HevySync } from "./services/hevySync.js";
 import { NutritionBackups } from "./services/nutritionBackups.js";
 import { MealRecognizer } from "./services/mealRecognition.js";
+import { NeedsAdvisor } from "./services/needsAdvisor.js";
 import { WebPushSender, vapidKeys } from "./services/webPush.js";
 
 const config = loadConfig();
@@ -93,6 +94,22 @@ const app = await buildApp({
         log: { info: (details, message) => app.log.info(details, message), warn: (details, message) => app.log.warn(details, message) },
       })
     : undefined,
+  needs: {
+    api,
+    store: services.needs,
+    health,
+    gym: () => (features.enabled("training") ? gym() : null),
+    // Same model as the meal recognition; only token usage is logged
+    advisor: config.ANTHROPIC_API_KEY
+      ? new NeedsAdvisor({
+          apiKey: config.ANTHROPIC_API_KEY,
+          model: () => services.recognitionModel.get(),
+          language: () => services.language.get(),
+          log: { info: (details, message) => app.log.info(details, message), warn: (details, message) => app.log.warn(details, message) },
+        })
+      : undefined,
+    aiEnabled: () => features.enabled("photoMeals"),
+  },
   weekApi: api,
   weekHealth: health,
   profile: { api, hevyConfigured: Boolean(config.HEVY_API_KEY) },
