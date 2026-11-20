@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { buildApp } from "../src/app.js";
 import { parseMeals } from "../src/parsers/meals.js";
+import { parseSavedMeals } from "../src/parsers/savedMeals.js";
+import { mealTypeAt } from "../src/routes/meals.js";
 import type { MealRoutesOptions } from "../src/routes/meals.js";
 import { copyMealFields, itemsAllOrNone, recentDistinctMeals, updateMealFields } from "../src/services/mealWrites.js";
 import { authOptions, signIn } from "./helpers.js";
@@ -102,6 +104,8 @@ describe("meal routes", () => {
       updateMeal: async () => {},
       deleteMeal: async () => {},
       saveMeal: async () => {},
+      savedMeals: async () => parseSavedMeals(fixture("saved-meals.txt")).value,
+      logSavedMeal: async () => ({ id: "saved-copy-id" }),
       ...overrides,
     };
   }
@@ -134,6 +138,52 @@ describe("meal routes", () => {
     expect(sent).toMatchObject({ description: ricotta.description, idempotency_key: "tap-123456" });
     expect(sent).not.toHaveProperty("logged_at");
   });
+
+  it("lists saved meals and logs one now with an idempotency key", async () => {
+    const logSavedMeal = vi.fn(async () => ({ id: "saved-copy-id" }));
+    const { app, headers } = await signedIn(fakeApi({ logSavedMeal }));
+    const list = await app.inject({ method: "GET", url: "/api/meals/saved", headers });
+    expect(list.json().meals.map((m: { name: string }) => m.name)).toEqual(["Caffè e biscotti", "Colazione solita"]);
+    // "Colazione solita" has a default type: Nutrition uses it
+    const id = "6f1c2a9e-3b7d-4c21-9a0e-5d8b7c6a1f23";
+    const logged = await app.inject({ method: "POST", url: `/api/meals/saved/${id}/log`, headers, payload: { idempotencyKey: "tap-123456" } });
+    expect(logged.statusCode).toBe(201);
+    expect(logged.json()).toEqual({ mealId: "saved-copy-id" });
+    expect(logSavedMeal).toHaveBeenCalledWith(id, "tap-123456", undefined);
+    // "Caffè e biscotti" has none: the type of the time of day on the profile clock (15:00 -> afternoon snack)
+    const noType = "0a9b8c7d-6e5f-4a3b-8c1d-0e9f8a7b6c5d";
+    expect((await app.inject({ method: "POST", url: `/api/meals/saved/${noType}/log`, headers, payload: { idempotencyKey: "tap-222222" } })).statusCode).toBe(201);
+    expect(logSavedMeal).toHaveBeenLastCalledWith(noType, "tap-222222", "afternoon_snack");
+    // A type sent by the client wins
+    const withType = await app.inject({ method: "POST", url: `/api/meals/saved/${id}/log`, headers, payload: { idempotencyKey: "tap-654321", type: "lunch" } });
+    expect(withType.statusCode).toBe(201);
+    expect(logSavedMeal).toHaveBeenLastCalledWith(id, "tap-654321", "lunch");
+    expect((await app.inject({ method: "POST", url: "/api/meals/saved/not-an-id/log", headers, payload: { idempotencyKey: "tap-123456" } })).statusCode).toBe(400);
+    const unknown = "11111111-2222-4333-8444-555555555555";
+    expect((await app.inject({ method: "POST", url: `/api/meals/saved/${unknown}/log`, headers, payload: { idempotencyKey: "tap-333333" } })).statusCode).toBe(404);
+    expect(logSavedMeal).toHaveBeenCalledTimes(3);
+  });
+
+  it("fails, instead of listing no favorites, when the saved meals answer is not recognized", async () => {
+    const savedMeals = vi.fn(async () => parseSavedMeals("Something else").value);
+    const { app, headers } = await signedIn(fakeApi({ savedMeals }));
+    const list = await app.inject({ method: "GET", url: "/api/meals/saved", headers });
+    expect(list.statusCode).toBe(502);
+  });
+
+  it("picks the meal type from the time of day", () => {
+    expect(["07:30:00", "10:59", "11:00", "14:59:59", "15:00", "17:59", "18:00", "23:30"].map(mealTypeAt)).toEqual([
+      "breakfast",
+      "breakfast",
+      "lunch",
+      "lunch",
+      "afternoon_snack",
+      "afternoon_snack",
+      "dinner",
+      "dinner",
+    ]);
+  });
+
 
   it("returns 404 when repeating an unknown meal", async () => {
     const { app, headers } = await signedIn(fakeApi());

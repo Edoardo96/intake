@@ -133,7 +133,7 @@ The interface is in Italian by default (English and Dutch in Profile › Languag
 
 - Meal detail: kcal and share of the daily goal, macro split bar with % of goals, foods with quantities, fiber, sugar (added sugar), caffeine, saturated fat and sodium when measured; "Save as favorite" saves it as a Nutrition saved meal.
 - Edit meal: type, time, foods (rename, change quantity with nutrients scaled in proportion, remove, add with values), or totals for meals without foods; delete with confirmation (also removes it from Nutrition). On iPad and desktop, edit and delete icons in the timeline.
-- Add sheet (the "+" button): water (+200 ml and +250 ml), today's plan meals, "repeat a recent meal" (distinct meals of the last two weeks, logged again now), "ask Claude" (opens Claude to log a photo or a free description); saved meals are shown as coming soon.
+- Add sheet (the "+" button): water (+200 ml and +250 ml), today's plan meals, "repeat a recent meal" (distinct meals of the last two weeks, logged again now), saved meals ("Preferiti": every saved meal of Nutrition with its kcal, logged now with one tap through `log_saved_meal`; a saved meal without a default type gets the type of the time of day on the Nutrition profile clock), "ask Claude" (opens Claude to log a photo or a free description). Water shortcuts show only while Acqua is on.
 
 </details>
 
@@ -187,12 +187,12 @@ The interface is in Italian by default (English and Dutch in Profile › Languag
 - Parsers for Nutrition MCP responses (meals with foods and all tracked nutrients, nutrition goals, current time and timezone), tested against real server output. Unrecognized fields are reported as warnings instead of being silently dropped.
 - Nutrition request budget: the Nutrition MCP server allows 60 requests per minute, so identical reads within 30 seconds share one request (in memory only, cleared by any write) and the clock is computed locally from the profile timezone. When the limit is hit the app says so and retries after the delay the server asks for.
 - Day API: `GET /api/days/:date` (or `today`, in the Nutrition profile's timezone) and `POST /api/water`.
+- Saved meals API: `GET /api/meals/saved` (from `get_saved_meals`, read live) and `POST /api/meals/saved/:id/log` with an idempotency key and an optional meal type (`log_saved_meal`).
 
 </details>
 
 ### 🗺️ Planned
 
-- Saved meals in the add sheet.
 - Customize layout on Trends › Nutrition (desktop/iPad): move, resize and hide cards.
 
 ## 🔧 How it works

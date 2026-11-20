@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useAddWater, useDay, useFeature, useLogPlanned, useRecentMeals, useRepeatMeal } from "../api/queries";
+import { useAddWater, useDay, useFeature, useLogPlanned, useLogSavedMeal, useRecentMeals, useRepeatMeal, useSavedMeals } from "../api/queries";
 import { formatKcal, formatShortDate } from "../lib/format";
 import { t } from "../lib/strings";
 import { CloseIcon } from "./icons";
@@ -34,7 +34,7 @@ const WATER_AMOUNTS = [200, 250];
 
 /**
  * "Aggiungi" sheet opened by the + button: a bottom sheet on phones, a centered dialog on wider screens.
- * Water shortcuts and today's plan meals not yet logged.
+ * Water shortcuts (when Acqua is on), today's plan meals not yet logged, saved meals and the other ways to add food.
  */
 export function AddSheet({ onClose }: Props) {
   const addWater = useAddWater("today");
@@ -44,6 +44,8 @@ export function AddSheet({ onClose }: Props) {
   const [showRecent, setShowRecent] = useState(false);
   const recent = useRecentMeals(showRecent);
   const repeat = useRepeatMeal();
+  const saved = useSavedMeals();
+  const logSaved = useLogSavedMeal();
   const firstButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -117,6 +119,33 @@ export function AddSheet({ onClose }: Props) {
           </>
         )}
 
+        {saved.data && saved.data.length > 0 && (
+          <>
+            <span className="sheet-section">{t.addSheet.savedSection}</span>
+            <div className="sheet-list">
+              {saved.data.map((meal) => (
+                <button
+                  key={meal.id}
+                  type="button"
+                  className="sheet-row"
+                  disabled={logSaved.isPending}
+                  onClick={() => logSaved.mutate(meal, { onSuccess: onClose })}
+                >
+                  <span className="sheet-row-text">
+                    <strong>
+                      {meal.name}
+                      {meal.kcal !== null && ` · ${formatKcal(meal.kcal)} kcal`}
+                    </strong>
+                    {meal.description && <span className="muted">{meal.description}</span>}
+                  </span>
+                  <span className="sheet-row-action">{t.addSheet.log}</span>
+                </button>
+              ))}
+            </div>
+            {logSaved.isError && <p className="error-text">{t.timeline.logFailed}</p>}
+          </>
+        )}
+
         <span className="sheet-section">{t.addSheet.otherFood}</span>
         <div className="sheet-list">
           <button type="button" className="sheet-row" aria-expanded={showRecent} onClick={() => setShowRecent((v) => !v)}>
@@ -152,14 +181,15 @@ export function AddSheet({ onClose }: Props) {
               {repeat.isError && <p className="error-text">{t.timeline.logFailed}</p>}
             </div>
           )}
-          <button type="button" className="sheet-row" disabled>
-            <RowIcon path={ROW_ICONS.saved} />
-            <span className="sheet-row-text">
-              <strong>{t.addSheet.saved}</strong>
-              <span className="muted">{t.addSheet.savedHint}</span>
-            </span>
-            <span className="sheet-row-action">{t.addSheet.soon}</span>
-          </button>
+          {(saved.isError || saved.data?.length === 0) && (
+            <div className="sheet-row">
+              <RowIcon path={ROW_ICONS.saved} />
+              <span className="sheet-row-text">
+                <strong>{t.addSheet.saved}</strong>
+                <span className="muted">{saved.isError ? t.addSheet.savedFailed : t.addSheet.savedEmpty}</span>
+              </span>
+            </div>
+          )}
           <a className="sheet-row" href={CLAUDE_URL} target="_blank" rel="noreferrer">
             <RowIcon path={ROW_ICONS.claude} />
             <span className="sheet-row-text">

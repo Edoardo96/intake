@@ -18,6 +18,8 @@ import type {
   PushSubscriptionRequest,
   ReminderSettings,
   RepeatMealRequest,
+  SavedMeal,
+  SavedMealsResponse,
   StoredPlan,
   UpdateMealRequest,
   WeekView,
@@ -234,6 +236,24 @@ export function useRepeatMeal() {
   });
 }
 
+/** Saved meals ("preferiti") on Nutrition, for the add sheet. */
+export function useSavedMeals() {
+  return useQuery({
+    queryKey: ["saved-meals"],
+    queryFn: () => apiFetch<SavedMealsResponse>("/api/meals/saved").then((r) => r.meals),
+    staleTime: 60_000,
+  });
+}
+
+/** Logs a saved meal now; the server picks the meal type (the saved meal's default, else the time of day). */
+export function useLogSavedMeal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (meal: SavedMeal) => apiFetch(`/api/meals/saved/${meal.id}/log`, { method: "POST", json: { idempotencyKey: newIdempotencyKey() } }),
+    onSettled: () => invalidateDays(queryClient),
+  });
+}
+
 export function useUpdateMeal() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -251,9 +271,11 @@ export function useDeleteMeal() {
 }
 
 export function useFavoriteMeal() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, name }: { id: string; name: string }) =>
       apiFetch(`/api/meals/${id}/favorite`, { method: "POST", json: { name } satisfies FavoriteMealRequest }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["saved-meals"] }),
   });
 }
 
