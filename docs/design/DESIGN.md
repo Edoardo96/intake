@@ -223,7 +223,7 @@ The first release builds the grid only; editing comes later.
 ## AI features
 
 Everything that asks the AI inside Intake (the "Foto del piatto" and "Descrivi a parole" tiles, Analizza, the
-"+ Aggiungi alimento" of the new and edited meal, the Pasti da foto switch and the AI model in Impostazioni, "Il
+"+ Aggiungi alimento" of the new and edited meal, "Aggiungi i cibi con l'IA" for a photo added in Modifica pasto, the Pasti da foto switch and the AI model in Impostazioni, "Il
 parere dell'IA" of Il tuo fabbisogno) carries
 the sparkles icon (`SparklesIcon`) and is called "IA" in Italian and "AI" in English and Dutch, never "Claude". Texts
 that speak of Claude as the chat outside Intake (logging by talking to Claude, the plan made in a Claude project, the
@@ -268,11 +268,14 @@ All of these map to existing Nutrition MCP tools:
 
 Photo recognition and free-text descriptions ("I had a margherita pizza") are in the app while the optional part
 Pasti da foto is on and `ANTHROPIC_API_KEY` is set: two tiles at the top of the add sheet ("Foto del piatto",
-"Descrivi a parole") open `/pasto/nuovo`. A picked photo is shown first with "Cambia foto" and an optional note, and
-is sent only with "Analizza". The confirmation screen is built like `Modifica.dc.html` (meal type, time, foods with
+"Descrivi a parole") open `/pasto/nuovo`. Picked photos (up to 6, e.g. one per course) are shown first in a carousel
+with a × on each, an "Aggiungi foto" tile and an optional note, and are sent together only with "Analizza". The confirmation screen is built like `Modifica.dc.html` (meal type, time, foods with
 − / + grams, "Stimato · non visibile" pill on hidden fats in the to-log colors, "+ Aggiungi alimento", values, a
-"Salva anche come preferito" switch with a name) and logs the meal with `log_meal`. The photo is kept and shown as a
-thumbnail on the Timeline card and on top of the meal detail. With the part off, the "Chiedi a Claude" row stays.
+"Salva anche come preferito" switch with a name) and logs the meal with `log_meal`; its first photo shows with a small
+count badge when there are more. The photos are kept: a carousel on top of the meal detail (one photo per slide, swipe
+or ‹ › with "2 / 3" under it) and in Modifica pasto (same carousel with × and an "Aggiungi foto" tile; a new photo shows
+a card "Nuova foto" with a note and "Aggiungi i cibi con l'IA" / "Solo la foto"), and the first photo with a count
+badge on the Timeline card. With the part off, the "Chiedi a Claude" row stays.
 Suggested order: water + plan meals + repeat recent in v1, then saved meals; search and barcode in phase 2.
 
 ## Design tokens
