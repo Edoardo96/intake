@@ -729,7 +729,7 @@ export interface HevySyncStatus {
 }
 
 /** Optional parts of the app; Alimentazione is always on (docs/features.md). */
-export type FeatureKey = "training" | "health" | "reminders";
+export type FeatureKey = "training" | "health" | "reminders" | "water";
 
 /** GET /api/features: which optional parts are on and whether the first-run setup was completed. */
 export interface FeaturesResponse {
@@ -737,6 +737,8 @@ export interface FeaturesResponse {
   training: boolean;
   health: boolean;
   reminders: boolean;
+  /** Water card, water shortcuts, water stats and water reminders. */
+  water: boolean;
   /** Workout apps configured in the server environment (HEVY_API_KEY, OPENGYM_URL + OPENGYM_TOKEN). */
   gymApps: { hevy: boolean; opengym: boolean };
 }

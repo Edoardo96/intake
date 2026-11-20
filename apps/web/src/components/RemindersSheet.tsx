@@ -1,6 +1,6 @@
 import type { ReminderSettings } from "@intake/shared";
 import { useEffect, useState } from "react";
-import { usePushStatus, useReminderSettings, useSubscribePush, useTestPush, useUnsubscribePush } from "../api/queries";
+import { useFeature, usePushStatus, useReminderSettings, useSubscribePush, useTestPush, useUnsubscribePush } from "../api/queries";
 import { currentSubscription, pushSupport, subscribeDevice } from "../lib/push";
 import { t } from "../lib/strings";
 import { CloseIcon } from "./icons";
@@ -11,6 +11,7 @@ const KINDS: Array<keyof ReminderSettings> = ["meal", "todo", "water", "summary"
 /** "Promemoria": turn notifications on for this device and choose which reminders are sent. */
 export function RemindersSheet({ onClose }: { onClose: () => void }) {
   const support = pushSupport();
+  const water = useFeature("water");
   const status = usePushStatus(true);
   const subscribe = useSubscribePush();
   const unsubscribe = useUnsubscribePush();
@@ -95,7 +96,7 @@ export function RemindersSheet({ onClose }: { onClose: () => void }) {
 
         <span className="sheet-section">{t.reminders.which}</span>
         <div className="sheet-list">
-          {KINDS.map((kind) => (
+          {KINDS.filter((kind) => kind !== "water" || water).map((kind) => (
             <label key={kind} className="sheet-row toggle-row">
               <span className="sheet-row-text">
                 <strong>{t.reminders.kinds[kind].title}</strong>

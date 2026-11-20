@@ -10,7 +10,7 @@ export interface FeatureRoutesOptions {
 }
 
 const updateSchema = z
-  .object({ setupDone: z.boolean(), training: z.boolean(), health: z.boolean(), reminders: z.boolean() })
+  .object({ setupDone: z.boolean(), training: z.boolean(), health: z.boolean(), reminders: z.boolean(), water: z.boolean() })
   .partial()
   .strict();
 
@@ -23,6 +23,7 @@ const FEATURE_ROUTES: Array<{ keys: FeatureKey[]; prefix: RegExp }> = [
   { keys: ["training", "health"], prefix: /^\/api\/workouts(\/|\?|$)/ },
   { keys: ["health"], prefix: /^\/api\/health\// },
   { keys: ["reminders"], prefix: /^\/api\/push(\/|\?|$)/ },
+  { keys: ["water"], prefix: /^\/api\/water(\/|\?|$)/ },
 ];
 
 /** The part that hides an API URL right now, or null when the route is served (Alimentazione and the rest). */

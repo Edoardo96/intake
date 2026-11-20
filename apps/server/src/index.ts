@@ -32,6 +32,7 @@ const scheduler = new ReminderScheduler({
   sender: new WebPushSender(vapid, config.PUBLIC_BASE_URL),
   enabled: () => features.enabled("reminders"),
   language: () => services.language.get(),
+  waterEnabled: () => features.enabled("water"),
   log: { warn: (details, message) => app.log.warn(details, message), info: (details, message) => app.log.info(details, message) },
 });
 
