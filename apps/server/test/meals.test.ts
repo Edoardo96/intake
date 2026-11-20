@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { buildApp } from "../src/app.js";
 import { parseMeals } from "../src/parsers/meals.js";
 import type { MealRoutesOptions } from "../src/routes/meals.js";
-import { copyMealFields, recentDistinctMeals, updateMealFields } from "../src/services/mealWrites.js";
+import { copyMealFields, itemsAllOrNone, recentDistinctMeals, updateMealFields } from "../src/services/mealWrites.js";
 import { authOptions, signIn } from "./helpers.js";
 import { fixture } from "./parsers/fixtures.js";
 
@@ -39,6 +39,32 @@ describe("updateMealFields", () => {
     expect(fields).toMatchObject({ meal_type: "snack", logged_at: "2026-11-04T17:30", description: "Ricotta vaccina 100 g" });
     expect(fields.items).toHaveLength(1);
     expect(fields.items![0]).toMatchObject({ name: "Ricotta vaccina", amount: 100, calories: 146 });
+  });
+
+  it("drops fiber and sugars from every item when a food added in the edit screen has none", () => {
+    const measured = ricotta.items[0]!.nutrients;
+    const fields = updateMealFields({
+      date: "2026-11-04",
+      time: "17:30",
+      type: "snack",
+      description: "Ricotta e miele",
+      items: [
+        { name: "Ricotta vaccina", quantity: 100, unit: "g", nutrients: { ...measured, fiber: 0, sugar: 3, addedSugar: 0 } },
+        { name: "Miele", quantity: 10, unit: "g", nutrients: { ...measured, kcal: 30, fiber: null, sugar: null, addedSugar: null } },
+      ],
+    });
+    for (const item of fields.items!) {
+      expect(item).not.toHaveProperty("fiber_g");
+      expect(item).not.toHaveProperty("sugar_g");
+      expect(item).not.toHaveProperty("added_sugar_g");
+    }
+    expect(fields.items![1]).toMatchObject({ name: "Miele", calories: 30 });
+  });
+
+  it("keeps the all-or-none keys when every item has them, and drops added sugar with sugar", () => {
+    const full = [{ name: "a", fiber_g: 1, sugar_g: 2, added_sugar_g: 0 }, { name: "b", fiber_g: 0, sugar_g: 1, added_sugar_g: 1 }];
+    expect(itemsAllOrNone(full)).toBe(full);
+    expect(itemsAllOrNone([{ name: "a", sugar_g: 2, added_sugar_g: 0 }, { name: "b", added_sugar_g: 1 }])).toEqual([{ name: "a" }, { name: "b" }]);
   });
 
   it("sends totals for a meal without items", () => {
