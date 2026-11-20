@@ -34,7 +34,19 @@ keeps "Chiedi a Claude" as before.
   paid. An answer that still stops at `max_tokens` is logged and shown as unreadable.
 - Every request logs its usage (model, stop reason, input, output and thinking tokens), never the photo or the text,
   so the real cost can be read in the server log or in the Anthropic Console.
-- COST_PLACEHOLDER
+- **Measured cost** (November 2026, list prices Haiku 5.5 $0.10 / $0.50 and Sonnet 5.5 $2 / $10 per million input /
+  output tokens; three public food photos at 1568 px and two descriptions, `effort: "low"`, no thinking tokens were
+  generated):
+
+  | | Input tokens | Output tokens | Cost | Time |
+  |---|---|---|---|---|
+  | Haiku 5.5, photo | 4,000–4,800 | 390–960 | **$0.0006–0.0010** | 4–7 s |
+  | Haiku 5.5, description | about 1,200 | about 300 | $0.0003 | 2 s |
+  | Sonnet 5.5, photo | 4,000–4,800 | 330–610 | **$0.013–0.016** | 4–6 s |
+  | Sonnet 5.5, description | about 1,200 | 220–400 | $0.005–0.006 | 2–4 s |
+
+  At three photos a day that is about $0.07 a month with Haiku and $1.30 with Sonnet. Busier plates (more foods)
+  give more output tokens.
 
 ## Privacy
 
