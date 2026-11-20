@@ -4906,6 +4906,101 @@ button.next-meal-primary {
 .goal-row[data-goal="water"] { --goal-color: var(--color-water); }
 .goal-row[data-goal="steps"] { --goal-color: var(--color-steps); }
 
+/* Obiettivi › Modifica: the source pill and the Edit button side by side */
+.goals-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.goals-head-actions .source-pill {
+  white-space: nowrap;
+}
+
+/* Narrow phones: the title and the Edit button only (the note under the goals says they come from Nutrition) */
+@media (max-width: 520px) {
+  .goals-head-actions .source-pill {
+    display: none;
+  }
+}
+
+/* A compact field per goal, on the right like the value it replaces */
+.goal-input {
+  flex: none;
+  width: 112px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-input);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.goal-input:focus-within {
+  border-color: var(--color-accent);
+}
+
+.goal-input input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+.goal-input .muted {
+  font-size: 13px;
+}
+
+.goals-form .goal-row {
+  min-height: 56px;
+  gap: 12px;
+}
+
+.goals-form .goal-name {
+  white-space: nowrap;
+}
+
+/* Editing needs room for a field beside each name: one column until the two columns are wide enough */
+@media (max-width: 999px) {
+  .goals-form .goal-grid {
+    columns: 1;
+  }
+}
+
+.goals-form .notice {
+  margin: 8px 0 0;
+}
+
+.goals-actions {
+  display: flex;
+  gap: 8px;
+  padding: 14px 0 4px;
+}
+
+.goals-actions .button {
+  flex: 1;
+  height: 46px;
+}
+
+@media (min-width: 700px) {
+  .goals-actions {
+    justify-content: flex-end;
+  }
+
+  .goals-actions .button {
+    flex: 0 0 auto;
+    min-width: 140px;
+  }
+}
+
 .goal-row strong {
   font-variant-numeric: tabular-nums;
 }

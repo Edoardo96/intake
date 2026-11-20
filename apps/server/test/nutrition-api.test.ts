@@ -25,6 +25,17 @@ describe("NutritionApi", () => {
     expect((await api.goals()).kcal).toBe(2000);
     expect(onWarnings).toHaveBeenCalledWith("get_nutrition_goals", ['goals: unknown goal "Potassium"']);
   });
+
+  it("sends only the changed goals to set_nutrition_goals, with the target weight in kg", async () => {
+    const callTool = vi.fn(async () => result("Goals saved"));
+    const api = new NutritionApi({ callTool });
+    await api.setGoals({ kcal: 2100, fiber: null, waterMl: 2000, targetWeight: 72.5, weightUnit: "kg" });
+    expect(callTool).toHaveBeenCalledWith("set_nutrition_goals", { daily_calories: 2100, daily_fiber_g: null, daily_water_ml: 2000, target_weight: 72.5, unit: "kg" });
+    await api.setGoals({});
+    expect(callTool).toHaveBeenCalledTimes(1);
+    await api.setGoals({ targetWeight: 160, weightUnit: "lb" });
+    expect(callTool).toHaveBeenLastCalledWith("set_nutrition_goals", { target_weight: 160, unit: "lb" });
+  });
 });
 
 describe("NutritionApi request budget (60 requests per minute on the Nutrition server)", () => {

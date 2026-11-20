@@ -752,3 +752,19 @@ export type Language = (typeof LANGUAGES)[number];
 export interface LanguageResponse {
   language: Language;
 }
+
+/**
+ * PUT /api/goals (Profilo › Obiettivi): only the fields sent change; null clears a goal.
+ * Saved in Nutrition with set_nutrition_goals, so Claude sees the same goals.
+ */
+export interface GoalsUpdate {
+  kcal?: number | null;
+  protein?: number | null;
+  carbs?: number | null;
+  fat?: number | null;
+  fiber?: number | null;
+  waterMl?: number | null;
+  /** In weightUnit, the unit of the Nutrition profile. */
+  targetWeight?: number | null;
+  weightUnit?: "kg" | "lb";
+}
