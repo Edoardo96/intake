@@ -52,26 +52,10 @@ strong,
   outline-offset: 2px;
 }
 
-/* Text fields show the caret, not the ring (the green box around them looked like an error); bordered fields
-   turn their border to the accent instead. Buttons, links and switches keep the ring above. */
-input:not([type="checkbox"]):not([type="radio"]):focus-visible,
-textarea:focus-visible,
-select:focus-visible {
-  outline: none;
-}
-
+/* Bordered fields show focus with the accent border (the ring stays too, except on touch screens: see below) */
 .field input:focus,
 .weight-input:focus-within {
   border-color: var(--color-accent);
-}
-
-/* iPhone Safari zooms into any field under 16px when it gets focus, and stays zoomed: keep fields at 16px on touch screens */
-@media (pointer: coarse) {
-  input:not([type="checkbox"]):not([type="radio"]),
-  textarea,
-  select {
-    font-size: 16px !important;
-  }
 }
 
 /* ================= Shell: bottom tab bar on phones, sidebar from 800px ================= */
@@ -2469,6 +2453,27 @@ button.button-primary {
   font-weight: 700;
 }
 
+/*
+ * Touch screens (iPhone, iPad). Safari zooms into a field whose text is under 16 px when it gets focus, and stays
+ * zoomed: the fields designed below 16 px are raised to 16 px (the larger ones keep their size). The focus ring on
+ * a text field looked like an error there, and the caret already shows the active field; keyboards on a computer
+ * keep the ring, since the edit-meal fields have no border.
+ */
+@media (pointer: coarse) {
+  .form-row input,
+  .item-name,
+  .item-quantity input,
+  .item-manual input {
+    font-size: 16px;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: none;
+  }
+}
+
 .add-food {
   height: 48px;
   padding: 0;
@@ -3651,17 +3656,6 @@ button.next-meal-primary {
 :root[data-standalone] .shell {
   position: relative;
   height: 100lvh;
-}
-
-/* Touch screens: no scroll indicator on the right of the page while scrolling (desktop keeps its scrollbar) */
-@media (pointer: coarse) {
-  .shell-main {
-    scrollbar-width: none;
-  }
-
-  .shell-main::-webkit-scrollbar {
-    display: none;
-  }
 }
 
 /* ================= Apple Salute (Profile) ================= */
