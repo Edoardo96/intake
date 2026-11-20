@@ -1,4 +1,4 @@
-import type { ClockInfo, NutritionGoals } from "@intake/shared";
+import type { ClockInfo, GoalsUpdate, NutritionGoals } from "@intake/shared";
 import {
   parseClock,
   parseGoalProgress,
@@ -130,6 +130,24 @@ export class NutritionApi {
     const clock = await this.callText("get_current_time", {}, parseClock);
     this.timezone = { name: clock.timezone, fetchedAt: now.getTime() };
     return clock;
+  }
+
+  /** Changes the daily goals (set_nutrition_goals): only the fields given change, null clears one. */
+  async setGoals(update: GoalsUpdate): Promise<void> {
+    const args: Record<string, number | null | string> = {};
+    const fields: Array<[keyof GoalsUpdate, string]> = [
+      ["kcal", "daily_calories"],
+      ["protein", "daily_protein_g"],
+      ["carbs", "daily_carbs_g"],
+      ["fat", "daily_fat_g"],
+      ["fiber", "daily_fiber_g"],
+      ["waterMl", "daily_water_ml"],
+      ["targetWeightKg", "target_weight"],
+    ];
+    for (const [key, name] of fields) if (update[key] !== undefined) args[name] = update[key];
+    if (update.targetWeightKg !== undefined) args.unit = "kg";
+    if (Object.keys(args).length === 0) return;
+    await this.call("set_nutrition_goals", args);
   }
 
   /** Daily goals and totals (including water) from structured content. */

@@ -30,6 +30,7 @@ import type {
   FeatureKey,
   FeaturesResponse,
   FeaturesUpdate,
+  GoalsUpdate,
   Language,
   LanguageResponse,
 } from "@intake/shared";
@@ -521,5 +522,14 @@ export function useSetLanguage() {
     onSuccess: ({ language }) => {
       if (rememberLanguage(language)) window.location.reload();
     },
+  });
+}
+
+/** Profilo › Obiettivi: saved in Nutrition; every screen reloads, since Today, Trends and the plan compare against the goals. */
+export function useSetGoals() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (update: GoalsUpdate) => apiFetch<{ ok: true }>("/api/goals", { method: "PUT", json: update }),
+    onSuccess: () => queryClient.invalidateQueries(),
   });
 }

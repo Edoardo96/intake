@@ -1,12 +1,12 @@
 import type { ProfileView, TrainingSourceId } from "@intake/shared";
 import { type ReactNode, useState } from "react";
 import { Link } from "wouter";
-import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeatures, useSetFeatures, useSetLanguage } from "../api/queries";
-import { LANGUAGES, type FeatureKey } from "@intake/shared";
+import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeatures, useSetFeatures, useSetLanguage, useSetGoals } from "../api/queries";
+import { LANGUAGES, type FeatureKey, type GoalsUpdate } from "@intake/shared";
 import { Avatar } from "../components/ProfileLink";
 import { RemindersSheet } from "../components/RemindersSheet";
 import { BackIcon } from "../components/icons";
-import { formatClock, formatKcal, formatShortDate, formatWater, formatWeight, formatWeekdayDay } from "../lib/format";
+import { formatClock, formatKcal, formatOneDecimal, formatShortDate, formatWater, formatWeight, formatWeekdayDay } from "../lib/format";
 import { LANGUAGE_NAMES, language, t } from "../lib/strings";
 import { exerciseName } from "./TrainingPage";
 import { getThemePreference, setThemePreference, type ThemePreference } from "../lib/theme";
@@ -132,46 +132,159 @@ function StepGoal({ goal }: { goal: number }) {
   );
 }
 
-function GoalsCard({ goals, stepGoal }: { goals: ProfileView["goals"] | null; stepGoal: number | null }) {
+type GoalField = "kcal" | "protein" | "carbs" | "fat" | "fiber" | "water" | "targetWeight";
+
+/** What a field shows when editing: kcal and grams as integers, water in liters, the target weight with one decimal. */
+function fieldText(key: GoalField, goals: ProfileView["goals"], targetWeight: number | null): string {
+  const value = key === "water" ? goals.waterMl : key === "targetWeight" ? targetWeight : goals[key];
+  if (value === null) return "";
+  if (key === "water") return formatOneDecimal(value / 1000);
+  if (key === "targetWeight") return formatWeight(value);
+  return String(Math.round(value));
+}
+
+/** "2,5" or "2.5" -> 2.5; empty -> null (clears the goal); anything else -> undefined (invalid). */
+function parseField(text: string): number | null | undefined {
+  const trimmed = text.trim();
+  if (trimmed === "") return null;
+  const value = Number(trimmed.replace(",", "."));
+  return Number.isFinite(value) && value >= 0 ? value : undefined;
+}
+
+function GoalsCard({ goals, targetWeight, stepGoal }: { goals: ProfileView["goals"] | null; targetWeight: number | null; stepGoal: number | null }) {
+  const setGoals = useSetGoals();
+  const [draft, setDraft] = useState<Record<GoalField, string> | null>(null);
+  const [invalid, setInvalid] = useState(false);
   const names = t.profile.goalNames;
   const grams = (v: number | null) => (v === null ? t.profile.notSet : `${formatKcal(v)} g`);
-  const rows = goals
+  const rows: Array<{ key: GoalField; label: string; value: string; unit: string; decimals: boolean }> = goals
     ? [
-        { key: "kcal", label: names.kcal, value: goals.kcal === null ? t.profile.notSet : `${formatKcal(goals.kcal)} kcal` },
-        { key: "protein", label: names.protein, value: grams(goals.protein) },
-        { key: "carbs", label: names.carbs, value: grams(goals.carbs) },
-        { key: "fat", label: names.fat, value: grams(goals.fat) },
-        { key: "fiber", label: names.fiber, value: grams(goals.fiber) },
-        { key: "water", label: names.water, value: goals.waterMl === null ? t.profile.notSet : formatWater(goals.waterMl) },
+        { key: "kcal", label: names.kcal, value: goals.kcal === null ? t.profile.notSet : `${formatKcal(goals.kcal)} kcal`, unit: "kcal", decimals: false },
+        { key: "protein", label: names.protein, value: grams(goals.protein), unit: "g", decimals: false },
+        { key: "carbs", label: names.carbs, value: grams(goals.carbs), unit: "g", decimals: false },
+        { key: "fat", label: names.fat, value: grams(goals.fat), unit: "g", decimals: false },
+        { key: "fiber", label: names.fiber, value: grams(goals.fiber), unit: "g", decimals: false },
+        { key: "water", label: names.water, value: goals.waterMl === null ? t.profile.notSet : formatWater(goals.waterMl), unit: "L", decimals: true },
       ]
     : [];
+  // The target weight is shown in Peso; it is edited here with the goals, since Nutrition keeps it with them
+  const editRows = [...rows, { key: "targetWeight" as const, label: t.profile.targetWeight, value: "", unit: "kg", decimals: true }];
+
+  const startEditing = () => {
+    if (!goals) return;
+    setDraft(Object.fromEntries(editRows.map((row) => [row.key, fieldText(row.key, goals, targetWeight)])) as Record<GoalField, string>);
+    setInvalid(false);
+    setGoals.reset();
+  };
+
+  const save = () => {
+    if (!goals || !draft) return;
+    const update: GoalsUpdate = {};
+    for (const row of editRows) {
+      const text = draft[row.key];
+      // Only what changed is sent, so a goal set elsewhere in the meantime is not overwritten
+      if (text === fieldText(row.key, goals, targetWeight)) continue;
+      const value = parseField(text);
+      if (value === undefined || (row.key === "targetWeight" && value !== null && (value < 20 || value > 400))) {
+        setInvalid(true);
+        return;
+      }
+      if (row.key === "water") update.waterMl = value === null ? null : Math.round(value * 1000);
+      else if (row.key === "targetWeight") update.targetWeightKg = value === null ? null : Math.round(value * 10) / 10;
+      else update[row.key] = value === null ? null : Math.round(value);
+    }
+    setInvalid(false);
+    if (Object.keys(update).length === 0) {
+      setDraft(null);
+      return;
+    }
+    setGoals.mutate(update, { onSuccess: () => setDraft(null) });
+  };
+
   return (
     <section id="settings-goals" className="card profile-card profile-list settings-section" aria-label={t.profile.goals}>
       <div className="profile-card-head">
         <h2>{t.profile.goals}</h2>
-        {goals && <span className="source-pill">{t.profile.goalsSource}</span>}
+        {goals && !draft && (
+          <span className="goals-head-actions">
+            <span className="source-pill">{t.profile.goalsSource}</span>
+            <button type="button" className="text-button text-button-strong" onClick={startEditing}>
+              {t.profile.goalsEdit}
+            </button>
+          </span>
+        )}
       </div>
-      <div className="goal-grid">
-      {rows.map((row) => (
-        <div key={row.key} className="profile-row-item goal-row" data-goal={row.key}>
-          <span className="goal-name">
-            <span className="goal-swatch" aria-hidden="true" />
-            {row.label}
-          </span>
-          <strong>{row.value}</strong>
-        </div>
-      ))}
-      {stepGoal !== null && (
-        <div className="profile-row-item goal-row" data-goal="steps">
-          <span className="goal-name">
-            <span className="goal-swatch" aria-hidden="true" />
-            {names.steps}
-          </span>
-          <StepGoal goal={stepGoal} />
-        </div>
+      {draft ? (
+        <form
+          className="goals-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            save();
+          }}
+        >
+          <div className="goal-grid">
+            {editRows.map((row) => (
+              <label key={row.key} className="profile-row-item goal-row" data-goal={row.key}>
+                <span className="goal-name">
+                  <span className="goal-swatch" aria-hidden="true" />
+                  {row.label}
+                </span>
+                <span className="goal-input">
+                  <input
+                    value={draft[row.key]}
+                    onChange={(event) => setDraft({ ...draft, [row.key]: event.target.value })}
+                    inputMode={row.decimals ? "decimal" : "numeric"}
+                    enterKeyHint="done"
+                    placeholder={t.profile.notSet}
+                    aria-label={`${row.label} (${row.unit})`}
+                  />
+                  <span className="muted">{row.unit}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <p className="muted settings-note">{t.profile.goalsHint}</p>
+          {invalid && <p className="notice" data-kind="error">{t.profile.goalsInvalid}</p>}
+          {setGoals.isError && <p className="notice" data-kind="error">{t.profile.goalsFailed}</p>}
+          <div className="goals-actions">
+            <button type="button" className="button button-secondary" onClick={() => setDraft(null)} disabled={setGoals.isPending}>
+              {t.profile.goalsCancel}
+            </button>
+            <button type="submit" className="button" disabled={setGoals.isPending}>
+              {t.profile.goalsSave}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <>
+          <div className="goal-grid">
+            {rows.map((row) => (
+              <div key={row.key} className="profile-row-item goal-row" data-goal={row.key}>
+                <span className="goal-name">
+                  <span className="goal-swatch" aria-hidden="true" />
+                  {row.label}
+                </span>
+                <strong>{row.value}</strong>
+              </div>
+            ))}
+            {stepGoal !== null && (
+              <div className="profile-row-item goal-row" data-goal="steps">
+                <span className="goal-name">
+                  <span className="goal-swatch" aria-hidden="true" />
+                  {names.steps}
+                </span>
+                <StepGoal goal={stepGoal} />
+              </div>
+            )}
+          </div>
+          {setGoals.isSuccess && (
+            <p className="notice" data-kind="ok">
+              {t.profile.goalsSaved}
+            </p>
+          )}
+          {goals && <p className="muted settings-note">{t.profile.goalsNote}</p>}
+        </>
       )}
-      </div>
-      {goals && <p className="muted settings-note">{t.profile.goalsNote}</p>}
     </section>
   );
 }
@@ -458,7 +571,7 @@ export function ProfilePage({ user }: { user: User }) {
           {profile.isPending && <div className="card skeleton" style={{ height: 220 }} />}
           {profile.isError && <p className="notice" data-kind="error">{t.profile.loadFailed}</p>}
           {data && <WeightCard profile={data} />}
-          {showGoals && <GoalsCard goals={data?.goals ?? null} stepGoal={health.data?.settings.stepGoal ?? null} />}
+          {showGoals && <GoalsCard goals={data?.goals ?? null} targetWeight={data?.weight.target ?? null} stepGoal={health.data?.settings.stepGoal ?? null} />}
 
           <FeaturesCard />
 

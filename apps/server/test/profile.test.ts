@@ -14,6 +14,7 @@ describe("profile routes", () => {
       goals: async () => goals,
       weightTrends: async () => ({ unit: "kg", target: null, entries: [{ date: "2026-11-06", weight: 75.4 }, { date: "2026-11-13", weight: 75 }] }),
       logWeight: async () => {},
+      setGoals: async () => {},
       ...overrides,
     };
   }
@@ -35,6 +36,17 @@ describe("profile routes", () => {
       goals: { kcal: 2200, protein: 135, carbs: 255, fat: 70, fiber: 30, waterMl: 2500 },
       hevyConfigured: true,
     });
+  });
+
+  it("changes only the goals sent, clears with null and refuses impossible values", async () => {
+    const setGoals = vi.fn(async () => {});
+    const { app, headers } = await signedIn(fakeApi({ setGoals }));
+    const ok = await app.inject({ method: "PUT", url: "/api/goals", headers, payload: { kcal: 2100, protein: 150, fiber: null, targetWeightKg: 72.5 } });
+    expect(ok.statusCode).toBe(200);
+    expect(setGoals).toHaveBeenCalledWith({ kcal: 2100, protein: 150, fiber: null, targetWeightKg: 72.5 });
+    expect((await app.inject({ method: "PUT", url: "/api/goals", headers, payload: { kcal: -5 } })).statusCode).toBe(400);
+    expect((await app.inject({ method: "PUT", url: "/api/goals", headers, payload: { sugar: 30 } })).statusCode).toBe(400);
+    expect(setGoals).toHaveBeenCalledTimes(1);
   });
 
   it("logs a weigh-in in kg and validates it", async () => {
