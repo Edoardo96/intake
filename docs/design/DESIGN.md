@@ -229,7 +229,7 @@ All of these map to existing Nutrition MCP tools:
 | Water +250 / +500 ml | `log_water` |
 | Today's plan meals not yet logged | `log_meal` with the plan's full nutrients, then link plan entry ↔ meal in SQLite |
 | Repeat a recent meal | `get_meals_by_date_range` → `log_meal` with the same items |
-| Saved meals (section "PREFERITI": name · kcal, description, "Registra"; one tap logs it now and closes the sheet; a small × on the right asks in the row "Eliminare “…” dai preferiti?" with Annulla / Elimina (danger) and deletes it from Nutrition; the type is the saved meal's default, else the time of day on the profile clock; with none, a row in ALTRO CIBO explains how to save one) | `get_saved_meals` → `log_saved_meal`, `delete_saved_meal` |
+| Saved meals (row "Pasti preferiti · N salvati" in ALTRO CIBO, before "Ripeti un pasto recente"; both rows open in place with a ▾ / ▴; inside, the first 5 favorites and "Mostra altri N"; each: name · kcal, description, "Registra"; one tap logs it now and closes the sheet; a small × on the right asks in the row "Eliminare “…” dai preferiti?" with Annulla / Elimina (danger) and deletes it from Nutrition; the type is the saved meal's default, else the time of day on the profile clock; with none, a row in ALTRO CIBO explains how to save one) | `get_saved_meals` → `log_saved_meal`, `delete_saved_meal` |
 | Search food + quantity | `search_foods`, `get_food_macros` → `log_meal` |
 | Barcode scan | camera scan in the browser (JS library such as ZXing; Safari has no `BarcodeDetector`) → `lookup_barcode` → `log_meal` |
 
