@@ -192,16 +192,16 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
 
   return (
     <div className="page detail-page edit-page">
-      <header className="edit-header">
-        <Link href={detailHref} className="text-button">
-          {t.edit.cancel}
+      {/* Like the meal detail: the back arrow leaves without saving; Salva sits at the bottom next to Elimina */}
+      <header className="edit-header edit-header-back">
+        <Link href={detailHref} className="icon-button" aria-label={t.edit.back}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M15 6l-6 6 6 6" />
+          </svg>
         </Link>
         <h1>{t.edit.title}</h1>
-        <button type="button" className="text-button text-button-strong" onClick={save} disabled={update.isPending || (hasItems && validItems.length === 0)}>
-          {t.edit.save}
-        </button>
+        <span aria-hidden="true" />
       </header>
-      {update.isError && <p className="error-text">{t.edit.saveFailed}</p>}
 
       <div className="segmented" role="radiogroup" aria-label={t.edit.type}>
         {[...MEAL_TYPES, ...(meal && !(MEAL_TYPES as readonly string[]).includes(meal.type) && (NUTRITION_MEAL_TYPES as readonly string[]).includes(meal.type) ? [meal.type as NutritionMealType] : [])].map((option) => (
@@ -326,9 +326,17 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
       {values && <p className="sheet-note">{t.edit.valuesFromFoods}</p>}
 
       <div className="detail-spacer" />
-      <button type="button" className="button-danger" onClick={() => setConfirmDelete(true)}>
-        {t.edit.delete}
-      </button>
+      <div className="edit-actions">
+        {update.isError && <p className="error-text">{t.edit.saveFailed}</p>}
+        <div className="detail-actions edit-actions-row">
+          <button type="button" className="button-secondary edit-delete" onClick={() => setConfirmDelete(true)}>
+            {t.edit.delete}
+          </button>
+          <button type="button" className="button-primary-inline" onClick={save} disabled={update.isPending || (hasItems && validItems.length === 0)}>
+            {t.edit.save}
+          </button>
+        </div>
+      </div>
 
       {confirmDelete && (
         <ConfirmDeleteSheet

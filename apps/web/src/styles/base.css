@@ -2419,6 +2419,53 @@ button.button-primary {
   justify-self: end;
 }
 
+/* Modifica pasto: the back arrow on the left, as on the meal detail */
+.edit-header-back .icon-button {
+  justify-self: start;
+}
+
+/* Modifica pasto: Elimina and Salva side by side like Modifica / Salva come preferito on the meal detail, kept at the
+   bottom of the screen while scrolling */
+.edit-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 -16px;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  background: var(--color-bg);
+}
+
+.edit-actions-row {
+  padding-bottom: 0;
+}
+
+.edit-actions .button-secondary,
+.edit-actions .button-primary-inline {
+  min-width: 0;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+/* Deleting stays red, with its label */
+.edit-delete {
+  border-color: var(--color-danger-border);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.edit-actions .button-primary-inline:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.edit-actions .error-text {
+  margin: 0;
+}
+
 .text-button {
   height: 44px;
   padding: 0 6px;
