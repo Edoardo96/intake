@@ -3707,6 +3707,15 @@ button.next-meal-primary {
   height: 100svh;
 }
 
+/*
+ * Installed app: the home indicator already leaves room below the icons, so the full safe area plus 10 px made the
+ * tab bar tall, with much more space under the icons than above them. Padding only, on every installed iPhone.
+ */
+:root[data-standalone] .tabbar {
+  padding-top: 8px;
+  padding-bottom: max(8px, calc(env(safe-area-inset-bottom) - 14px));
+}
+
 /* ================= Apple Salute (Profile) ================= */
 
 .health-page {
