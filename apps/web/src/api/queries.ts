@@ -42,6 +42,10 @@ import type {
   MealPhotoUpload,
   Language,
   LanguageResponse,
+  NeedsAiOpinion,
+  NeedsApplyRequest,
+  NeedsProfile,
+  NeedsView,
 } from "@intake/shared";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, apiFetch, newIdempotencyKey } from "./client";
@@ -651,5 +655,38 @@ export function useBackupAction() {
         ? apiFetch<BackupStatus>("/api/backups/run", { method: "POST" })
         : apiFetch<BackupStatus>("/api/backups/settings", { method: "PUT", json: { keep: action.keep } }),
     onSuccess: (status) => queryClient.setQueryData(backupsKey, status),
+  });
+}
+
+const needsKey = ["needs"] as const;
+
+/** Piano › Il tuo fabbisogno: the saved fields, the calculation, the data check and the last AI opinion (docs/needs.md). */
+export function useNeeds() {
+  return useQuery({ queryKey: needsKey, queryFn: () => apiFetch<NeedsView>("/api/needs") });
+}
+
+export function useSaveNeedsProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (profile: NeedsProfile) => apiFetch<NeedsView>("/api/needs/profile", { method: "PUT", json: profile }),
+    onSuccess: (view) => queryClient.setQueryData(needsKey, view),
+  });
+}
+
+/** Sets the goals in Nutrition; every screen reloads, as with Profilo › Obiettivi. */
+export function useApplyNeeds() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: NeedsApplyRequest) => apiFetch<{ ok: true }>("/api/needs/apply", { method: "POST", json: request }),
+    onSuccess: () => queryClient.invalidateQueries(),
+  });
+}
+
+/** "Chiedi un parere all'IA" (Claude API); nothing is applied until the user chooses. */
+export function useAskNeedsAi() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiFetch<NeedsAiOpinion>("/api/needs/ai", { method: "POST" }),
+    onSuccess: (ai) => queryClient.setQueryData<NeedsView>(needsKey, (view) => (view ? { ...view, ai } : view)),
   });
 }

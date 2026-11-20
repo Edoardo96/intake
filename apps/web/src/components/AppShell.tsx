@@ -27,10 +27,11 @@ const TABS = [
   { path: "/timeline", label: t.nav.timeline, Icon: TimelineIcon },
 ] as const;
 
-/** The section a location belongs to: meal screens sit under Timeline, Andamento covers its sub-pages. */
+/** The section a location belongs to: meal screens sit under Timeline, Andamento and Piano cover their sub-pages. */
 function sectionOf(location: string): string {
   if (location.startsWith("/pasto/")) return "/timeline";
   if (location.startsWith("/andamento")) return "/andamento";
+  if (location.startsWith("/piano")) return "/piano";
   return location;
 }
 

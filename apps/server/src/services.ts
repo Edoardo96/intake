@@ -10,6 +10,7 @@ import { LanguageStore } from "./db/languageStore.js";
 import { BackupStore } from "./db/backupStore.js";
 import { MealPhotoStore } from "./db/mealPhotoStore.js";
 import { RecognitionModelStore } from "./db/recognitionModelStore.js";
+import { NeedsStore } from "./db/needsStore.js";
 import { PlanStore } from "./db/planStore.js";
 import { ReminderStore } from "./db/reminderStore.js";
 import { SecretStore } from "./db/secretStore.js";
@@ -27,6 +28,7 @@ export interface Services {
   backups: BackupStore;
   mealPhotos: MealPhotoStore;
   recognitionModel: RecognitionModelStore;
+  needs: NeedsStore;
   nutrition: NutritionConnection;
   close(): Promise<void>;
 }
@@ -53,6 +55,7 @@ export function createServices(config: Config): Services {
     backups: new BackupStore(db),
     mealPhotos: new MealPhotoStore(join(config.DATA_DIR, "meal-photos")),
     recognitionModel: new RecognitionModelStore(db, config.RECOGNITION_MODEL),
+    needs: new NeedsStore(db),
     nutrition,
     async close() {
       await nutrition.close();

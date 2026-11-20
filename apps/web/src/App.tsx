@@ -12,6 +12,7 @@ import { HealthPage } from "./pages/HealthPage";
 import { HealthTrendsPage } from "./pages/HealthTrendsPage";
 import { MealPage } from "./pages/MealPage";
 import { NewMealPage } from "./pages/NewMealPage";
+import { NeedsPage } from "./pages/NeedsPage";
 import { PlanPage } from "./pages/PlanPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { WeekPage } from "./pages/WeekPage";
@@ -99,6 +100,9 @@ function SignedIn({ user, notice, adding, openAdd, closeAdd }: SignedInProps) {
         <Route path="/profilo/salute">{on?.health ? <HealthPage /> : home}</Route>
         <Route path="/profilo">
           <ProfilePage user={user} />
+        </Route>
+        <Route path="/piano/fabbisogno">
+          <NeedsPage />
         </Route>
         <Route path="/piano">
           <PlanPage />

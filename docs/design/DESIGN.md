@@ -223,10 +223,35 @@ The first release builds the grid only; editing comes later.
 ## AI features
 
 Everything that asks the AI inside Intake (the "Foto del piatto" and "Descrivi a parole" tiles, Analizza, the
-"+ Aggiungi alimento" of the new and edited meal, "Aggiungi i cibi con l'IA" for a photo added in Modifica pasto, the Pasti da foto switch and the AI model in Impostazioni) carries
+"+ Aggiungi alimento" of the new and edited meal, "Aggiungi i cibi con l'IA" for a photo added in Modifica pasto, the Pasti da foto switch and the AI model in Impostazioni, "Il
+parere dell'IA" of Il tuo fabbisogno) carries
 the sparkles icon (`SparklesIcon`) and is called "IA" in Italian and "AI" in English and Dutch, never "Claude". Texts
 that speak of Claude as the chat outside Intake (logging by talking to Claude, the plan made in a Claude project, the
 "Chiedi a Claude" row that opens the Claude app) keep the name; that row gets the sparkles too.
+
+## Piano — Il tuo fabbisogno (20 Nov)
+
+A card at the top of Piano, above the week's plan, with three bands divided by a line:
+
+1. The active goal: pills with the goal and its source ("calcolo standard", "proposta IA", "dai tuoi dati"), the
+   calories large, the macros on one line, then weight · workouts a week · estimated maintenance. "Modifica" in the
+   card header opens the page.
+2. "VERIFICA SUI TUOI DATI": one sentence with the average calories, the weight trend and the real maintenance, then
+   "✓ in linea con l'obiettivo" (accent pill) or "Per il tuo obiettivo: X kcal" with "Applica"; a muted note that it
+   is plain arithmetic, no AI. With too few data, one muted sentence with what is missing.
+3. "IL PARERE DELL'IA" with the sparkles, separate from the settings: the last opinion (date, summary, a
+   three-column table Calcolo / Proposta IA with the differing AI values in bold, tips, "Tieni il calcolo" /
+   "Usa la proposta" or "✓ Proposta dell'IA in uso"), then "Chiedi" (asks again from the card, with a spinner
+   while it waits).
+
+Without saved fields: the title, one sentence, "Calcola il tuo fabbisogno" and band 2 without the suggestion.
+
+The page (`/piano/fabbisogno`) follows the new-meal layout (Annulla · title): sections Tu (sex as a segmented
+control, age, height, the weight from Nutrition read-only), Vita di tutti i giorni (work segmented, steps),
+Allenamenti (times a week, average length, type segmented), Obiettivo (2 × 2 cards with name and one-line hint, the
+selected one with an accent border and soft accent fill; Ritmo segmented for cut and bulk), Note per l'IA (with the
+sparkles, only while the AI can be used), then the calculation card (calories, macros, basal and maintenance, weekly
+change, "Salva" / "Applica agli obiettivi"). The AI is asked from the card only. Rules in `docs/needs.md`.
 
 ## Add sheet (`+`) — what is really possible
 

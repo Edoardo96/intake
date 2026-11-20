@@ -21,6 +21,7 @@ import { backupRoutes, type BackupRoutesOptions } from "./routes/backups.js";
 import { HevyError } from "./hevy/hevyApi.js";
 import { weekRoutes, type WeekRoutesOptions } from "./routes/weeks.js";
 import { profileRoutes, type ProfileRoutesOptions } from "./routes/profile.js";
+import { needsRoutes, type NeedsRoutesOptions } from "./routes/needs.js";
 import { authRoutes } from "./routes/auth.js";
 import { healthRoutes } from "./routes/health.js";
 import { appleHealthRoutes, type AppleHealthRoutesOptions } from "./routes/appleHealth.js";
@@ -67,6 +68,8 @@ export interface AppOptions {
   weekHealth?: WeekRoutesOptions["health"];
   /** Profilo and weigh-ins; registered together with `auth`. */
   profile?: Omit<ProfileRoutesOptions, "requireOwner">;
+  /** "Il tuo fabbisogno" (Piano) and the AI opinion; registered together with `auth`. */
+  needs?: Omit<NeedsRoutesOptions, "requireOwner">;
   /** Meal plan storage; registered together with `api`. */
   plans?: PlanStore;
   /** Reminders (Web Push); registered together with `auth`. */
@@ -179,6 +182,9 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     }
     if (options.profile) {
       await app.register(profileRoutes, { prefix: "/api", ...options.profile, requireOwner });
+    }
+    if (options.needs) {
+      await app.register(needsRoutes, { prefix: "/api", ...options.needs, requireOwner });
     }
     if (options.mealsApi) {
       await app.register(mealRoutes, { prefix: "/api", api: options.mealsApi, recognizer: options.recognizer, photos: options.mealPhotos, recognitionModel: options.recognitionModel, requireOwner });
