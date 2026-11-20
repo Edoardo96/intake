@@ -121,7 +121,9 @@ export function NeedsCard() {
               <span className="muted">{t.needs.aiOf(formatMediumDate(ai.at.slice(0, 10)))}</span>
               <p className="needs-ai-summary">{ai.summary}</p>
             </>
-          ) : null}
+          ) : (
+            <p className="muted">{t.needs.aiIntro}</p>
+          )}
           <Link href={`${NEEDS_PATH}#ia`} className="button-secondary-small needs-ai-link">
             <SparklesIcon size={16} />
             {ai ? t.needs.aiRefresh : t.needs.aiAsk}

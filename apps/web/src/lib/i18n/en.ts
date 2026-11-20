@@ -597,6 +597,7 @@ export const en: Strings = {
     checkApply: "Apply",
     ai: "The AI’s opinion",
     aiAsk: "Ask the AI for an opinion",
+    aiIntro: "A second opinion on the calculation, with its own proposal and a few tips. Nothing changes until you choose.",
     aiRefresh: "Update the opinion",
     aiOf: (date: string) => `Opinion of ${date}`,
     aiNeedsProfile: "Work out your needs first to ask the AI for an opinion.",

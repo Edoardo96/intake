@@ -597,6 +597,7 @@ export const it = {
     checkApply: "Applica",
     ai: "Il parere dell’IA",
     aiAsk: "Chiedi un parere all’IA",
+    aiIntro: "Un secondo parere sul calcolo, con la sua proposta e qualche consiglio. Non cambia niente finché non scegli tu.",
     aiRefresh: "Aggiorna il parere",
     aiOf: (date: string) => `Parere del ${date}`,
     aiNeedsProfile: "Calcola prima il fabbisogno per chiedere un parere all’IA.",

@@ -597,6 +597,7 @@ export const nl: Strings = {
     checkApply: "Toepassen",
     ai: "De mening van de AI",
     aiAsk: "Vraag de AI om een mening",
+    aiIntro: "Een tweede mening over de berekening, met een eigen voorstel en een paar tips. Er verandert niets tot je kiest.",
     aiRefresh: "Mening bijwerken",
     aiOf: (date: string) => `Mening van ${date}`,
     aiNeedsProfile: "Bereken eerst je behoefte om de AI om een mening te vragen.",
