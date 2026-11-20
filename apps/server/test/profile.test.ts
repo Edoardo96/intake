@@ -41,12 +41,16 @@ describe("profile routes", () => {
   it("changes only the goals sent, clears with null and refuses impossible values", async () => {
     const setGoals = vi.fn(async () => {});
     const { app, headers } = await signedIn(fakeApi({ setGoals }));
-    const ok = await app.inject({ method: "PUT", url: "/api/goals", headers, payload: { kcal: 2100, protein: 150, fiber: null, targetWeightKg: 72.5 } });
+    const ok = await app.inject({ method: "PUT", url: "/api/goals", headers, payload: { kcal: 2100, protein: 150, fiber: null, targetWeight: 72.5, weightUnit: "kg" } });
     expect(ok.statusCode).toBe(200);
-    expect(setGoals).toHaveBeenCalledWith({ kcal: 2100, protein: 150, fiber: null, targetWeightKg: 72.5 });
+    expect(setGoals).toHaveBeenCalledWith({ kcal: 2100, protein: 150, fiber: null, targetWeight: 72.5, weightUnit: "kg" });
     expect((await app.inject({ method: "PUT", url: "/api/goals", headers, payload: { kcal: -5 } })).statusCode).toBe(400);
     expect((await app.inject({ method: "PUT", url: "/api/goals", headers, payload: { sugar: 30 } })).statusCode).toBe(400);
-    expect(setGoals).toHaveBeenCalledTimes(1);
+    // The target weight range follows the unit: 300 lb is fine, 500 kg is not
+    expect((await app.inject({ method: "PUT", url: "/api/goals", headers, payload: { targetWeight: 500, weightUnit: "kg" } })).statusCode).toBe(400);
+    expect((await app.inject({ method: "PUT", url: "/api/goals", headers, payload: { targetWeight: 300, weightUnit: "lb" } })).statusCode).toBe(200);
+    expect(setGoals).toHaveBeenLastCalledWith({ targetWeight: 300, weightUnit: "lb" });
+    expect(setGoals).toHaveBeenCalledTimes(2);
   });
 
   it("logs a weigh-in in kg and validates it", async () => {

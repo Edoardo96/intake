@@ -2,7 +2,7 @@ import type { ProfileView, TrainingSourceId } from "@intake/shared";
 import { type ReactNode, useState } from "react";
 import { Link } from "wouter";
 import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeatures, useSetFeatures, useSetLanguage, useSetGoals } from "../api/queries";
-import { LANGUAGES, type FeatureKey, type GoalsUpdate } from "@intake/shared";
+import { LANGUAGES, parseGoalInput, weightUnitOf, type FeatureKey, type GoalsUpdate, type WeightUnit } from "@intake/shared";
 import { Avatar } from "../components/ProfileLink";
 import { RemindersSheet } from "../components/RemindersSheet";
 import { BackIcon } from "../components/icons";
@@ -143,15 +143,18 @@ function fieldText(key: GoalField, goals: ProfileView["goals"], targetWeight: nu
   return String(Math.round(value));
 }
 
-/** "2,5" or "2.5" -> 2.5; empty -> null (clears the goal); anything else -> undefined (invalid). */
-function parseField(text: string): number | null | undefined {
-  const trimmed = text.trim();
-  if (trimmed === "") return null;
-  const value = Number(trimmed.replace(",", "."));
-  return Number.isFinite(value) && value >= 0 ? value : undefined;
-}
-
-function GoalsCard({ goals, targetWeight, stepGoal }: { goals: ProfileView["goals"] | null; targetWeight: number | null; stepGoal: number | null }) {
+function GoalsCard({
+  goals,
+  targetWeight,
+  weightUnit,
+  stepGoal,
+}: {
+  goals: ProfileView["goals"] | null;
+  targetWeight: number | null;
+  /** The unit of the Nutrition profile, used for the target weight label and when saving it. */
+  weightUnit: WeightUnit;
+  stepGoal: number | null;
+}) {
   const setGoals = useSetGoals();
   const [draft, setDraft] = useState<Record<GoalField, string> | null>(null);
   const [invalid, setInvalid] = useState(false);
@@ -168,7 +171,7 @@ function GoalsCard({ goals, targetWeight, stepGoal }: { goals: ProfileView["goal
       ]
     : [];
   // The target weight is shown in Peso; it is edited here with the goals, since Nutrition keeps it with them
-  const editRows = [...rows, { key: "targetWeight" as const, label: t.profile.targetWeight, value: "", unit: "kg", decimals: true }];
+  const editRows = [...rows, { key: "targetWeight" as const, label: t.profile.targetWeight, value: "", unit: weightUnit, decimals: true }];
 
   const startEditing = () => {
     if (!goals) return;
@@ -184,13 +187,17 @@ function GoalsCard({ goals, targetWeight, stepGoal }: { goals: ProfileView["goal
       const text = draft[row.key];
       // Only what changed is sent, so a goal set elsewhere in the meantime is not overwritten
       if (text === fieldText(row.key, goals, targetWeight)) continue;
-      const value = parseField(text);
-      if (value === undefined || (row.key === "targetWeight" && value !== null && (value < 20 || value > 400))) {
+      // Calories and grams read "2.200" as 2200; out-of-range values are refused, not saved
+      const value = parseGoalInput(row.key === "water" ? "waterL" : row.key, text, weightUnit);
+      if (value === undefined) {
         setInvalid(true);
         return;
       }
       if (row.key === "water") update.waterMl = value === null ? null : Math.round(value * 1000);
-      else if (row.key === "targetWeight") update.targetWeightKg = value === null ? null : Math.round(value * 10) / 10;
+      else if (row.key === "targetWeight") {
+        update.targetWeight = value === null ? null : Math.round(value * 10) / 10;
+        update.weightUnit = weightUnit;
+      }
       else update[row.key] = value === null ? null : Math.round(value);
     }
     setInvalid(false);
@@ -571,7 +578,7 @@ export function ProfilePage({ user }: { user: User }) {
           {profile.isPending && <div className="card skeleton" style={{ height: 220 }} />}
           {profile.isError && <p className="notice" data-kind="error">{t.profile.loadFailed}</p>}
           {data && <WeightCard profile={data} />}
-          {showGoals && <GoalsCard goals={data?.goals ?? null} targetWeight={data?.weight.target ?? null} stepGoal={health.data?.settings.stepGoal ?? null} />}
+          {showGoals && <GoalsCard goals={data?.goals ?? null} targetWeight={data?.weight.target ?? null} weightUnit={weightUnitOf(data?.weight.unit)} stepGoal={health.data?.settings.stepGoal ?? null} />}
 
           <FeaturesCard />
 

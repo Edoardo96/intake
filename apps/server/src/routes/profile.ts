@@ -1,4 +1,4 @@
-import type { GoalsUpdate, ProfileView } from "@intake/shared";
+import { TARGET_WEIGHT_LIMITS, type GoalsUpdate, type ProfileView } from "@intake/shared";
 import type { FastifyPluginAsync, preHandlerHookHandler } from "fastify";
 import { z } from "zod";
 import type { NutritionApi } from "../mcp/nutritionApi.js";
@@ -22,9 +22,16 @@ const goalsBody = z
     fat: grams,
     fiber: grams,
     waterMl: z.number().min(0).max(20_000).nullable().optional(),
-    targetWeightKg: z.number().min(20).max(400).nullable().optional(),
+    /** In weightUnit (default kg), the unit of the Nutrition profile. */
+    targetWeight: z.number().nullable().optional(),
+    weightUnit: z.enum(["kg", "lb"]).optional(),
   })
-  .strict();
+  .strict()
+  .refine(({ targetWeight, weightUnit }) => {
+    if (targetWeight === undefined || targetWeight === null) return true;
+    const limits = TARGET_WEIGHT_LIMITS[weightUnit ?? "kg"];
+    return targetWeight >= limits.min && targetWeight <= limits.max;
+  });
 
 const logWeightBody = z.object({
   weightKg: z.number().min(20).max(400),

@@ -142,10 +142,10 @@ export class NutritionApi {
       ["fat", "daily_fat_g"],
       ["fiber", "daily_fiber_g"],
       ["waterMl", "daily_water_ml"],
-      ["targetWeightKg", "target_weight"],
+      ["targetWeight", "target_weight"],
     ];
     for (const [key, name] of fields) if (update[key] !== undefined) args[name] = update[key];
-    if (update.targetWeightKg !== undefined) args.unit = "kg";
+    if (update.targetWeight !== undefined) args.unit = update.weightUnit ?? "kg";
     if (Object.keys(args).length === 0) return;
     await this.call("set_nutrition_goals", args);
   }

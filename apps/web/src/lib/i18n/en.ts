@@ -95,7 +95,7 @@ export const en: Strings = {
     goalsHint: "Leave a field empty to remove that goal. They are saved in Nutrition, so Claude sees them too.",
     goalsSaved: "Goals saved.",
     goalsFailed: "Goals not saved. Try again.",
-    goalsInvalid: "Check the values: positive numbers only, weight between 20 and 400 kg.",
+    goalsInvalid: "Check the values: calories between 500 and 10,000, calories and grams without decimals, water between 0.5 and 10 L and a realistic target weight.",
     targetWeight: "Target weight",
     goalNames: { kcal: "Calories", protein: "Protein", carbs: "Carbs", fat: "Fat", fiber: "Fiber", water: "Water", steps: "Steps" },
     notSet: "–",

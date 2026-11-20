@@ -95,7 +95,7 @@ export const it = {
     goalsHint: "Lascia vuoto un campo per togliere quell’obiettivo. Si salvano su Nutrition, quindi anche Claude li vede.",
     goalsSaved: "Obiettivi salvati.",
     goalsFailed: "Obiettivi non salvati. Riprova.",
-    goalsInvalid: "Controlla i valori: solo numeri positivi, peso tra 20 e 400 kg.",
+    goalsInvalid: "Controlla i valori: calorie tra 500 e 10.000, calorie e grammi senza decimali, acqua tra 0,5 e 10 L e un peso obiettivo realistico.",
     targetWeight: "Peso obiettivo",
     goalNames: { kcal: "Calorie", protein: "Proteine", carbs: "Carboidrati", fat: "Grassi", fiber: "Fibre", water: "Acqua", steps: "Passi" },
     notSet: "–",

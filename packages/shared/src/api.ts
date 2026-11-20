@@ -764,5 +764,7 @@ export interface GoalsUpdate {
   fat?: number | null;
   fiber?: number | null;
   waterMl?: number | null;
-  targetWeightKg?: number | null;
+  /** In weightUnit, the unit of the Nutrition profile. */
+  targetWeight?: number | null;
+  weightUnit?: "kg" | "lb";
 }

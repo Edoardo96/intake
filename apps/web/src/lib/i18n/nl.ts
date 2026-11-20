@@ -95,7 +95,7 @@ export const nl: Strings = {
     goalsHint: "Laat een veld leeg om dat doel te verwijderen. Ze worden in Nutrition opgeslagen, dus Claude ziet ze ook.",
     goalsSaved: "Doelen opgeslagen.",
     goalsFailed: "Doelen niet opgeslagen. Probeer het opnieuw.",
-    goalsInvalid: "Controleer de waarden: alleen positieve getallen, gewicht tussen 20 en 400 kg.",
+    goalsInvalid: "Controleer de waarden: calorieën tussen 500 en 10.000, calorieën en grammen zonder decimalen, water tussen 0,5 en 10 L en een realistisch streefgewicht.",
     targetWeight: "Streefgewicht",
     goalNames: { kcal: "Calorieën", protein: "Eiwit", carbs: "Koolhydraten", fat: "Vet", fiber: "Vezels", water: "Water", steps: "Stappen" },
     notSet: "–",
