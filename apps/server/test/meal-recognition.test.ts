@@ -103,6 +103,7 @@ describe("recognize and create routes", () => {
     saveMeal: vi.fn(async () => {}),
     savedMeals: async () => [],
     logSavedMeal: async () => ({ id: null }),
+    deleteSavedMeal: async () => true,
   } satisfies MealRoutesOptions["api"];
 
   async function signedIn(recognizer?: MealRoutesOptions["recognizer"], mealPhotos?: MealPhotoStore, recognitionModel?: RecognitionModelStore) {

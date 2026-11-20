@@ -191,6 +191,12 @@ export class NutritionApi {
     await this.call("delete_meal", { id });
   }
 
+  /** Deletes a saved meal; meals already logged from it keep their values. False when Nutrition has no such saved meal. */
+  async deleteSavedMeal(id: string): Promise<boolean> {
+    const result = await this.call("delete_saved_meal", { id });
+    return !/^No saved meal found/i.test(result.text.trim());
+  }
+
   /** Saves a logged meal as a favorite ("saved meal") on Nutrition. */
   async saveMeal(name: string, fromMealId: string): Promise<void> {
     await this.call("save_meal", { name, from_meal_id: fromMealId });

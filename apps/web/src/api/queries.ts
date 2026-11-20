@@ -305,6 +305,15 @@ export function useLogSavedMeal() {
   });
 }
 
+/** Deletes a favorite on Nutrition; the list of the add sheet reloads. */
+export function useDeleteSavedMeal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (meal: SavedMeal) => apiFetch(`/api/meals/saved/${meal.id}`, { method: "DELETE" }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["saved-meals"] }),
+  });
+}
+
 export function useUpdateMeal() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -1704,6 +1704,45 @@ strong,
   white-space: nowrap;
 }
 
+/* A favorite: the row logs it, the small × on the right asks to delete it */
+.saved-row {
+  padding: 0;
+  gap: 4px;
+}
+
+.saved-row > .sheet-row {
+  flex: 1;
+  min-width: 0;
+  border-bottom: none;
+}
+
+.saved-delete {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  background: none;
+  color: var(--color-text-muted);
+}
+
+.saved-confirm {
+  flex-wrap: wrap;
+}
+
+.saved-confirm .sheet-row-text {
+  flex: 1 1 200px;
+}
+
+.saved-confirm-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.saved-confirm-actions .button-secondary-small {
+  height: 36px;
+  padding: 0 14px;
+}
+
 .sheet-row-action {
   flex: none;
   font-size: 13px;

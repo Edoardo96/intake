@@ -9,7 +9,7 @@ import type { RecognitionModelStore } from "../db/recognitionModelStore.js";
 import { RecognitionError, type MealRecognizer, type RecognitionFailure } from "../services/mealRecognition.js";
 
 export interface MealRoutesOptions {
-  api: Pick<NutritionApi, "clock" | "mealsByDate" | "mealsByRange" | "logMeal" | "updateMeal" | "deleteMeal" | "saveMeal" | "savedMeals" | "logSavedMeal">;
+  api: Pick<NutritionApi, "clock" | "mealsByDate" | "mealsByRange" | "logMeal" | "updateMeal" | "deleteMeal" | "saveMeal" | "savedMeals" | "logSavedMeal" | "deleteSavedMeal">;
   requireOwner: preHandlerHookHandler;
   /** Photo and text recognition with the Claude API; the route answers 503 without it. */
   recognizer?: Pick<MealRecognizer, "recognize">;
@@ -174,6 +174,14 @@ export const mealRoutes: FastifyPluginAsync<MealRoutesOptions> = async (app, { a
 
   // Saved meals ("Pasti preferiti" in the add sheet)
   app.get("/meals/saved", async () => ({ meals: await api.savedMeals() }));
+
+  // Deleting a favorite is confirmed in the add sheet; meals already logged from it keep their values
+  app.delete<{ Params: { id: string } }>("/meals/saved/:id", async (request, reply) => {
+    const id = request.params.id.toLowerCase();
+    if (!SAVED_ID.test(id)) return reply.code(400).send({ error: "Invalid request" });
+    if (!(await api.deleteSavedMeal(id))) return reply.code(404).send({ error: "Saved meal not found" });
+    return { ok: true };
+  });
 
   // The type is the one sent, else the saved meal's default, else the time of day on the Nutrition profile clock
   app.post<{ Params: { id: string } }>("/meals/saved/:id/log", async (request, reply) => {
