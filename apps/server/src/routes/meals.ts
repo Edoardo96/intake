@@ -1,10 +1,11 @@
-import { NUTRITION_MEAL_TYPES, type NutritionMealType } from "@intake/shared";
+import { NUTRITION_MEAL_TYPES, type NutritionMealType, type RecognitionModelResponse } from "@intake/shared";
 import type { FastifyPluginAsync, preHandlerHookHandler } from "fastify";
 import { z } from "zod";
 import type { NutritionApi } from "../mcp/nutritionApi.js";
 import { isValidDate } from "../services/dayView.js";
 import { copyMealFields, recentDistinctMeals, updateMealFields } from "../services/mealWrites.js";
 import { MEAL_PHOTO_MAX_BYTES, MealPhotoStore } from "../db/mealPhotoStore.js";
+import type { RecognitionModelStore } from "../db/recognitionModelStore.js";
 import { RecognitionError, type MealRecognizer, type RecognitionFailure } from "../services/mealRecognition.js";
 
 export interface MealRoutesOptions {
@@ -14,6 +15,8 @@ export interface MealRoutesOptions {
   recognizer?: Pick<MealRecognizer, "recognize">;
   /** Photos kept with meals logged from a photo; without it photos are not stored. */
   photos?: MealPhotoStore;
+  /** Claude model chosen for the recognition (Impostazioni › Funzioni › Pasti da foto). */
+  recognitionModel?: Pick<RecognitionModelStore, "get" | "set" | "models">;
 }
 
 /** Room for a resized photo (the app sends at most about 1 MB of base64). */
@@ -26,7 +29,7 @@ const recognizeSchema = z
   })
   .refine((body) => body.image || body.text, "A photo or a description is required");
 
-const RECOGNITION_STATUS: Record<RecognitionFailure, number> = { auth: 502, credit: 402, busy: 503, unreadable: 502, failed: 502 };
+const RECOGNITION_STATUS: Record<RecognitionFailure, number> = { auth: 502, credit: 402, busy: 503, refused: 422, unreadable: 502, failed: 502 };
 
 const date = z.string().refine(isValidDate, "Invalid date");
 const nullableNumber = z.number().nonnegative().nullable();
@@ -87,7 +90,7 @@ function shiftDate(value: string, days: number): string {
 }
 
 /** Logged meals under /api/meals: edit, delete, save as favorite, repeat. */
-export const mealRoutes: FastifyPluginAsync<MealRoutesOptions> = async (app, { api, requireOwner, recognizer, photos }) => {
+export const mealRoutes: FastifyPluginAsync<MealRoutesOptions> = async (app, { api, requireOwner, recognizer, photos, recognitionModel }) => {
   app.addHook("preHandler", requireOwner);
 
   // Foods, grams and nutrition per 100 g from a photo or a description; nothing is logged until the user confirms
@@ -102,6 +105,19 @@ export const mealRoutes: FastifyPluginAsync<MealRoutesOptions> = async (app, { a
       request.log.warn({ reason: error.reason }, error.message);
       return reply.code(RECOGNITION_STATUS[error.reason]).send({ error: `recognition_${error.reason}` });
     }
+  });
+
+  // The Claude model of the next recognitions; under /meals/recognize, so it is hidden with the part
+  app.get("/meals/recognize/model", async (_request, reply) => {
+    if (!recognitionModel) return reply.code(503).send({ error: "recognition_not_configured" });
+    return { model: recognitionModel.get(), models: recognitionModel.models } satisfies RecognitionModelResponse;
+  });
+
+  app.put("/meals/recognize/model", async (request, reply) => {
+    if (!recognitionModel) return reply.code(503).send({ error: "recognition_not_configured" });
+    const model = (request.body as { model?: unknown } | null)?.model;
+    if (typeof model !== "string" || !recognitionModel.set(model)) return reply.code(400).send({ error: "invalid_model" });
+    return { model: recognitionModel.get(), models: recognitionModel.models } satisfies RecognitionModelResponse;
   });
 
   // A new meal, e.g. confirmed after the recognition; its photo (optional) is kept under the new meal's id

@@ -1,4 +1,13 @@
 import type { Language, RecognizedMeal } from "@intake/shared";
+import Anthropic, {
+  APIError,
+  AuthenticationError,
+  InternalServerError,
+  PaymentRequiredError,
+  PermissionDeniedError,
+  RateLimitError,
+} from "@anthropic-ai/sdk";
+import type { ContentBlockParam, Message } from "@anthropic-ai/sdk/resources/messages";
 import { z } from "zod";
 
 /** What the user sends: a photo of the plate, a free description, or both. */
@@ -7,7 +16,7 @@ export interface RecognitionInput {
   text?: string;
 }
 
-export type RecognitionFailure = "auth" | "credit" | "busy" | "unreadable" | "failed";
+export type RecognitionFailure = "auth" | "credit" | "busy" | "refused" | "unreadable" | "failed";
 
 /** The Claude API call did not give a usable answer. `reason` decides the HTTP status and the message in the app. */
 export class RecognitionError extends Error {
@@ -19,10 +28,6 @@ export class RecognitionError extends Error {
     this.name = "RecognitionError";
   }
 }
-
-const API_URL = "https://api.anthropic.com/v1/messages";
-const API_VERSION = "2023-06-01";
-const TOOL = "record_meal";
 
 const per100Schema = z.object({
   kcal: z.number().nonnegative(),
@@ -49,21 +54,14 @@ const answerSchema = z.object({
     .max(20),
 });
 
-/** The first {...} block of a text answer, parsed; undefined when there is none. */
-function jsonInText(text: string): unknown {
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start < 0 || end <= start) return undefined;
-  try {
-    return JSON.parse(text.slice(start, end + 1));
-  } catch {
-    return undefined;
-  }
-}
-
-/** JSON schema of the tool call: Claude answers only through it, so the output is always structured. */
-const TOOL_SCHEMA = {
+/**
+ * JSON schema of the answer, sent as a structured output (output_config.format): the API guarantees an answer that
+ * matches it. Number ranges are not supported there, so `answerSchema` checks them after.
+ */
+const ANSWER_JSON_SCHEMA = {
   type: "object",
+  additionalProperties: false,
+  required: ["description", "items"],
   properties: {
     description: { type: "string", description: "Short description of the whole meal, in the language the system prompt asks for, e.g. \"Pasta al pomodoro con insalata mista\"." },
     items: {
@@ -71,13 +69,17 @@ const TOOL_SCHEMA = {
       description: "One entry per food, including oil, butter, sauces and dressings that are cooked in or poured on.",
       items: {
         type: "object",
+        additionalProperties: false,
+        required: ["name", "grams", "visible", "per100g"],
         properties: {
           name: { type: "string", description: "Name of the food as eaten, in the language the system prompt asks for, e.g. \"Pasta al pomodoro (cotta)\", \"Olio extravergine d'oliva\"." },
           grams: { type: "number", description: "Estimated weight eaten, in grams (for drinks, millilitres treated as grams)." },
           visible: { type: "boolean", description: "False when the food is not visible in the photo but almost certainly present (e.g. cooking oil), or when there is no photo." },
           per100g: {
             type: "object",
+            additionalProperties: false,
             description: "Nutrition per 100 g of this food as eaten (cooked weight for cooked foods).",
+            required: ["kcal", "protein", "carbs", "fat", "fiber", "sugar", "addedSugar"],
             properties: {
               kcal: { type: "number" },
               protein: { type: "number" },
@@ -87,14 +89,11 @@ const TOOL_SCHEMA = {
               sugar: { type: "number", description: "Total sugars; 0 for foods with none (meat, fish, eggs, oil, plain pasta and rice)." },
               addedSugar: { type: "number", description: "Added sugars, part of sugar; 0 for whole fruit, vegetables, plain milk and yogurt, meat, fish, pasta, oil." },
             },
-            required: ["kcal", "protein", "carbs", "fat", "fiber", "sugar", "addedSugar"],
           },
         },
-        required: ["name", "grams", "visible", "per100g"],
       },
     },
   },
-  required: ["description", "items"],
 } as const;
 
 const LANGUAGE_NAMES: Record<Language, string> = { it: "Italian", en: "English", nl: "Dutch" };
@@ -105,84 +104,86 @@ const system = (language: Language) => [
   "Judge portion sizes from the plate, cutlery and food density; prefer typical home portions when unsure.",
   "Add cooking fats, dressings and sauces that are not visible but very likely present (mark them visible: false) with realistic amounts.",
   "If the description gives quantities or foods, they win over what the photo suggests.",
-  `Write every name and the description in ${LANGUAGE_NAMES[language]}. Always answer by calling the record_meal tool, exactly once, with no other text.`,
+  `Write every name and the description in ${LANGUAGE_NAMES[language]}.`,
 ].join(" ");
 
-type FetchLike = (url: string, init: { method: string; headers: Record<string, string>; body: string; signal?: AbortSignal }) => Promise<{
-  ok: boolean;
-  status: number;
-  json(): Promise<unknown>;
-}>;
+/** The part of the SDK client the recognizer uses; tests pass a fake. */
+export type MessagesClient = Pick<Anthropic["messages"], "create">;
 
 export interface MealRecognizerOptions {
   apiKey: string;
-  model: string;
-  fetch?: FetchLike;
-  timeoutMs?: number;
+  /** Model of the next request (Impostazioni › Pasti da foto, or RECOGNITION_MODEL). */
+  model: () => string;
+  client?: MessagesClient;
   /** Language of the food names and description (Profilo › Lingua); Italian when missing. */
   language?: () => Language;
+  /** Token usage of each request, to see the real cost; never the photo, the text or the key. */
+  log?: { info(details: object, message: string): void; warn(details: object, message: string): void };
+}
+
+/** Room for adaptive thinking (on by default on the 5.5 models, counted in max_tokens) and the answer; only what is generated is paid. */
+const MAX_TOKENS = 16_000;
+/** Each attempt; the SDK retries 429, 529 and connection errors twice by itself. */
+const TIMEOUT_MS = 60_000;
+
+/** The SDK error of a failed request, as the reason shown in the app. */
+function failureOf(error: unknown): RecognitionFailure {
+  if (error instanceof AuthenticationError || error instanceof PermissionDeniedError) return "auth";
+  if (error instanceof PaymentRequiredError || (error instanceof APIError && error.type === "billing_error")) return "credit";
+  if (error instanceof RateLimitError || error instanceof InternalServerError) return "busy";
+  return "failed";
 }
 
 /**
- * Recognizes the foods of a meal with the Claude API (vision): one tool call returns the foods, their
+ * Recognizes the foods of a meal with the Claude API (vision): a structured output returns the foods, their
  * estimated grams and nutrition per 100 g. Nothing is stored; the user confirms or corrects before it is logged.
  */
 export class MealRecognizer {
-  private readonly fetch: FetchLike;
+  private readonly client: MessagesClient;
 
   constructor(private readonly options: MealRecognizerOptions) {
-    this.fetch = options.fetch ?? (globalThis.fetch as unknown as FetchLike);
-  }
-
-  get model(): string {
-    return this.options.model;
+    this.client = options.client ?? new Anthropic({ apiKey: options.apiKey, timeout: TIMEOUT_MS }).messages;
   }
 
   async recognize(input: RecognitionInput): Promise<RecognizedMeal> {
-    const content: unknown[] = [];
+    const content: ContentBlockParam[] = [];
     if (input.image) content.push({ type: "image", source: { type: "base64", media_type: input.image.mediaType, data: input.image.data } });
     const text = input.text?.trim();
-    content.push({
-      type: "text",
-      text: input.image
-        ? `Photo of my meal.${text ? ` Notes: ${text}` : ""}`
-        : `I ate: ${text ?? ""}`,
-    });
+    content.push({ type: "text", text: input.image ? `Photo of my meal.${text ? ` Notes: ${text}` : ""}` : `I ate: ${text ?? ""}` });
+    const model = this.options.model();
 
-    const response = await this.fetch(API_URL, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-api-key": this.options.apiKey, "anthropic-version": API_VERSION },
-      body: JSON.stringify({
-        model: this.options.model,
-        max_tokens: 2000,
+    let response: Message;
+    try {
+      response = await this.client.create({
+        model,
+        max_tokens: MAX_TOKENS,
         system: system(this.options.language?.() ?? "it"),
-        tools: [{ name: TOOL, description: "Record the foods of the meal with estimated grams and nutrition per 100 g.", input_schema: TOOL_SCHEMA }],
-        // Newer models refuse a forced tool call (tool_choice "tool"/"any"); the system prompt asks for it instead
-        tool_choice: { type: "auto" },
+        // Portion estimation needs little reasoning: low effort keeps thinking short, fast and cheap
+        output_config: { effort: "low", format: { type: "json_schema", schema: ANSWER_JSON_SCHEMA } },
         messages: [{ role: "user", content }],
-      }),
-      signal: AbortSignal.timeout(this.options.timeoutMs ?? 60_000),
-    }).catch((error: unknown) => {
-      throw new RecognitionError("failed", `Claude API not reachable: ${error instanceof Error ? error.message : String(error)}`);
-    });
-
-    if (!response.ok) {
-      // The error body says why ({ error: { type, message } }); it never contains the key
-      const detail = await response
-        .json()
-        .then((body) => (body as { error?: { type?: string; message?: string } }).error)
-        .catch(() => undefined);
-      const why = `Claude API error ${response.status}${detail?.type ? ` ${detail.type}` : ""}${detail?.message ? `: ${detail.message}` : ""}`;
-      if (response.status === 401 || response.status === 403) throw new RecognitionError("auth", why);
-      if (response.status === 429 || response.status === 529 || response.status === 503) throw new RecognitionError("busy", why);
-      if (/credit balance|billing|purchase credits/i.test(detail?.message ?? "")) throw new RecognitionError("credit", why);
-      throw new RecognitionError("failed", why);
+      });
+    } catch (error) {
+      // The API error type and message say why; they never contain the key
+      const why = error instanceof APIError ? `Claude API error ${error.status ?? "-"} ${error.type ?? ""}: ${error.apiMessage ?? error.message}` : `Claude API not reachable: ${error instanceof Error ? error.message : String(error)}`;
+      throw new RecognitionError(failureOf(error), why);
     }
 
-    const body = (await response.json()) as { content?: Array<{ type: string; name?: string; input?: unknown; text?: string }> };
-    const call = body.content?.find((block) => block.type === "tool_use" && block.name === TOOL);
-    // Without the tool call, accept the same object written as JSON in the text
-    const parsed = answerSchema.safeParse(call ? call.input : jsonInText(body.content?.filter((b) => b.type === "text").map((b) => b.text ?? "").join("\n") ?? ""));
+    const usage = { model, stopReason: response.stop_reason, inputTokens: response.usage.input_tokens, outputTokens: response.usage.output_tokens, thinkingTokens: response.usage.output_tokens_details?.thinking_tokens ?? null };
+    this.options.log?.info(usage, "meal recognition");
+    if (response.stop_reason === "refusal") throw new RecognitionError("refused", "Claude declined to describe this meal");
+    if (response.stop_reason === "max_tokens") {
+      this.options.log?.warn(usage, "meal recognition stopped at max_tokens");
+      throw new RecognitionError("unreadable", "Claude API answer was cut at max_tokens");
+    }
+
+    const answer = response.content.flatMap((block) => (block.type === "text" ? [block.text] : [])).join("");
+    let json: unknown;
+    try {
+      json = JSON.parse(answer);
+    } catch {
+      throw new RecognitionError("unreadable", "Claude API answer is not JSON");
+    }
+    const parsed = answerSchema.safeParse(json);
     if (!parsed.success) throw new RecognitionError("unreadable", "Claude API answer did not match the meal schema");
     return {
       description: parsed.data.description,

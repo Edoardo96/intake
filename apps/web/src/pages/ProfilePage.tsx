@@ -1,7 +1,7 @@
 import type { ProfileView, TrainingSourceId } from "@intake/shared";
-import { type ReactNode, useState } from "react";
+import { Fragment, type ReactNode, useState } from "react";
 import { Link } from "wouter";
-import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeature, useFeatures, useSetFeatures, useSetLanguage, useSetGoals, useBackups, useBackupAction } from "../api/queries";
+import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useRecognitionModel, useSetRecognitionModel, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeature, useFeatures, useSetFeatures, useSetLanguage, useSetGoals, useBackups, useBackupAction } from "../api/queries";
 import { BACKUP_KEEP, LANGUAGES, parseGoalInput, weightUnitOf, type FeatureKey, type GoalsUpdate, type WeightUnit } from "@intake/shared";
 import { Avatar } from "../components/ProfileLink";
 import { RemindersSheet } from "../components/RemindersSheet";
@@ -488,21 +488,25 @@ function FeaturesCard() {
         <span className="state-pill" data-state="standby">{s.alwaysOn}</span>
       </div>
       {FEATURE_ROWS.map((key) => (
-        <label key={key} className="profile-row-item feature-row">
-          <span className="connection-text">
-            <strong>{s[key]}</strong>
-            <span className="muted">{key === "photoMeals" && !data.recognitionConfigured ? s.photoMealsMissing : s[`${key}Note`]}</span>
-          </span>
-          <input
-            type="checkbox"
-            role="switch"
-            className="switch"
-            aria-label={s.toggle(s[key])}
-            checked={data[key]}
-            disabled={save.isPending || (key === "photoMeals" && !data.recognitionConfigured && !data[key])}
-            onChange={(event) => save.mutate({ [key]: event.target.checked })}
-          />
-        </label>
+        <Fragment key={key}>
+          <label className="profile-row-item feature-row">
+            <span className="connection-text">
+              <strong>{s[key]}</strong>
+              <span className="muted">{key === "photoMeals" && !data.recognitionConfigured ? s.photoMealsMissing : s[`${key}Note`]}</span>
+            </span>
+            <input
+              type="checkbox"
+              role="switch"
+              className="switch"
+              aria-label={s.toggle(s[key])}
+              checked={data[key]}
+              disabled={save.isPending || (key === "photoMeals" && !data.recognitionConfigured && !data[key])}
+              onChange={(event) => save.mutate({ [key]: event.target.checked })}
+            />
+          </label>
+          {/* The model sits right under its switch, only while the part is on and the key is set */}
+          {key === "photoMeals" && data.photoMeals && data.recognitionConfigured && <RecognitionModelRow />}
+        </Fragment>
       ))}
       <div className="profile-row-item feature-foot">
         <span className="muted feature-hint">{save.isError ? s.failed : s.hint}</span>
@@ -511,6 +515,44 @@ function FeaturesCard() {
         </button>
       </div>
     </section>
+  );
+}
+
+/** "Haiku 5.5" for claude-haiku-5-5; other model ids as they are. */
+function modelName(id: string): string {
+  const match = /^claude-(haiku|sonnet|opus)-(\d+)-(\d+)$/.exec(id);
+  return match ? `${match[1]![0]!.toUpperCase()}${match[1]!.slice(1)} ${match[2]}.${match[3]}` : id;
+}
+
+/** Pasti da foto › Modello: Haiku (default, cheaper) or Sonnet, for the next recognitions of the installation. */
+function RecognitionModelRow() {
+  const model = useRecognitionModel(true);
+  const save = useSetRecognitionModel();
+  const s = t.profile.features;
+  if (!model.data) return null;
+  const current = save.variables ?? model.data.model;
+  return (
+    <div className="profile-row-item settings-row recognition-model-row">
+      <span className="connection-text">
+        <strong id="recognition-model-label">{s.recognitionModel}</strong>
+        <span className="muted">{save.isError ? s.recognitionModelFailed : s.recognitionModelNote}</span>
+      </span>
+      <div className="segmented settings-segmented" role="radiogroup" aria-labelledby="recognition-model-label">
+        {model.data.models.map((option) => (
+          <button
+            key={option}
+            type="button"
+            role="radio"
+            aria-checked={current === option}
+            className="segmented-option"
+            disabled={save.isPending}
+            onClick={() => option !== model.data.model && save.mutate(option)}
+          >
+            {modelName(option)}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 

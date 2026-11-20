@@ -850,3 +850,15 @@ export interface SavedMeal {
 export interface SavedMealsResponse {
   meals: SavedMeal[];
 }
+
+/** Claude models offered for the meal recognition (Impostazioni › Funzioni › Pasti da foto). Haiku is the default. */
+export const RECOGNITION_MODELS = ["claude-haiku-5-5", "claude-sonnet-5-5"] as const;
+export const DEFAULT_RECOGNITION_MODEL = "claude-haiku-5-5";
+
+/** GET / PUT /api/meals/recognize/model */
+export interface RecognitionModelResponse {
+  /** Model of the next recognition. */
+  model: string;
+  /** Models that can be chosen: RECOGNITION_MODELS, plus RECOGNITION_MODEL from .env when it names another one. */
+  models: string[];
+}

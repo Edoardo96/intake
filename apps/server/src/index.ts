@@ -83,7 +83,16 @@ const app = await buildApp({
   api,
   mealsApi: api,
   mealPhotos: services.mealPhotos,
-  recognizer: config.ANTHROPIC_API_KEY ? new MealRecognizer({ apiKey: config.ANTHROPIC_API_KEY, model: config.RECOGNITION_MODEL, language: () => services.language.get() }) : undefined,
+  recognitionModel: services.recognitionModel,
+  recognizer: config.ANTHROPIC_API_KEY
+    ? new MealRecognizer({
+        apiKey: config.ANTHROPIC_API_KEY,
+        model: () => services.recognitionModel.get(),
+        language: () => services.language.get(),
+        // Token usage of each recognition, to read the real cost; never the photo, the text or the key
+        log: { info: (details, message) => app.log.info(details, message), warn: (details, message) => app.log.warn(details, message) },
+      })
+    : undefined,
   weekApi: api,
   weekHealth: health,
   profile: { api, hevyConfigured: Boolean(config.HEVY_API_KEY) },

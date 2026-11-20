@@ -55,6 +55,8 @@ export interface AppOptions {
   recognizer?: MealRoutesOptions["recognizer"];
   /** Photos of meals logged from a photo; optional. */
   mealPhotos?: MealRoutesOptions["photos"];
+  /** Claude model chosen for the recognition; optional. */
+  recognitionModel?: MealRoutesOptions["recognitionModel"];
   /** Daily insight ("Dai tuoi dati"); registered together with `auth`. */
   insightApi?: InsightRoutesOptions["api"];
   /** Apple Health data for the insight; optional. */
@@ -179,7 +181,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
       await app.register(profileRoutes, { prefix: "/api", ...options.profile, requireOwner });
     }
     if (options.mealsApi) {
-      await app.register(mealRoutes, { prefix: "/api", api: options.mealsApi, recognizer: options.recognizer, photos: options.mealPhotos, requireOwner });
+      await app.register(mealRoutes, { prefix: "/api", api: options.mealsApi, recognizer: options.recognizer, photos: options.mealPhotos, recognitionModel: options.recognitionModel, requireOwner });
     }
     if (options.api) {
       await app.register(dayRoutes, { prefix: "/api", api: options.api, plans: options.plans, requireOwner });

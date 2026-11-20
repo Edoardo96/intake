@@ -8,11 +8,14 @@ keeps "Chiedi a Claude" as before.
 
 1. The add sheet shows "Foto del piatto" and "Descrivi a parole" (`/pasto/nuovo`, `/pasto/nuovo/testo`).
 2. A photo from the camera or the library is resized **in the browser** (longest edge 1568 px, JPEG quality 0.85)
-   and shown with "Cambia foto" and an optional note. Nothing is sent until "Analizza".
-3. `POST /api/meals/recognize` sends the photo and/or the text to the Claude API (`services/mealRecognition.ts`). The
-   answer is a `record_meal` tool call (or the same object as JSON text): foods, estimated grams eaten, nutrition per
-   100 g (kcal, macros, fiber, sugar, added sugar), and likely hidden fats such as cooking oil marked "not visible".
-   Food names follow the installation language.
+   and shown with "Cambia foto" and an optional note. Nothing is sent until "Analizza". Redrawing the photo on a
+   canvas also drops its EXIF data (GPS position, camera, date): neither Anthropic nor the server receives it.
+3. `POST /api/meals/recognize` sends the photo and/or the text to the Claude API (`services/mealRecognition.ts`,
+   official SDK `@anthropic-ai/sdk`). The answer is a **structured output** (`output_config.format`, a JSON schema
+   with `additionalProperties: false` at every level), so it always has the expected shape: foods, estimated grams
+   eaten, nutrition per 100 g (kcal, macros, fiber, sugar, added sugar), and likely hidden fats such as cooking oil
+   marked "not visible". The ranges (grams, 1–20 foods) are checked after with zod. Food names follow the
+   installation language.
 4. The confirmation screen lets the user change the type, time and grams, remove foods, add a missed one in words
    ("+ Aggiungi alimento", recognized the same way) and also save the meal as a favorite.
 5. Only "Registra pasto" writes to Nutrition (`POST /api/meals` → `log_meal`, with an idempotency key). Fiber, sugar
@@ -20,17 +23,18 @@ keeps "Chiedi a Claude" as before.
 
 ## Model and cost
 
-- `RECOGNITION_MODEL` in `.env` chooses the model; the default is `claude-sonnet-5-5`. `claude-haiku-5-5` is much
-  cheaper and usually good enough for common dishes.
-- One request per "Analizza" or "+ Aggiungi alimento"; nothing runs in the background. The request asks for at most
-  2,000 output tokens and does not turn on extended thinking.
-- Indicative cost per photo (list prices of November 2026: Sonnet 5.5 $2 / $10 and Haiku 5.5 $0.10 / $0.50 per million
-  input / output tokens): a 1568 × 1176 photo is about 2,350 input tokens, the prompt and tool schema about 1,000 more,
-  and the answer 300–800 tokens.
-  - `claude-sonnet-5-5`: about **$0.01–0.015** per photo, less than a cent for a description.
-  - `claude-haiku-5-5`: well under **$0.001** per photo.
-- The key is billed by Anthropic to the account that owns it; the Console (Usage) shows the real cost. A key without
-  credit gives its own message in the app ("Credito Claude esaurito").
+- The model is chosen in **Impostazioni › Funzioni**, under Pasti da foto: **Haiku 5.5 (default)** or Sonnet 5.5
+  (settings key `recognition_model`, `db/recognitionModelStore.ts`). `RECOGNITION_MODEL` in `.env` sets the starting
+  model and, if it names another one, adds it to the choice. The change applies to the next request.
+- One request per "Analizza" or "+ Aggiungi alimento"; nothing runs in the background. The SDK retries 429, 529 and
+  connection errors twice by itself; each attempt times out after 60 s.
+- Thinking is on by default on the 5.5 models and cannot be turned off on Sonnet 5.5; its tokens are billed as output
+  and count against `max_tokens`. The request asks for **`effort: "low"`** (portion estimation needs little
+  reasoning) and allows `max_tokens: 16000`, so an answer is not cut by the thinking; only the tokens generated are
+  paid. An answer that still stops at `max_tokens` is logged and shown as unreadable.
+- Every request logs its usage (model, stop reason, input, output and thinking tokens), never the photo or the text,
+  so the real cost can be read in the server log or in the Anthropic Console.
+- COST_PLACEHOLDER
 
 ## Privacy
 
@@ -56,7 +60,8 @@ keeps "Chiedi a Claude" as before.
 |---|---|
 | 503 `recognition_not_configured` | `ANTHROPIC_API_KEY` missing |
 | 502 `recognition_auth` | invalid key |
-| 402 `recognition_credit` | no credit left |
-| 503 `recognition_busy` | Claude busy (429 / 529 / 503) |
-| 502 `recognition_unreadable` | the answer did not describe a meal |
-| 502 `recognition_failed` | any other failure, including a timeout after 60 s |
+| 402 `recognition_credit` | no credit left (`PaymentRequiredError` or a `billing_error`) |
+| 503 `recognition_busy` | Claude busy (rate limit or overloaded, after the SDK retries) |
+| 422 `recognition_refused` | Claude declined (`stop_reason: refusal`) |
+| 502 `recognition_unreadable` | the answer was cut at `max_tokens`, or did not describe a meal |
+| 502 `recognition_failed` | any other failure, including a timeout |

@@ -6,60 +6,89 @@ import { MealPhotoStore } from "../src/db/mealPhotoStore.js";
 import { buildApp } from "../src/app.js";
 import type { MealRoutesOptions } from "../src/routes/meals.js";
 import { MealRecognizer, RecognitionError } from "../src/services/mealRecognition.js";
+import { RecognitionModelStore } from "../src/db/recognitionModelStore.js";
+import { openDatabase } from "../src/db/database.js";
+import { APIError } from "@anthropic-ai/sdk";
 import { authOptions, signIn } from "./helpers.js";
 
 const answer = {
   description: "Pasta al pomodoro con insalata",
   items: [
     { name: "Pasta al pomodoro (cotta)", grams: 251.4, visible: true, per100g: { kcal: 130, protein: 4.5, carbs: 25, fat: 1.5, fiber: 1.8, sugar: 2.1, addedSugar: 0 } },
-    { name: "Olio extravergine d'oliva", grams: 10, visible: false, per100g: { kcal: 884, protein: 0, carbs: 0, fat: 100 } },
+    { name: "Olio extravergine d'oliva", grams: 10, visible: false, per100g: { kcal: 884, protein: 0, carbs: 0, fat: 100, fiber: 0, sugar: 0, addedSugar: 0 } },
   ],
 };
 
-function fakeFetch(status: number, body: unknown) {
-  return vi.fn(async () => ({ ok: status >= 200 && status < 300, status, json: async () => body }));
+/** A Messages API answer with the given JSON text, stop reason and usage. */
+function message(text: string, stop_reason = "end_turn", usage = { input_tokens: 3400, output_tokens: 520, output_tokens_details: { thinking_tokens: 120 } }) {
+  return { id: "msg_1", type: "message", role: "assistant", model: "m", content: [{ type: "text", text }], stop_reason, usage };
 }
 
+function fakeClient(result: unknown) {
+  return { create: vi.fn(async () => (result instanceof Error ? Promise.reject(result) : result)) };
+}
+
+const apiError = (status: number, type: string, msg = "x") => APIError.generate(status, { type: "error", error: { type, message: msg } }, msg, new Headers());
+
 describe("MealRecognizer", () => {
-  it("sends the photo with the record_meal tool (tool_choice auto, not forced) and returns the foods", async () => {
-    const fetch = fakeFetch(200, { content: [{ type: "text", text: "ok" }, { type: "tool_use", name: "record_meal", input: answer }] });
-    const recognizer = new MealRecognizer({ apiKey: "sk-test", model: "claude-sonnet-5-5", fetch });
+  it("sends the photo with a structured output at low effort and returns the foods", async () => {
+    const client = fakeClient(message(JSON.stringify(answer)));
+    const log = { info: vi.fn(), warn: vi.fn() };
+    const recognizer = new MealRecognizer({ apiKey: "sk-test", model: () => "claude-haiku-5-5", client: client as never, log });
     const meal = await recognizer.recognize({ image: { mediaType: "image/jpeg", data: "aGVsbG8gd29ybGQgaGVsbG8=" }, text: "senza parmigiano" });
 
     expect(meal.description).toBe("Pasta al pomodoro con insalata");
     expect(meal.items[0]).toEqual({ name: "Pasta al pomodoro (cotta)", grams: 251, visible: true, per100g: answer.items[0]!.per100g });
-    expect(meal.items[1]!.per100g).toEqual({ kcal: 884, protein: 0, carbs: 0, fat: 100, fiber: null, sugar: null, addedSugar: null });
+    expect(meal.items[1]!.per100g).toEqual({ kcal: 884, protein: 0, carbs: 0, fat: 100, fiber: 0, sugar: 0, addedSugar: 0 });
 
-    const [url, init] = fetch.mock.calls[0] as unknown as [string, { headers: Record<string, string>; body: string }];
-    expect(url).toBe("https://api.anthropic.com/v1/messages");
-    expect(init.headers["x-api-key"]).toBe("sk-test");
-    const sent = JSON.parse(init.body);
-    expect(sent.model).toBe("claude-sonnet-5-5");
-    expect(sent.tool_choice).toEqual({ type: "auto" });
-    expect(sent.tools[0].input_schema.properties.items.items.properties.per100g.required).toEqual(["kcal", "protein", "carbs", "fat", "fiber", "sugar", "addedSugar"]);
-    expect(sent.tools[0].name).toBe("record_meal");
+    const sent = (client.create.mock.calls[0] as unknown as [Record<string, any>])[0];
+    expect(sent.model).toBe("claude-haiku-5-5");
+    expect(sent.max_tokens).toBe(16_000);
+    expect(sent.output_config.effort).toBe("low");
+    expect(sent.output_config.format.type).toBe("json_schema");
+    const schema = sent.output_config.format.schema;
+    expect(schema.additionalProperties).toBe(false);
+    expect(schema.properties.items.items.additionalProperties).toBe(false);
+    expect(schema.properties.items.items.properties.per100g.additionalProperties).toBe(false);
+    expect(schema.properties.items.items.properties.per100g.required).toEqual(["kcal", "protein", "carbs", "fat", "fiber", "sugar", "addedSugar"]);
+    expect(sent.tools).toBeUndefined();
     expect(sent.messages[0].content[0]).toEqual({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: "aGVsbG8gd29ybGQgaGVsbG8=" } });
     expect(sent.messages[0].content[1].text).toContain("senza parmigiano");
+    // Token usage is logged, never the photo or the text
+    expect(log.info).toHaveBeenCalledWith({ model: "claude-haiku-5-5", stopReason: "end_turn", inputTokens: 3400, outputTokens: 520, thinkingTokens: 120 }, "meal recognition");
   });
 
-  it("accepts the same answer written as JSON in a text block", async () => {
-    const fetch = fakeFetch(200, { content: [{ type: "text", text: `Ecco il pasto:\n${JSON.stringify(answer)}` }] });
-    const meal = await new MealRecognizer({ apiKey: "k", model: "m", fetch }).recognize({ text: "pasta" });
-    expect(meal.items.map((i) => i.name)).toEqual(["Pasta al pomodoro (cotta)", "Olio extravergine d'oliva"]);
+  it("uses the model chosen at the time of each request", async () => {
+    let model = "claude-haiku-5-5";
+    const client = fakeClient(message(JSON.stringify(answer)));
+    const recognizer = new MealRecognizer({ apiKey: "k", model: () => model, client: client as never });
+    await recognizer.recognize({ text: "pasta" });
+    model = "claude-sonnet-5-5";
+    await recognizer.recognize({ text: "pasta" });
+    expect(client.create.mock.calls.map((call) => (call as unknown as [{ model: string }])[0].model)).toEqual(["claude-haiku-5-5", "claude-sonnet-5-5"]);
   });
 
-  it("turns API failures and malformed answers into RecognitionError", async () => {
-    const run = (status: number, body: unknown = {}) =>
-      new MealRecognizer({ apiKey: "k", model: "m", fetch: fakeFetch(status, body) }).recognize({ text: "una mela" }).catch((e: RecognitionError) => e.reason);
-    expect(await run(401)).toBe("auth");
-    expect(await run(529)).toBe("busy");
-    expect(await run(500)).toBe("failed");
-    expect(await run(400, { type: "error", error: { type: "invalid_request_error", message: "Your credit balance is too low to access the Anthropic API." } })).toBe("credit");
-    const error = await new MealRecognizer({ apiKey: "k", model: "m", fetch: fakeFetch(404, { error: { type: "not_found_error", message: "model: m" } }) })
+  it("turns typed API errors, refusals, cut and malformed answers into RecognitionError", async () => {
+    const run = (result: unknown) =>
+      new MealRecognizer({ apiKey: "k", model: () => "m", client: fakeClient(result) as never, log: { info: () => {}, warn: () => {} } })
+        .recognize({ text: "una mela" })
+        .catch((e: RecognitionError) => e.reason);
+    expect(await run(apiError(401, "authentication_error"))).toBe("auth");
+    expect(await run(apiError(403, "permission_error"))).toBe("auth");
+    expect(await run(apiError(402, "billing_error"))).toBe("credit");
+    expect(await run(apiError(400, "billing_error"))).toBe("credit");
+    expect(await run(apiError(429, "rate_limit_error"))).toBe("busy");
+    expect(await run(apiError(529, "overloaded_error"))).toBe("busy");
+    expect(await run(apiError(400, "invalid_request_error"))).toBe("failed");
+    expect(await run(new Error("socket hang up"))).toBe("failed");
+    expect(await run(message("", "refusal"))).toBe("refused");
+    expect(await run(message('{"description":"Pasta', "max_tokens"))).toBe("unreadable");
+    expect(await run(message("not json"))).toBe("unreadable");
+    expect(await run(message(JSON.stringify({ description: "x", items: [] })))).toBe("unreadable");
+    const error = await new MealRecognizer({ apiKey: "k", model: () => "m", client: fakeClient(apiError(404, "not_found_error", "model: m")) as never })
       .recognize({ text: "una mela" })
       .catch((e: RecognitionError) => e);
     expect((error as RecognitionError).message).toBe("Claude API error 404 not_found_error: model: m");
-    expect(await run(200, { content: [{ type: "tool_use", name: "record_meal", input: { description: "x", items: [] } }] })).toBe("unreadable");
   });
 });
 
@@ -76,8 +105,8 @@ describe("recognize and create routes", () => {
     logSavedMeal: async () => ({ id: null }),
   } satisfies MealRoutesOptions["api"];
 
-  async function signedIn(recognizer?: MealRoutesOptions["recognizer"], mealPhotos?: MealPhotoStore) {
-    const app = await buildApp({ auth: authOptions(), mealsApi: api, recognizer, mealPhotos });
+  async function signedIn(recognizer?: MealRoutesOptions["recognizer"], mealPhotos?: MealPhotoStore, recognitionModel?: RecognitionModelStore) {
+    const app = await buildApp({ auth: authOptions(), mealsApi: api, recognizer, mealPhotos, recognitionModel });
     const { cookie } = await signIn(app);
     return { app, headers: { cookie } };
   }
@@ -101,6 +130,33 @@ describe("recognize and create routes", () => {
     const busy = await app.inject({ method: "POST", url: "/api/meals/recognize", headers, payload: { text: "pasta" } });
     expect(busy.statusCode).toBe(503);
     expect(busy.json()).toEqual({ error: "recognition_busy" });
+  });
+
+  it("maps a refusal to 422", async () => {
+    const { app, headers } = await signedIn({ recognize: async () => Promise.reject(new RecognitionError("refused", "declined")) });
+    const refused = await app.inject({ method: "POST", url: "/api/meals/recognize", headers, payload: { text: "pasta" } });
+    expect(refused.statusCode).toBe(422);
+    expect(refused.json()).toEqual({ error: "recognition_refused" });
+  });
+
+  it("reads and changes the model of the next recognitions, Haiku by default", async () => {
+    const store = new RecognitionModelStore(openDatabase(":memory:"));
+    const { app, headers } = await signedIn(undefined, undefined, store);
+    expect((await app.inject({ method: "GET", url: "/api/meals/recognize/model", headers })).json()).toEqual({ model: "claude-haiku-5-5", models: ["claude-haiku-5-5", "claude-sonnet-5-5"] });
+    const changed = await app.inject({ method: "PUT", url: "/api/meals/recognize/model", headers, payload: { model: "claude-sonnet-5-5" } });
+    expect(changed.json().model).toBe("claude-sonnet-5-5");
+    expect(store.get()).toBe("claude-sonnet-5-5");
+    expect((await app.inject({ method: "PUT", url: "/api/meals/recognize/model", headers, payload: { model: "gpt-4" } })).statusCode).toBe(400);
+  });
+
+  it("starts from RECOGNITION_MODEL when set, and offers it too", () => {
+    const db = openDatabase(":memory:");
+    const store = new RecognitionModelStore(db, "claude-opus-5-5");
+    expect(store.get()).toBe("claude-opus-5-5");
+    expect(store.models).toEqual(["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"]);
+    expect(store.set("claude-haiku-5-5")).toBe(true);
+    // The choice is kept in the settings table
+    expect(new RecognitionModelStore(db, "claude-opus-5-5").get()).toBe("claude-haiku-5-5");
   });
 
   it("logs a confirmed meal with its items and an idempotency key", async () => {

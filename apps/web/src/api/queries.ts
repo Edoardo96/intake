@@ -1,4 +1,5 @@
 import type {
+  RecognitionModelResponse,
   DailyScores,
   AddWaterRequest,
   CreateMealRequest,
@@ -71,6 +72,19 @@ export function useSetFeatures() {
       queryClient.setQueryData(featuresKey, features);
       void queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] !== "features" });
     },
+  });
+}
+
+/** Claude model of the meal recognition (Pasti da foto); asked only while the part is on and the key is set. */
+export function useRecognitionModel(enabled: boolean) {
+  return useQuery({ queryKey: ["recognition-model"], queryFn: () => apiFetch<RecognitionModelResponse>("/api/meals/recognize/model"), enabled, staleTime: 5 * 60_000 });
+}
+
+export function useSetRecognitionModel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (model: string) => apiFetch<RecognitionModelResponse>("/api/meals/recognize/model", { method: "PUT", json: { model } }),
+    onSuccess: (data) => queryClient.setQueryData(["recognition-model"], data),
   });
 }
 
