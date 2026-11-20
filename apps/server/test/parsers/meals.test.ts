@@ -137,6 +137,14 @@ describe("parseMeals – date range", () => {
 });
 
 describe("parseMealPatterns", () => {
+  it("reads a new account's answer (\"No data in range.\") as no data, so the daily insight does not fail", async () => {
+    const { parseMealPatterns } = await import("../../src/parsers/mealPatterns.js");
+    expect(parseMealPatterns(fixture("meal-patterns-empty.txt"))).toEqual({
+      value: { startDate: "", endDate: "", loggedDays: 0, windowDays: 0, breakfast: null },
+      warnings: [],
+    });
+  });
+
   it("parses the window and the breakfast effect", async () => {
     const { parseMealPatterns } = await import("../../src/parsers/mealPatterns.js");
     expect(parseMealPatterns(fixture("meal-patterns-7d.txt")).value).toEqual({

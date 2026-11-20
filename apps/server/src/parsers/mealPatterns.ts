@@ -47,8 +47,8 @@ function group(text: string, label: string): EffectGroup | null {
 export function parseMealPatterns(text: string): Parsed<MealPatterns> {
   const header = HEADER.exec(text);
   if (!header) {
-    // "No meals logged…" style answers: nothing to analyse
-    if (/no meals|not enough/i.test(text)) {
+    // "No meals logged…" and "No data in range." (a new account) style answers: nothing to analyse
+    if (/no meals|not enough|no data/i.test(text)) {
       return { value: { startDate: "", endDate: "", loggedDays: 0, windowDays: 0, breakfast: null }, warnings: [] };
     }
     throw new ParseError("unrecognized get_meal_patterns response", text);
