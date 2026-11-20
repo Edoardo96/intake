@@ -12,6 +12,6 @@
 - [ ] `npm run typecheck`, `npm test`, `npm run build` and `npm run check:standards` pass locally
 - [ ] Tests added or updated for new behavior and parser changes
 - [ ] README feature list and the matching `docs/` page updated
-- [ ] User-facing text in Italian in `strings.ts`; code, comments and docs in English
+- [ ] User-facing text in `lib/i18n/` (Italian, English and Dutch); code, comments and docs in English
 - [ ] UI checked at phone, tablet and desktop widths in light and dark mode, colors from tokens only
 - [ ] No secrets, `.env` files or real personal data

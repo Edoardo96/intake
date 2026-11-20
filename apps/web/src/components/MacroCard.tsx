@@ -14,7 +14,7 @@ interface Props {
 /** One meter per macro: eaten / goal with the remaining (or excess) amount in words. */
 export function MacroCard({ totals, goals }: Props) {
   return (
-    <section className="card macro-card" aria-label="Macronutrienti">
+    <section className="card macro-card" aria-label={t.macros.label}>
       {MACROS.map((key) => {
         const eaten = totals[key];
         const goal = goals[key];

@@ -170,7 +170,7 @@ export function PlanPage() {
 
       {shown && day && (
         <>
-          <div className="plan-tabs" role="tablist" aria-label="Giorni">
+          <div className="plan-tabs" role="tablist" aria-label={t.plan.daysTabs}>
             {WEEKDAYS.map((w, i) => (
               <button
                 key={w}

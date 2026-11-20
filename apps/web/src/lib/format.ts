@@ -1,6 +1,6 @@
-/** Italian number and date formatting for the UI. */
+/** Number and date formatting for the UI, in the locale of the installation language (Italian by default). */
 
-const LOCALE = "it-IT";
+import { locale as LOCALE } from "./strings";
 
 // Italian skips the thousands separator below 10,000 by default ("1762"); always group ("1.762")
 const integer = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 0, useGrouping: "always" });
@@ -138,4 +138,25 @@ const fixedOneDecimal = new Intl.NumberFormat(LOCALE, { minimumFractionDigits: 1
 /** Weigh-ins always show one decimal: 75 -> "75,0" */
 export function formatWeight(kg: number): string {
   return fixedOneDecimal.format(kg);
+}
+
+const lists = new Intl.ListFormat(LOCALE, { type: "conjunction" });
+
+/** ["A", "B", "C"] -> "A, B e C" ("A, B and C" in English) */
+export function formatList(items: string[]): string {
+  return lists.format(items);
+}
+
+const weekdayNarrow = new Intl.DateTimeFormat(LOCALE, { weekday: "narrow", timeZone: "UTC" });
+
+/** "2026-11-04" -> "M" (Wednesday's initial in the chosen language) */
+export function formatWeekdayLetter(date: string): string {
+  return weekdayNarrow.format(parseDate(date)).toUpperCase();
+}
+
+const monthLong = new Intl.DateTimeFormat(LOCALE, { month: "long", timeZone: "UTC" });
+
+/** "2026-09-14" -> "settembre" */
+export function formatMonth(date: string): string {
+  return monthLong.format(parseDate(date));
 }

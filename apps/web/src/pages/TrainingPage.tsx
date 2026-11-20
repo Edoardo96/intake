@@ -4,11 +4,9 @@ import { useTraining } from "../api/queries";
 import { TrendsSwitch, TrendsTitle } from "../components/TrendsSwitch";
 import { HeartRateChart } from "../components/WorkoutCard";
 import { addDays } from "../lib/dates";
-import { formatDuration, formatKcal, formatOneDecimal, formatWeekday, formatWeekdayDay } from "../lib/format";
-import { t } from "../lib/strings";
+import { formatDuration, formatKcal, formatList, formatMonth, formatOneDecimal, formatWeekday, formatWeekdayDay } from "../lib/format";
+import { language, t } from "../lib/strings";
 
-const LETTERS = ["L", "M", "M", "G", "V", "S", "D"];
-const MONTHS = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
 const kg = (value: number) => formatOneDecimal(value);
 const shortDate = (date: string) => `${Number(date.slice(8, 10))}/${Number(date.slice(5, 7))}`;
 
@@ -32,7 +30,7 @@ export function exerciseName(exercise: Pick<TrainingTargetExercise, "title" | "t
 const liftName = (title: string) => exerciseName({ title, templateTitle: title });
 
 export function targetText(e: TrainingTargetExercise): string {
-  if (e.label) return e.label.replace(/(\d)\.(\d)/g, "$1,$2");
+  if (e.label) return language === "en" ? e.label : e.label.replace(/(\d)\.(\d)/g, "$1,$2");
   const range = e.repRange ? (e.repRange.start === e.repRange.end ? String(e.repRange.start) : `${e.repRange.start}–${e.repRange.end}`) : null;
   // openGym: the opening sets it computed, with the routine's range for context
   if (e.openingReps != null && e.sets > 0) {
@@ -246,7 +244,7 @@ function Week({ week, planned }: { week: TrainingView["week"]; planned: boolean 
       <div className="training-days">
         {week.days.map((d, i) => (
           <div key={d.date} className="training-day">
-            <span>{LETTERS[i]}</span>
+            <span>{t.weekdaysShort[i]}</span>
             <span
               className="training-day-tile"
               data-active={d.letter ? true : undefined}
@@ -284,7 +282,7 @@ function changeLabel(change: TrainingLift["change"]): { text: string; kind: "up"
     case "last":
       return { text: t.training.lastSession(kg(change.kg)), kind: "up" };
     case "since":
-      return { text: t.training.since(kg(change.kg), MONTHS[Number(change.since.slice(5, 7)) - 1]!), kind: "up" };
+      return { text: t.training.since(kg(change.kg), formatMonth(`${change.since.slice(0, 7)}-15`)), kind: "up" };
     default:
       return { text: t.training.steady, kind: "flat" };
   }
@@ -323,7 +321,7 @@ function LiftChart({ lift }: { lift: TrainingLift }) {
 
 function Lift({ lift, routineTitles }: { lift: TrainingLift; routineTitles: Map<string, string> }) {
   const change = changeLabel(lift.change);
-  const routines = lift.routines.map((letter) => routineTitles.get(letter) ?? letter).join(" e ");
+  const routines = formatList(lift.routines.map((letter) => routineTitles.get(letter) ?? letter));
   return (
     <div className="lift">
       <div className="lift-head">

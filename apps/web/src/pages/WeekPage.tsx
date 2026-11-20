@@ -8,14 +8,14 @@ import { TrendsSwitch, TrendsTitle } from "../components/TrendsSwitch";
 import { familyIcon } from "../components/WorkoutCard";
 import { addDays } from "../lib/dates";
 import { formatGrams, formatKcal, formatShortDate, formatWater, formatWeekday, formatWeekdayDay } from "../lib/format";
-import { t } from "../lib/strings";
+import { locale, t } from "../lib/strings";
 
 const CHART_HEIGHT = 140;
 
 /** "2 – 8 novembre" */
 function weekRange(start: string, end: string): string {
   const [, , startDay] = start.split("-");
-  const endLabel = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${end}T12:00:00Z`));
+  const endLabel = new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${end}T12:00:00Z`));
   const sameMonth = start.slice(0, 7) === end.slice(0, 7);
   return sameMonth ? `${Number(startDay)} – ${endLabel}` : `${formatShortDate(start)} – ${endLabel}`;
 }
@@ -313,7 +313,7 @@ function ConsistencyCard({ week }: { week: WeekView }) {
     ...(c.fiber.goal ? [{ label: t.week.fiberTarget, note: targetNote(c.fiber, (v) => `${formatKcal(v)} g`), value: `${c.fiber.hit}/${c.fiber.total}` }] : []),
     {
       label: t.week.waterTarget,
-      note: c.water.best && c.water.goal ? `${lower(c.water.best.date)} ${formatWater(c.water.best.value)} su ${formatWater(c.water.goal)}${almost(c.water.best.value, c.water.goal)}` : t.week.noCompletedDays,
+      note: c.water.best && c.water.goal ? `${t.week.bestOf(lower(c.water.best.date), formatWater(c.water.best.value), formatWater(c.water.goal))}${almost(c.water.best.value, c.water.goal)}` : t.week.noCompletedDays,
       value: `${c.water.hit}/${c.water.total}`,
     },
     { label: t.week.asPlanned, note: t.week.asPlannedNote(c.skipped), value: String(c.asPlanned) },

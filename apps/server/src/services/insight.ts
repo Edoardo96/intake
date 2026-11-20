@@ -1,4 +1,4 @@
-import type { InsightResponse, Meal } from "@intake/shared";
+import type { InsightResponse, Language, Meal } from "@intake/shared";
 import type { HealthSleep } from "../parsers/healthAutoExport.js";
 import type { MealPatterns } from "../parsers/mealPatterns.js";
 import type { NutritionSummary } from "../parsers/summary.js";
@@ -12,8 +12,52 @@ export const MIN_GROUP_DAYS = 5;
 /** Smallest relative difference worth a sentence. */
 export const MIN_DIFFERENCE = 0.1;
 
-const integer = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 0, useGrouping: "always" } as unknown as Intl.NumberFormatOptions);
-const round = (value: number) => integer.format(Math.round(value));
+const LOCALES: Record<Language, string> = { it: "it-IT", en: "en-GB", nl: "nl-NL" };
+const formatters = new Map<Language, Intl.NumberFormat>();
+function rounder(language: Language): (value: number) => string {
+  let integer = formatters.get(language);
+  if (!integer) {
+    integer = new Intl.NumberFormat(LOCALES[language], { maximumFractionDigits: 0, useGrouping: "always" } as unknown as Intl.NumberFormatOptions);
+    formatters.set(language, integer);
+  }
+  return (value: number) => integer.format(Math.round(value));
+}
+
+type N = string;
+/** Insight sentences, one set per UI language (Profilo › Lingua). */
+const TEXTS: Record<Language, {
+  shortNight: (short: N, rested: N) => string;
+  steps: (goal: N, active: N, quiet: N) => string;
+  breakfast: (withIt: N, without: N) => string;
+  perMeal: (perMeal: N, goal: N, needed: N) => string;
+  weekend: (weekend: N, weekday: N) => string;
+  window: (windowDays: number, days: number) => string;
+}> = {
+  it: {
+    shortNight: (a, b) => `Dopo una notte sotto le 7 ore mangi in media ${a} kcal, contro ${b} kcal quando dormi di più.`,
+    steps: (goal, a, b) => `Nei giorni con almeno ${goal} passi mangi in media ${a} kcal, contro ${b} kcal negli altri.`,
+    breakfast: (a, b) => `Nei giorni in cui fai colazione arrivi a ${a} g di proteine, contro ${b} g quando la salti.`,
+    perMeal: (perMeal, goal, needed) => `In media un pasto ti porta ${perMeal} g di proteine: per arrivare a ${goal} g al giorno ne servono circa ${needed} a pasto.`,
+    weekend: (a, b) => `Nel weekend mangi in media ${a} kcal, contro ${b} kcal nei giorni feriali.`,
+    window: (w, d) => `Ultimi ${w} giorni · ${d === 1 ? "1 giorno registrato" : `${d} giorni registrati`}`,
+  },
+  en: {
+    shortNight: (a, b) => `After a night under 7 hours you eat ${a} kcal on average, against ${b} kcal when you sleep longer.`,
+    steps: (goal, a, b) => `On days with at least ${goal} steps you eat ${a} kcal on average, against ${b} kcal on the other days.`,
+    breakfast: (a, b) => `On days you have breakfast you reach ${a} g of protein, against ${b} g when you skip it.`,
+    perMeal: (perMeal, goal, needed) => `On average a meal gives you ${perMeal} g of protein: to reach ${goal} g a day you need about ${needed} per meal.`,
+    weekend: (a, b) => `At the weekend you eat ${a} kcal on average, against ${b} kcal on weekdays.`,
+    window: (w, d) => `Last ${w} days · ${d === 1 ? "1 day logged" : `${d} days logged`}`,
+  },
+  nl: {
+    shortNight: (a, b) => `Na een nacht van minder dan 7 uur eet je gemiddeld ${a} kcal, tegen ${b} kcal als je langer slaapt.`,
+    steps: (goal, a, b) => `Op dagen met minstens ${goal} stappen eet je gemiddeld ${a} kcal, tegen ${b} kcal op de andere dagen.`,
+    breakfast: (a, b) => `Op dagen dat je ontbijt kom je op ${a} g eiwit, tegen ${b} g als je het overslaat.`,
+    perMeal: (perMeal, goal, needed) => `Gemiddeld levert een maaltijd je ${perMeal} g eiwit: om ${goal} g per dag te halen heb je ongeveer ${needed} per maaltijd nodig.`,
+    weekend: (a, b) => `In het weekend eet je gemiddeld ${a} kcal, tegen ${b} kcal op doordeweekse dagen.`,
+    window: (w, d) => `Laatste ${w} dagen · ${d === 1 ? "1 dag geregistreerd" : `${d} dagen geregistreerd`}`,
+  },
+};
 
 export interface InsightInput {
   today: string;
@@ -48,8 +92,10 @@ function compareKcal(a: number[], b: number[]): { a: number; b: number } | null 
  * Sentences that cross Apple Health with what was eaten, over completed logged days (today is left out):
  * calories after a short night (under 7 hours, assigned to the wake-up day) and on days at the step goal.
  */
-export function healthCandidates({ today, summary, health }: InsightInput): Candidate[] {
+export function healthCandidates({ today, summary, health }: InsightInput, language: Language = "it"): Candidate[] {
   if (!health) return [];
+  const text = TEXTS[language];
+  const round = rounder(language);
   const from = addDays(today, -(HEALTH_WINDOW_DAYS - 1));
   const eaten = new Map(summary.days.filter((d) => d.mealCount > 0 && d.date >= from && d.date < today).map((d) => [d.date, d.kcal]));
   const candidates: Candidate[] = [];
@@ -64,7 +110,7 @@ export function healthCandidates({ today, summary, health }: InsightInput): Cand
   const sleep = compareKcal(short, rested);
   if (sleep) {
     candidates.push({
-      text: `Dopo una notte sotto le 7 ore mangi in media ${round(sleep.a)} kcal, contro ${round(sleep.b)} kcal quando dormi di più.`,
+      text: text.shortNight(round(sleep.a), round(sleep.b)),
       windowDays: HEALTH_WINDOW_DAYS,
     });
   }
@@ -79,7 +125,7 @@ export function healthCandidates({ today, summary, health }: InsightInput): Cand
   const steps = compareKcal(active, quiet);
   if (steps) {
     candidates.push({
-      text: `Nei giorni con almeno ${round(health.stepGoal)} passi mangi in media ${round(steps.a)} kcal, contro ${round(steps.b)} kcal negli altri.`,
+      text: text.steps(round(health.stepGoal), round(steps.a), round(steps.b)),
       windowDays: HEALTH_WINDOW_DAYS,
     });
   }
@@ -90,16 +136,16 @@ export function healthCandidates({ today, summary, health }: InsightInput): Cand
  * Candidate sentences built only from real figures; one is picked per day, deterministically,
  * so the card is stable during the day and changes from one day to the next. No LLM involved.
  */
-export function insightCandidates(input: InsightInput): Candidate[] {
+export function insightCandidates(input: InsightInput, language: Language = "it"): Candidate[] {
   const { today, patterns, meals, summary, proteinGoal } = input;
+  const text = TEXTS[language];
+  const round = rounder(language);
   const candidates: string[] = [];
 
   // Breakfast effect, as computed by the Nutrition server
   const breakfast = patterns.breakfast;
   if (breakfast && breakfast.with.days > 0 && breakfast.without.days > 0 && Math.abs(breakfast.with.protein - breakfast.without.protein) >= 5) {
-    candidates.push(
-      `Nei giorni in cui fai colazione arrivi a ${round(breakfast.with.protein)} g di proteine, contro ${round(breakfast.without.protein)} g quando la salti.`,
-    );
+    candidates.push(text.breakfast(round(breakfast.with.protein), round(breakfast.without.protein)));
   }
 
   // Protein per meal against the daily goal
@@ -109,9 +155,7 @@ export function insightCandidates(input: InsightInput): Candidate[] {
     const mealsPerDay = meals.length / loggedDays;
     const needed = proteinGoal / Math.max(3, Math.round(mealsPerDay));
     if (needed - perMeal >= 3) {
-      candidates.push(
-        `In media un pasto ti porta ${round(perMeal)} g di proteine: per arrivare a ${round(proteinGoal)} g al giorno ne servono circa ${round(needed)} a pasto.`,
-      );
+      candidates.push(text.perMeal(round(perMeal), round(proteinGoal), round(needed)));
     }
   }
 
@@ -125,16 +169,16 @@ export function insightCandidates(input: InsightInput): Candidate[] {
     const weekendAvg = avg(weekend);
     const weekdayAvg = avg(weekday);
     if (Math.abs(weekendAvg - weekdayAvg) >= 150) {
-      candidates.push(`Nel weekend mangi in media ${round(weekendAvg)} kcal, contro ${round(weekdayAvg)} kcal nei giorni feriali.`);
+      candidates.push(text.weekend(round(weekendAvg), round(weekdayAvg)));
     }
   }
 
-  return [...candidates.map((text) => ({ text, windowDays: WINDOW_DAYS })), ...healthCandidates(input)];
+  return [...candidates.map((text) => ({ text, windowDays: WINDOW_DAYS })), ...healthCandidates(input, language)];
 }
 
-export function pickInsight(input: InsightInput): InsightResponse["insight"] {
+export function pickInsight(input: InsightInput, language: Language = "it"): InsightResponse["insight"] {
   if (input.patterns.loggedDays < MIN_LOGGED_DAYS) return null;
-  const candidates = insightCandidates(input);
+  const candidates = insightCandidates(input, language);
   if (candidates.length === 0) return null;
   const dayNumber = Math.floor(Date.parse(`${input.today}T12:00:00Z`) / 86_400_000);
   const chosen = candidates[dayNumber % candidates.length]!;
@@ -144,6 +188,6 @@ export function pickInsight(input: InsightInput): InsightResponse["insight"] {
     chosen.windowDays === WINDOW_DAYS ? input.patterns.loggedDays : input.summary.days.filter((d) => d.mealCount > 0 && d.date >= from).length;
   return {
     text: chosen.text,
-    window: `Ultimi ${chosen.windowDays} giorni · ${days === 1 ? "1 giorno registrato" : `${days} giorni registrati`}`,
+    window: TEXTS[language].window(chosen.windowDays, days),
   };
 }

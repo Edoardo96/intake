@@ -84,7 +84,7 @@ function LoggedCard({ meal }: { meal: Meal }) {
       </header>
       <p className="meal-summary">{mealSummary(meal)}</p>
       {chips.length > 0 && (
-        <ul className="chips" aria-label="Macronutrienti del pasto">
+        <ul className="chips" aria-label={t.timeline.mealMacros}>
           {chips.map((key) => (
             <li key={key} className="chip" data-macro={key}>
               {t.macroChips[key]} {formatGramsShort(values[key]!)} g

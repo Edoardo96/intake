@@ -32,7 +32,7 @@ CI runs the same commands; a pull request with a red check is not merged.
 ### Language
 
 - Code, comments, documentation, commit messages, branch names and pull requests: **English**.
-- User-facing text: **Italian**, only in `apps/web/src/lib/strings.ts` (the server notification texts in `apps/server/src/services/reminders.ts` are the only exception). Numbers and dates go through `apps/web/src/lib/format.ts`.
+- User-facing text: only in `apps/web/src/lib/i18n/`. **Italian** (`it.ts`) is the reference, the default and the fallback; add every new text to `en.ts` (English) and `nl.ts` (Dutch) too, with the same keys. `npm run typecheck` fails when a translation is missing; if you cannot translate a text, ask in the pull request. The server notification texts (`apps/server/src/services/reminders.ts`) and the daily insight sentences (`apps/server/src/services/insight.ts`) are the only exceptions, in the same three languages. Numbers and dates go through `apps/web/src/lib/format.ts`, which follows the chosen language.
 
 ### Commits and pull requests
 

@@ -1,4 +1,4 @@
-import { mealTimes, planDay } from "@intake/shared";
+import { mealTimes, planDay, type Language } from "@intake/shared";
 import type { PlanStore } from "../db/planStore.js";
 import type { ReminderStore, StoredSubscription } from "../db/reminderStore.js";
 import type { NutritionApi } from "../mcp/nutritionApi.js";
@@ -18,6 +18,8 @@ export interface ReminderSchedulerDeps {
   log: { warn(details: object, message: string): void; info(details: object, message: string): void };
   /** False while the Promemoria part is off: the checks are skipped. */
   enabled?: () => boolean;
+  /** Installation language of the notification text (Profilo › Lingua); Italian when missing. */
+  language?: () => Language;
 }
 
 /**
@@ -86,7 +88,7 @@ export class ReminderScheduler {
 
     let sent = 0;
     for (const slot of slots) {
-      const notification = buildNotification(slot, { now, entries, totals: progress?.totals ?? null, goals: progress?.goals ?? null });
+      const notification = buildNotification(slot, { now, entries, totals: progress?.totals ?? null, goals: progress?.goals ?? null }, this.deps.language?.() ?? "it");
       // Marked even when it no longer applies, so it is not checked again every minute
       store.markSent(slot.key);
       if (notification) sent += await this.sendAll(notification);

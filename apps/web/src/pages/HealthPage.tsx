@@ -5,7 +5,7 @@ import { ApiError } from "../api/client";
 import { useHealthImport, useHealthStatus, useHealthSync, useHealthSyncAction } from "../api/queries";
 import { BackIcon } from "../components/icons";
 import { addDays } from "../lib/dates";
-import { formatClock, formatDayLongMonth, formatDayMonth, formatKcal, formatMegabytes, formatShortDate, localIsoDate } from "../lib/format";
+import { formatClock, formatDayLongMonth, formatDayMonth, formatKcal, formatMegabytes, formatShortDate, localIsoDate, formatList } from "../lib/format";
 import { t } from "../lib/strings";
 
 /** Same limit as the server (HEALTH_IMPORT_MAX_BYTES). */
@@ -286,7 +286,7 @@ function duplicateRecords(dup: HealthDuplicate): string {
   return [...bySource.entries()]
     .map(([source, records]) => {
       const name = dup.renamed ? ` "${records[0]!.label}"` : "";
-      return `${source}${name} ${records.map((r) => `${r.start}–${r.end}`).join(" e ")}`;
+      return `${source}${name} ${formatList(records.map((r) => `${r.start}–${r.end}`))}`;
     })
     .join(" · ");
 }

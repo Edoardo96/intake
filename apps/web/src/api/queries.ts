@@ -30,9 +30,12 @@ import type {
   FeatureKey,
   FeaturesResponse,
   FeaturesUpdate,
+  Language,
+  LanguageResponse,
 } from "@intake/shared";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, apiFetch, newIdempotencyKey } from "./client";
+import { rememberLanguage } from "../lib/strings";
 
 export interface User {
   email: string;
@@ -508,5 +511,15 @@ export function useHealthDay(date: string) {
     queryKey: ["health", "day", date],
     queryFn: () => apiFetch<HealthDay>(`/api/health/days/${date}`),
     placeholderData: keepPreviousData,
+  });
+}
+
+/** Profilo › Lingua: one language for the whole installation; the app reloads in it once saved. */
+export function useSetLanguage() {
+  return useMutation({
+    mutationFn: (language: Language) => apiFetch<LanguageResponse>("/api/language", { method: "PUT", json: { language } }),
+    onSuccess: ({ language }) => {
+      if (rememberLanguage(language)) window.location.reload();
+    },
   });
 }
