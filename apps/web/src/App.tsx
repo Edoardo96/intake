@@ -11,6 +11,7 @@ import { EditMealPage } from "./pages/EditMealPage";
 import { HealthPage } from "./pages/HealthPage";
 import { HealthTrendsPage } from "./pages/HealthTrendsPage";
 import { MealPage } from "./pages/MealPage";
+import { NewMealPage } from "./pages/NewMealPage";
 import { PlanPage } from "./pages/PlanPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { WeekPage } from "./pages/WeekPage";
@@ -91,6 +92,8 @@ function SignedIn({ user, notice, adding, openAdd, closeAdd }: SignedInProps) {
         <Route path="/salute">
           <Redirect to="/profilo/salute" replace />
         </Route>
+        <Route path="/pasto/nuovo/testo">{on?.recognition ? <NewMealPage initialMode="text" /> : home}</Route>
+        <Route path="/pasto/nuovo">{on?.recognition ? <NewMealPage initialMode="photo" /> : home}</Route>
         <Route path="/pasto/:date/:id/modifica">{(params) => <EditMealPage date={params.date} id={params.id} />}</Route>
         <Route path="/pasto/:date/:id">{(params) => <MealPage date={params.date} id={params.id} />}</Route>
         <Route path="/profilo/salute">{on?.health ? <HealthPage /> : home}</Route>

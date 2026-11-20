@@ -223,12 +223,17 @@ All of these map to existing Nutrition MCP tools:
 | Water +250 / +500 ml | `log_water` |
 | Today's plan meals not yet logged | `log_meal` with the plan's full nutrients, then link plan entry ↔ meal in SQLite |
 | Repeat a recent meal | `get_meals_by_date_range` → `log_meal` with the same items |
-| Saved meals (section "PREFERITI": name · kcal, description, "Registra"; one tap logs it now and closes the sheet; the type is the saved meal's default, else the time of day on the profile clock; with none, a row in ALTRO CIBO explains how to save one) | `get_saved_meals` → `log_saved_meal` |
+| Saved meals (section "PREFERITI": name · kcal, description, "Registra"; one tap logs it now and closes the sheet; a small × on the right asks in the row "Eliminare “…” dai preferiti?" with Annulla / Elimina (danger) and deletes it from Nutrition; the type is the saved meal's default, else the time of day on the profile clock; with none, a row in ALTRO CIBO explains how to save one) | `get_saved_meals` → `log_saved_meal`, `delete_saved_meal` |
 | Search food + quantity | `search_foods`, `get_food_macros` → `log_meal` |
 | Barcode scan | camera scan in the browser (JS library such as ZXing; Safari has no `BarcodeDetector`) → `lookup_barcode` → `log_meal` |
 
-Not in the app: photo recognition and free-text descriptions ("I had a margherita pizza").
-They need an LLM; the user keeps doing those through Claude, which writes to the same Nutrition account.
+Photo recognition and free-text descriptions ("I had a margherita pizza") are in the app while the optional part
+Pasti da foto is on and `ANTHROPIC_API_KEY` is set: two tiles at the top of the add sheet ("Foto del piatto",
+"Descrivi a parole") open `/pasto/nuovo`. A picked photo is shown first with "Cambia foto" and an optional note, and
+is sent only with "Analizza". The confirmation screen is built like `Modifica.dc.html` (meal type, time, foods with
+− / + grams, "Stimato · non visibile" pill on hidden fats in the to-log colors, "+ Aggiungi alimento", values, a
+"Salva anche come preferito" switch with a name) and logs the meal with `log_meal`. The photo is kept and shown as a
+thumbnail on the Timeline card and on top of the meal detail. With the part off, the "Chiedi a Claude" row stays.
 Suggested order: water + plan meals + repeat recent in v1, then saved meals; search and barcode in phase 2.
 
 ## Design tokens

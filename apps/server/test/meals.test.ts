@@ -106,6 +106,7 @@ describe("meal routes", () => {
       saveMeal: async () => {},
       savedMeals: async () => parseSavedMeals(fixture("saved-meals.txt")).value,
       logSavedMeal: async () => ({ id: "saved-copy-id" }),
+      deleteSavedMeal: async () => true,
       ...overrides,
     };
   }
@@ -169,6 +170,16 @@ describe("meal routes", () => {
     const { app, headers } = await signedIn(fakeApi({ savedMeals }));
     const list = await app.inject({ method: "GET", url: "/api/meals/saved", headers });
     expect(list.statusCode).toBe(502);
+  });
+
+  it("deletes a favorite, 404 when Nutrition has no such saved meal", async () => {
+    const deleteSavedMeal = vi.fn(async (id: string) => id === "6f1c2a9e-3b7d-4c21-9a0e-5d8b7c6a1f23");
+    const { app, headers } = await signedIn(fakeApi({ deleteSavedMeal }));
+    const ok = await app.inject({ method: "DELETE", url: "/api/meals/saved/6F1C2A9E-3B7D-4C21-9A0E-5D8B7C6A1F23", headers });
+    expect(ok.statusCode).toBe(200);
+    expect(deleteSavedMeal).toHaveBeenCalledWith("6f1c2a9e-3b7d-4c21-9a0e-5d8b7c6a1f23");
+    expect((await app.inject({ method: "DELETE", url: "/api/meals/saved/11111111-2222-4333-8444-555555555555", headers })).statusCode).toBe(404);
+    expect((await app.inject({ method: "DELETE", url: "/api/meals/saved/not-an-id", headers })).statusCode).toBe(400);
   });
 
   it("picks the meal type from the time of day", () => {

@@ -8,6 +8,8 @@ import { HealthStore } from "./db/healthStore.js";
 import { HevySyncStore } from "./db/hevySyncStore.js";
 import { LanguageStore } from "./db/languageStore.js";
 import { BackupStore } from "./db/backupStore.js";
+import { MealPhotoStore } from "./db/mealPhotoStore.js";
+import { RecognitionModelStore } from "./db/recognitionModelStore.js";
 import { PlanStore } from "./db/planStore.js";
 import { ReminderStore } from "./db/reminderStore.js";
 import { SecretStore } from "./db/secretStore.js";
@@ -23,6 +25,8 @@ export interface Services {
   features: FeatureStore;
   language: LanguageStore;
   backups: BackupStore;
+  mealPhotos: MealPhotoStore;
+  recognitionModel: RecognitionModelStore;
   nutrition: NutritionConnection;
   close(): Promise<void>;
 }
@@ -47,6 +51,8 @@ export function createServices(config: Config): Services {
     features: new FeatureStore(db),
     language: new LanguageStore(db),
     backups: new BackupStore(db),
+    mealPhotos: new MealPhotoStore(join(config.DATA_DIR, "meal-photos")),
+    recognitionModel: new RecognitionModelStore(db, config.RECOGNITION_MODEL),
     nutrition,
     async close() {
       await nutrition.close();

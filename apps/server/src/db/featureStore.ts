@@ -8,12 +8,14 @@ export interface Features {
   health: boolean;
   reminders: boolean;
   water: boolean;
+  photoMeals: boolean;
 }
 
 const SETTINGS_KEY = "features";
 
 /** A new installation starts with only Alimentazione on until the first-run setup chooses. */
-const FRESH: Features = { setupDone: false, training: false, health: false, reminders: false, water: true };
+/** Photo meals start off on every installation, new or existing: the add sheet stays as it was until the switch is turned on. */
+const FRESH: Features = { setupDone: false, training: false, health: false, reminders: false, water: true, photoMeals: false };
 
 /**
  * Which optional parts of the app are on (docs/features.md). Stored for the whole installation in the settings
@@ -54,7 +56,7 @@ export class FeatureStore {
     const used = health || has("SELECT 1 FROM push_subscriptions LIMIT 1") || has("SELECT 1 FROM plans LIMIT 1") || has("SELECT 1 FROM settings WHERE key IN ('training_source', 'hevy_sync') LIMIT 1");
     if (!used) return;
     // Promemoria costs nothing without subscribed devices, so it stays visible as before
-    this.set({ setupDone: true, training: options.gymConfigured, health, reminders: true, water: true });
+    this.set({ setupDone: true, training: options.gymConfigured, health, reminders: true, water: true, photoMeals: false });
   }
 }
 

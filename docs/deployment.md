@@ -43,6 +43,7 @@ The tunnel's published application points at an IP address, so `dockerdmz` must 
    - `PUBLIC_BASE_URL`: the public https URL, without a trailing slash
    - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `OWNER_EMAIL`
    - optional `HEVY_API_KEY` (Hevy Pro → Settings → Developer) to show workouts; add it later at any time and run `bash deploy.sh` again
+   - optional `ANTHROPIC_API_KEY` (console.anthropic.com → API keys, billed per use) to log meals from a photo or a description; the model is chosen in Impostazioni › Funzioni (Haiku by default; `RECOGNITION_MODEL` sets the starting one)
    - optional `OPENGYM_URL` and `OPENGYM_TOKEN` to read workouts from openGym instead (see [opengym.md](opengym.md)); with both configured, the source is chosen in Profile › Connections
 4. In Google Cloud Console add `<PUBLIC_BASE_URL>/auth/callback` to the OAuth client's authorized redirect URIs (see [google-sign-in.md](google-sign-in.md)). The localhost one can stay for development.
 5. Build and start:

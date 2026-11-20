@@ -1,6 +1,10 @@
 import type {
+  RecognitionModelResponse,
   DailyScores,
   AddWaterRequest,
+  CreateMealRequest,
+  RecognizeMealRequest,
+  RecognizedMeal,
   DayView,
   FavoriteMealRequest,
   HealthDay,
@@ -68,6 +72,19 @@ export function useSetFeatures() {
       queryClient.setQueryData(featuresKey, features);
       void queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] !== "features" });
     },
+  });
+}
+
+/** Claude model of the meal recognition (Pasti da foto); asked only while the part is on and the key is set. */
+export function useRecognitionModel(enabled: boolean) {
+  return useQuery({ queryKey: ["recognition-model"], queryFn: () => apiFetch<RecognitionModelResponse>("/api/meals/recognize/model"), enabled, staleTime: 5 * 60_000 });
+}
+
+export function useSetRecognitionModel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (model: string) => apiFetch<RecognitionModelResponse>("/api/meals/recognize/model", { method: "PUT", json: { model } }),
+    onSuccess: (data) => queryClient.setQueryData(["recognition-model"], data),
   });
 }
 
@@ -236,6 +253,40 @@ export function useRepeatMeal() {
   });
 }
 
+/** Foods, grams and nutrition from a photo or a description (Claude API); nothing is logged yet. */
+export function useRecognizeMeal() {
+  return useMutation({
+    mutationFn: (request: RecognizeMealRequest) => apiFetch<RecognizedMeal>("/api/meals/recognize", { method: "POST", json: request }),
+  });
+}
+
+/** Logs a new meal confirmed by the user (e.g. after the recognition). */
+export function useCreateMeal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: CreateMealRequest) => apiFetch<{ mealId: string | null; photoSaved: boolean; favoriteSaved: boolean }>("/api/meals", { method: "POST", json: request }),
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ["meal-photos"] });
+      void queryClient.invalidateQueries({ queryKey: ["saved-meals"] });
+      return invalidateDays(queryClient);
+    },
+  });
+}
+
+/** Ids of the meals that have a photo kept on the server (logged from a photo). */
+export function useMealPhotos() {
+  // Kept photos belong to the photo meals part: while it is off they are not shown (and the route answers 404)
+  const on = useFeatures().data?.recognition ?? false;
+  return useQuery({
+    queryKey: ["meal-photos"],
+    enabled: on,
+    queryFn: () => apiFetch<{ mealIds: string[] }>("/api/meals/photos").then((r) => new Set(r.mealIds)),
+    staleTime: 5 * 60_000,
+  });
+}
+
+export const mealPhotoUrl = (id: string) => `/api/meals/${id}/photo`;
+
 /** Saved meals ("preferiti") on Nutrition, for the add sheet. */
 export function useSavedMeals() {
   return useQuery({
@@ -254,6 +305,15 @@ export function useLogSavedMeal() {
   });
 }
 
+/** Deletes a favorite on Nutrition; the list of the add sheet reloads. */
+export function useDeleteSavedMeal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (meal: SavedMeal) => apiFetch(`/api/meals/saved/${meal.id}`, { method: "DELETE" }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["saved-meals"] }),
+  });
+}
+
 export function useUpdateMeal() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -266,7 +326,10 @@ export function useDeleteMeal() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => apiFetch(`/api/meals/${id}`, { method: "DELETE" }),
-    onSettled: () => invalidateDays(queryClient),
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ["meal-photos"] });
+      return invalidateDays(queryClient);
+    },
   });
 }
 

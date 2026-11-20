@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useAddWater, useDay, useFeature, useLogPlanned, useLogSavedMeal, useRecentMeals, useRepeatMeal, useSavedMeals } from "../api/queries";
+import { Link } from "wouter";
+import { useAddWater, useDay, useFeature, useFeatures, useLogPlanned, useLogSavedMeal, useDeleteSavedMeal, useRecentMeals, useRepeatMeal, useSavedMeals } from "../api/queries";
 import { formatKcal, formatShortDate } from "../lib/format";
 import { t } from "../lib/strings";
 import { CloseIcon } from "./icons";
@@ -39,6 +40,7 @@ const WATER_AMOUNTS = [200, 250];
 export function AddSheet({ onClose }: Props) {
   const addWater = useAddWater("today");
   const water = useFeature("water");
+  const recognition = useFeatures().data?.recognition ?? false;
   const today = useDay("today");
   const logPlanned = useLogPlanned("today");
   const [showRecent, setShowRecent] = useState(false);
@@ -46,6 +48,8 @@ export function AddSheet({ onClose }: Props) {
   const repeat = useRepeatMeal();
   const saved = useSavedMeals();
   const logSaved = useLogSavedMeal();
+  const deleteSaved = useDeleteSavedMeal();
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const firstButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -72,6 +76,31 @@ export function AddSheet({ onClose }: Props) {
             <CloseIcon size={18} strokeWidth={2.5} />
           </button>
         </div>
+
+        {recognition && (
+          <div className="capture-tiles">
+            <Link href="/pasto/nuovo" className="capture-tile" data-primary onClick={onClose}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
+                <circle cx="12" cy="13" r="3.5" />
+              </svg>
+              <span>
+                <strong>{t.newMeal.photo}</strong>
+                <span className="capture-tile-hint">{t.newMeal.photoHint}</span>
+              </span>
+            </Link>
+            <Link href="/pasto/nuovo/testo" className="capture-tile" onClick={onClose}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4 6h16v10H9l-5 4z" />
+                <path d="M8 10h8M8 13h5" />
+              </svg>
+              <span>
+                <strong>{t.newMeal.text}</strong>
+                <span className="capture-tile-hint">{t.newMeal.textHint}</span>
+              </span>
+            </Link>
+          </div>
+        )}
 
         {water && (
           <div className="sheet-water">
@@ -123,26 +152,58 @@ export function AddSheet({ onClose }: Props) {
           <>
             <span className="sheet-section">{t.addSheet.savedSection}</span>
             <div className="sheet-list">
-              {saved.data.map((meal) => (
-                <button
-                  key={meal.id}
-                  type="button"
-                  className="sheet-row"
-                  disabled={logSaved.isPending}
-                  onClick={() => logSaved.mutate(meal, { onSuccess: onClose })}
-                >
-                  <span className="sheet-row-text">
-                    <strong>
-                      {meal.name}
-                      {meal.kcal !== null && ` · ${formatKcal(meal.kcal)} kcal`}
-                    </strong>
-                    {meal.description && <span className="muted">{meal.description}</span>}
-                  </span>
-                  <span className="sheet-row-action">{t.addSheet.log}</span>
-                </button>
-              ))}
+              {saved.data.map((meal) =>
+                confirmDelete === meal.id ? (
+                  // Deleting is confirmed in place: the favorite goes from Nutrition, logged meals keep their values
+                  <div key={meal.id} className="sheet-row saved-confirm" data-static role="group" aria-label={t.addSheet.deleteSavedConfirm(meal.name)}>
+                    <span className="sheet-row-text">
+                      <strong>{t.addSheet.deleteSavedConfirm(meal.name)}</strong>
+                      <span className="muted">{t.addSheet.deleteSavedNote}</span>
+                    </span>
+                    <span className="saved-confirm-actions">
+                      <button type="button" className="button-secondary-small" onClick={() => setConfirmDelete(null)}>
+                        {t.addSheet.deleteSavedNo}
+                      </button>
+                      <button
+                        type="button"
+                        className="button-secondary-small"
+                        data-kind="danger"
+                        disabled={deleteSaved.isPending}
+                        onClick={() => deleteSaved.mutate(meal, { onSuccess: () => setConfirmDelete(null) })}
+                      >
+                        {t.addSheet.deleteSavedYes}
+                      </button>
+                    </span>
+                  </div>
+                ) : (
+                  <div key={meal.id} className="sheet-row saved-row" data-static>
+                    <button type="button" className="sheet-row" disabled={logSaved.isPending} onClick={() => logSaved.mutate(meal, { onSuccess: onClose })}>
+                      <span className="sheet-row-text">
+                        <strong>
+                          {meal.name}
+                          {meal.kcal !== null && ` · ${formatKcal(meal.kcal)} kcal`}
+                        </strong>
+                        {meal.description && <span className="muted">{meal.description}</span>}
+                      </span>
+                      <span className="sheet-row-action">{t.addSheet.log}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-button saved-delete"
+                      aria-label={t.addSheet.deleteSaved(meal.name)}
+                      onClick={() => {
+                        deleteSaved.reset();
+                        setConfirmDelete(meal.id);
+                      }}
+                    >
+                      <CloseIcon size={18} />
+                    </button>
+                  </div>
+                ),
+              )}
             </div>
             {logSaved.isError && <p className="error-text">{t.timeline.logFailed}</p>}
+            {deleteSaved.isError && <p className="error-text">{t.addSheet.deleteSavedFailed}</p>}
           </>
         )}
 
@@ -190,14 +251,16 @@ export function AddSheet({ onClose }: Props) {
               </span>
             </div>
           )}
-          <a className="sheet-row" href={CLAUDE_URL} target="_blank" rel="noreferrer">
-            <RowIcon path={ROW_ICONS.claude} />
-            <span className="sheet-row-text">
-              <strong>{t.addSheet.claude}</strong>
-              <span className="muted">{t.addSheet.claudeHint}</span>
-            </span>
-            <span className="sheet-row-action">{t.addSheet.open}</span>
-          </a>
+          {!recognition && (
+            <a className="sheet-row" href={CLAUDE_URL} target="_blank" rel="noreferrer">
+              <RowIcon path={ROW_ICONS.claude} />
+              <span className="sheet-row-text">
+                <strong>{t.addSheet.claude}</strong>
+                <span className="muted">{t.addSheet.claudeHint}</span>
+              </span>
+              <span className="sheet-row-action">{t.addSheet.open}</span>
+            </a>
+          )}
         </div>
       </div>
     </Scrim>

@@ -37,6 +37,17 @@ describe("NutritionApi", () => {
     await api.setGoals({ targetWeight: 160, weightUnit: "lb" });
     expect(callTool).toHaveBeenLastCalledWith("set_nutrition_goals", { target_weight: 160, unit: "lb" });
   });
+
+  it("deletes a saved meal by id and tells when Nutrition had none", async () => {
+    // Answers of the Nutrition server (src/mcp/tools/saved-meals.ts upstream)
+    const callTool = vi.fn(async (_tool: string, args: Record<string, unknown>) =>
+      result(args.id === "a" ? 'Saved meal "Colazione solita" deleted. Meals already logged from it keep their values.' : `No saved meal found with id ${String(args.id)}.`),
+    );
+    const api = new NutritionApi({ callTool });
+    expect(await api.deleteSavedMeal("a")).toBe(true);
+    expect(callTool).toHaveBeenCalledWith("delete_saved_meal", { id: "a" });
+    expect(await api.deleteSavedMeal("b")).toBe(false);
+  });
 });
 
 describe("NutritionApi export", () => {

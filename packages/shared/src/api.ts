@@ -105,6 +105,35 @@ export interface UpdateMealRequest {
   totals?: { kcal: number; protein: number; carbs: number; fat: number };
 }
 
+/** POST /api/meals: logs a new meal (e.g. confirmed from a photo); same shape as an edit plus an idempotency key. */
+export interface CreateMealRequest extends UpdateMealRequest {
+  idempotencyKey: string;
+  /** The photo the meal was recognized from (resized JPEG, base64), kept on the server with the meal. */
+  photo?: { mediaType: "image/jpeg"; data: string };
+  /** Also save the new meal as a favorite (saved meal) with this name. */
+  favoriteName?: string;
+}
+
+/** POST /api/meals/recognize: a photo (base64, already resized by the app) and/or a free description. */
+export interface RecognizeMealRequest {
+  image?: { mediaType: "image/jpeg" | "image/png" | "image/webp"; data: string };
+  text?: string;
+}
+
+/** One food recognized by Claude, with the estimated eaten weight and nutrition per 100 g. */
+export interface RecognizedItem {
+  name: string;
+  grams: number;
+  /** False for foods that are not visible in the photo but very likely there (cooking oil, dressings). */
+  visible: boolean;
+  per100g: { kcal: number; protein: number; carbs: number; fat: number; fiber: number | null; sugar: number | null; addedSugar: number | null };
+}
+
+export interface RecognizedMeal {
+  description: string;
+  items: RecognizedItem[];
+}
+
 export interface RepeatMealRequest {
   /** Date of the meal to copy, to find it. */
   date: string;
@@ -729,7 +758,7 @@ export interface HevySyncStatus {
 }
 
 /** Optional parts of the app; Alimentazione is always on (docs/features.md). */
-export type FeatureKey = "training" | "health" | "reminders" | "water";
+export type FeatureKey = "training" | "health" | "reminders" | "water" | "photoMeals";
 
 /** GET /api/features: which optional parts are on and whether the first-run setup was completed. */
 export interface FeaturesResponse {
@@ -739,8 +768,17 @@ export interface FeaturesResponse {
   reminders: boolean;
   /** Water card, water shortcuts, water stats and water reminders. */
   water: boolean;
+  /**
+   * Meals from a photo or a description, recognized by Claude and confirmed before logging, with the photo kept.
+   * Off: the add sheet works as before ("Chiedi a Claude"). Stored switch; it only takes effect with ANTHROPIC_API_KEY.
+   */
+  photoMeals: boolean;
   /** Workout apps configured in the server environment (HEVY_API_KEY, OPENGYM_URL + OPENGYM_TOKEN). */
   gymApps: { hevy: boolean; opengym: boolean };
+  /** Photo and text recognition in use: ANTHROPIC_API_KEY is set and the photoMeals switch is on. */
+  recognition: boolean;
+  /** Whether ANTHROPIC_API_KEY is set, so the photoMeals switch can work. */
+  recognitionConfigured: boolean;
 }
 
 /** PUT /api/features body: any subset. */
@@ -811,4 +849,16 @@ export interface SavedMeal {
 /** GET /api/meals/saved */
 export interface SavedMealsResponse {
   meals: SavedMeal[];
+}
+
+/** Claude models offered for the meal recognition (Impostazioni › Funzioni › Pasti da foto). Haiku is the default. */
+export const RECOGNITION_MODELS = ["claude-haiku-5-5", "claude-sonnet-5-5"] as const;
+export const DEFAULT_RECOGNITION_MODEL = "claude-haiku-5-5";
+
+/** GET / PUT /api/meals/recognize/model */
+export interface RecognitionModelResponse {
+  /** Model of the next recognition. */
+  model: string;
+  /** Models that can be chosen: RECOGNITION_MODELS, plus RECOGNITION_MODEL from .env when it names another one. */
+  models: string[];
 }

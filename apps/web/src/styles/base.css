@@ -140,7 +140,8 @@ strong,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ptr-spinner {
+  .ptr-spinner,
+  .recognize-spinner {
     animation-duration: 2.4s;
   }
 }
@@ -1701,6 +1702,45 @@ strong,
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* A favorite: the row logs it, the small × on the right asks to delete it */
+.saved-row {
+  padding: 0;
+  gap: 4px;
+}
+
+.saved-row > .sheet-row {
+  flex: 1;
+  min-width: 0;
+  border-bottom: none;
+}
+
+.saved-delete {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  background: none;
+  color: var(--color-text-muted);
+}
+
+.saved-confirm {
+  flex-wrap: wrap;
+}
+
+.saved-confirm .sheet-row-text {
+  flex: 1 1 200px;
+}
+
+.saved-confirm-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.saved-confirm-actions .button-secondary-small {
+  height: 36px;
+  padding: 0 14px;
 }
 
 .sheet-row-action {
@@ -6943,4 +6983,304 @@ div.connection-row {
 .feature-foot .button-secondary-small {
   height: 36px;
   padding: 0 14px;
+}
+
+/* ================= New meal: photo or description (NewMealPage, add sheet tiles) ================= */
+
+.capture-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.capture-tile {
+  min-height: 112px;
+  padding: 14px;
+  border-radius: var(--radius-card-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.capture-tile svg {
+  color: var(--color-accent);
+}
+
+.capture-tile strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.capture-tile-hint {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.capture-tile[data-primary] {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.capture-tile[data-primary] svg,
+.capture-tile[data-primary] .capture-tile-hint {
+  color: var(--color-on-accent);
+}
+
+.capture-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.capture-button {
+  min-height: 56px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.capture-button[data-primary] {
+  min-height: 120px;
+  flex-direction: column;
+  border: none;
+  border-radius: var(--radius-card);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: 17px;
+}
+
+.note-input {
+  height: 48px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.text-entry {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  gap: 8px;
+}
+
+.text-entry .sheet-section {
+  padding: 0;
+}
+
+.text-entry textarea {
+  min-height: 120px;
+  border: none;
+  background: transparent;
+  resize: vertical;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.recognize-wait {
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.recognize-preview {
+  width: 100%;
+  max-height: 280px;
+  object-fit: cover;
+  border-radius: var(--radius-card-sm);
+}
+
+.recognize-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--color-track);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: ptr-spin 0.9s linear infinite;
+}
+
+.recognized-card {
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.recognized-photo {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+}
+
+.recognized-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.recognized-text .eyebrow {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--color-accent);
+}
+
+.recognized-text strong {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.recognized-text strong .muted {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.recognized-text > .muted {
+  font-size: 13px;
+}
+
+.recognized-row {
+  min-height: 64px;
+  padding: 6px 0;
+}
+
+.recognized-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  font-size: 12px;
+}
+
+.recognized-name strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.estimate-pill {
+  padding: 1px 8px;
+  border: 1px solid var(--color-todo-border);
+  border-radius: 999px;
+  background: var(--color-todo-bg);
+  color: var(--color-todo-text);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.stepper {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-input);
+}
+
+.stepper button {
+  width: 36px;
+  height: 40px;
+  border: none;
+  background: none;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-accent);
+  cursor: pointer;
+}
+
+.stepper button:disabled {
+  color: var(--color-text-muted);
+  opacity: 0.5;
+  cursor: default;
+}
+
+.stepper .stat-value {
+  min-width: 52px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.recognized-empty {
+  padding: 14px 0;
+  font-size: 13px;
+}
+
+/* Meal photos kept on the server (meals logged from a photo) */
+.meal-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.meal-thumb {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  background: var(--color-track);
+}
+
+.detail-photo {
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: var(--radius-card);
+  background: var(--color-track);
+}
+
+.add-food-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--color-divider);
+}
+
+.add-food-row .note-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.favorite-name {
+  border-top: 1px solid var(--color-divider);
+}
+
+/* Photo picked, not sent yet: the picture, "Cambia foto", then the note and "Analizza" */
+.photo-check {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The switch is the card's first row: no divider above it */
+.favorite-card .setup-switch-row {
+  border-top: none;
 }

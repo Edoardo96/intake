@@ -1,6 +1,7 @@
 import type { HealthNight, Meal, PlannedEntry, Workout } from "@intake/shared";
 import { useId, useState } from "react";
 import { Link } from "wouter";
+import { mealPhotoUrl, useMealPhotos } from "../api/queries";
 import { ConfirmDeleteSheet } from "./ConfirmDeleteSheet";
 import { formatDuration, formatGramsShort, formatKcal, formatTime } from "../lib/format";
 import { t } from "../lib/strings";
@@ -59,6 +60,7 @@ function LoggedCard({ meal }: { meal: Meal }) {
   const values = { protein: meal.nutrients.protein, carbs: meal.nutrients.carbs, fat: meal.nutrients.fat, fiber: meal.nutrients.fiber };
   const chips = MACROS.filter((key) => values[key] !== null && Math.round(values[key]) > 0);
   const title = mealTitle(meal);
+  const hasPhoto = useMealPhotos().data?.has(meal.id) ?? false;
   return (
     <article className="meal-card" data-kind="logged">
       <header className="meal-card-head">
@@ -82,7 +84,14 @@ function LoggedCard({ meal }: { meal: Meal }) {
           </button>
         </span>
       </header>
-      <p className="meal-summary">{mealSummary(meal)}</p>
+      {hasPhoto ? (
+        <div className="meal-body">
+          <img className="meal-thumb" src={mealPhotoUrl(meal.id)} alt={t.meal.photoAlt(title)} loading="lazy" />
+          <p className="meal-summary">{mealSummary(meal)}</p>
+        </div>
+      ) : (
+        <p className="meal-summary">{mealSummary(meal)}</p>
+      )}
       {chips.length > 0 && (
         <ul className="chips" aria-label={t.timeline.mealMacros}>
           {chips.map((key) => (

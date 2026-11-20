@@ -12,6 +12,7 @@ import { healthWhenOn } from "./db/featureStore.js";
 import { ReminderScheduler } from "./services/reminderScheduler.js";
 import { HevySync } from "./services/hevySync.js";
 import { NutritionBackups } from "./services/nutritionBackups.js";
+import { MealRecognizer } from "./services/mealRecognition.js";
 import { WebPushSender, vapidKeys } from "./services/webPush.js";
 
 const config = loadConfig();
@@ -81,6 +82,17 @@ const app = await buildApp({
   nutrition: services.nutrition,
   api,
   mealsApi: api,
+  mealPhotos: services.mealPhotos,
+  recognitionModel: services.recognitionModel,
+  recognizer: config.ANTHROPIC_API_KEY
+    ? new MealRecognizer({
+        apiKey: config.ANTHROPIC_API_KEY,
+        model: () => services.recognitionModel.get(),
+        language: () => services.language.get(),
+        // Token usage of each recognition, to read the real cost; never the photo, the text or the key
+        log: { info: (details, message) => app.log.info(details, message), warn: (details, message) => app.log.warn(details, message) },
+      })
+    : undefined,
   weekApi: api,
   weekHealth: health,
   profile: { api, hevyConfigured: Boolean(config.HEVY_API_KEY) },
@@ -96,7 +108,7 @@ const app = await buildApp({
   healthIngest: { store: services.health, token: healthToken },
   language: services.language,
   backups: { backups },
-  features: { features, gymApps: { hevy: Boolean(hevy), opengym: Boolean(openGym) } },
+  features: { features, gymApps: { hevy: Boolean(hevy), opengym: Boolean(openGym) }, recognition: Boolean(config.ANTHROPIC_API_KEY) },
 });
 
 app.addHook("onClose", async () => {

@@ -29,6 +29,16 @@ const envSchema = z.object({
     .string()
     .optional()
     .transform((value) => value?.trim() || undefined),
+  /** Claude API key (console.anthropic.com) for recognizing meals from a photo or a description; hidden without it. */
+  ANTHROPIC_API_KEY: z
+    .string()
+    .optional()
+    .transform((value) => value?.trim() || undefined),
+  /** Claude model for the recognition until one is chosen in Impostazioni; Haiku when empty. */
+  RECOGNITION_MODEL: z
+    .string()
+    .optional()
+    .transform((value) => value?.trim() || undefined),
   /** Address used for "Apri in openGym" links when OPENGYM_URL is an internal one; defaults to OPENGYM_URL. */
   OPENGYM_PUBLIC_URL: z
     .string()

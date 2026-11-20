@@ -6,11 +6,13 @@ import type { FeatureStore } from "../db/featureStore.js";
 export interface FeatureRoutesOptions {
   features: FeatureStore;
   gymApps: FeaturesResponse["gymApps"];
+  /** Whether ANTHROPIC_API_KEY is set (photo and text recognition; used only while photoMeals is on). */
+  recognition?: boolean;
   requireOwner: preHandlerHookHandler;
 }
 
 const updateSchema = z
-  .object({ setupDone: z.boolean(), training: z.boolean(), health: z.boolean(), reminders: z.boolean(), water: z.boolean() })
+  .object({ setupDone: z.boolean(), training: z.boolean(), health: z.boolean(), reminders: z.boolean(), water: z.boolean(), photoMeals: z.boolean() })
   .partial()
   .strict();
 
@@ -24,6 +26,8 @@ const FEATURE_ROUTES: Array<{ keys: FeatureKey[]; prefix: RegExp }> = [
   { keys: ["health"], prefix: /^\/api\/health\// },
   { keys: ["reminders"], prefix: /^\/api\/push(\/|\?|$)/ },
   { keys: ["water"], prefix: /^\/api\/water(\/|\?|$)/ },
+  // Photo meals: the recognition and the kept photos (logging a meal and the favorites stay with Alimentazione)
+  { keys: ["photoMeals"], prefix: /^\/api\/meals\/(recognize|photos)(\/|\?|$)|^\/api\/meals\/[^/?]+\/photo(\?|$)/ },
 ];
 
 /** The part that hides an API URL right now, or null when the route is served (Alimentazione and the rest). */
@@ -32,8 +36,11 @@ export function blockedBy(url: string, enabled: (key: FeatureKey) => boolean): F
   return route && !route.keys.some(enabled) ? route.keys[0]! : null;
 }
 
-export const featureRoutes: FastifyPluginAsync<FeatureRoutesOptions> = async (app, { features, gymApps, requireOwner }) => {
-  const response = (): FeaturesResponse => ({ ...features.get(), gymApps });
+export const featureRoutes: FastifyPluginAsync<FeatureRoutesOptions> = async (app, { features, gymApps, recognition = false, requireOwner }) => {
+  const response = (): FeaturesResponse => {
+    const stored = features.get();
+    return { ...stored, gymApps, recognition: recognition && stored.photoMeals, recognitionConfigured: recognition };
+  };
 
   app.get("/features", { preHandler: requireOwner }, async () => response());
 
