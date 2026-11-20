@@ -1745,6 +1745,19 @@ strong,
   white-space: nowrap;
 }
 
+/* ▾ / ▴ of a row that opens a list (Pasti preferiti, Ripeti un pasto recente) */
+.row-chevron {
+  flex: none;
+  margin-left: auto;
+  display: flex;
+  color: var(--color-text-muted);
+}
+
+.saved-more {
+  display: block;
+  margin: 4px auto 8px;
+}
+
 /* A favorite: the row logs it, the small × on the right asks to delete it */
 .saved-row {
   padding: 0;
