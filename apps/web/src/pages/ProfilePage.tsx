@@ -1,13 +1,13 @@
 import type { ProfileView, TrainingSourceId } from "@intake/shared";
 import { useState } from "react";
 import { Link } from "wouter";
-import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeatures, useSetFeatures } from "../api/queries";
-import type { FeatureKey } from "@intake/shared";
+import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeatures, useSetFeatures, useSetLanguage } from "../api/queries";
+import { LANGUAGES, type FeatureKey } from "@intake/shared";
 import { Avatar } from "../components/ProfileLink";
 import { RemindersSheet } from "../components/RemindersSheet";
 import { BackIcon } from "../components/icons";
 import { formatClock, formatKcal, formatShortDate, formatWater, formatWeight, formatWeekdayDay } from "../lib/format";
-import { t } from "../lib/strings";
+import { LANGUAGE_NAMES, language, t } from "../lib/strings";
 import { exerciseName } from "./TrainingPage";
 import { getThemePreference, setThemePreference, type ThemePreference } from "../lib/theme";
 
@@ -361,6 +361,7 @@ export function ProfilePage({ user }: { user: User }) {
   const signOut = useSignOut();
   const disconnect = useDisconnectNutrition();
   const [theme, setTheme] = useState<ThemePreference>(getThemePreference);
+  const setLanguage = useSetLanguage();
   const [reminders, setReminders] = useState(false);
   const features = useFeatures().data;
   const data = profile.data;
@@ -446,6 +447,31 @@ export function ProfilePage({ user }: { user: User }) {
               ))}
             </div>
             <span className="muted weight-note">{t.profile.themeNote}</span>
+          </section>
+
+          <section className="card profile-card" aria-label={t.profile.language}>
+            <h2 id="language-label">{t.profile.language}</h2>
+            <div className="segmented" role="radiogroup" aria-labelledby="language-label">
+              {LANGUAGES.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  role="radio"
+                  lang={option}
+                  aria-checked={(setLanguage.variables ?? language) === option}
+                  className="segmented-option"
+                  disabled={setLanguage.isPending}
+                  onClick={() => option !== language && setLanguage.mutate(option)}
+                >
+                  {LANGUAGE_NAMES[option]}
+                </button>
+              ))}
+            </div>
+            {setLanguage.isError ? (
+              <span className="notice" data-kind="error">{t.profile.languageFailed}</span>
+            ) : (
+              <span className="muted weight-note">{t.profile.languageNote}</span>
+            )}
           </section>
 
           <div className="profile-actions">

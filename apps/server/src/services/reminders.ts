@@ -1,9 +1,9 @@
-import type { DayGoals, DayTotals, PlannedEntry, ReminderSettings } from "@intake/shared";
+import type { DayGoals, DayTotals, Language, PlannedEntry, ReminderSettings } from "@intake/shared";
 
 /**
  * Reminder rules (pure). The scheduler asks which reminders are due from the plan times alone,
  * and only then reads Nutrition to drop the ones that no longer apply (meal already logged or
- * skipped, water on track). Notification text is Italian like the rest of the UI.
+ * skipped, water on track). Notification text follows the installation language (Profilo › Lingua), Italian by default.
  */
 
 export type ReminderKind = "meal" | "todo" | "water" | "summary";
@@ -70,13 +70,54 @@ export interface ReminderContext {
   goals: DayGoals | null;
 }
 
-// "1.950" as in the web app (Italian formatting does not group four-digit numbers by default)
-const integer = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 0, useGrouping: "always" } as unknown as Intl.NumberFormatOptions);
-const liters = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 2 });
-const l = (ml: number) => liters.format(Math.round(ml / 10) / 100);
+const LOCALES: Record<Language, string> = { it: "it-IT", en: "en-GB", nl: "nl-NL" };
+
+/** Notification texts, one set per UI language (the only user-facing text built on the server besides the daily insight). */
+const TEXTS: Record<Language, {
+  todoTitle: (title: string, time: string) => string;
+  todoBody: string;
+  waterTitle: (total: string, goal: string) => string;
+  waterBody: (missing: string) => string;
+  summaryTitle: string;
+  of: string;
+  protein: string;
+}> = {
+  it: {
+    todoTitle: (title, time) => `${title} delle ${time}: l'hai registrato?`,
+    todoBody: "Apri Intake: Mangiato come previsto, Altro… o Salta.",
+    waterTitle: (total, goal) => `Acqua: ${total} su ${goal} L`,
+    waterBody: (missing) => `Un bicchiere adesso? Ne mancano ${missing} L.`,
+    summaryTitle: "Riepilogo di oggi",
+    of: "su",
+    protein: "proteine",
+  },
+  en: {
+    todoTitle: (title, time) => `${title} at ${time}: did you log it?`,
+    todoBody: "Open Intake: Eaten as planned, Other… or Skip.",
+    waterTitle: (total, goal) => `Water: ${total} of ${goal} L`,
+    waterBody: (missing) => `A glass now? ${missing} L to go.`,
+    summaryTitle: "Today's summary",
+    of: "of",
+    protein: "protein",
+  },
+  nl: {
+    todoTitle: (title, time) => `${title} van ${time}: heb je het geregistreerd?`,
+    todoBody: "Open Intake: Gegeten volgens plan, Anders… of Overslaan.",
+    waterTitle: (total, goal) => `Water: ${total} van ${goal} L`,
+    waterBody: (missing) => `Nu een glas? Nog ${missing} L te gaan.`,
+    summaryTitle: "Samenvatting van vandaag",
+    of: "van",
+    protein: "eiwit",
+  },
+};
 
 /** The notification for a due slot, or null when it no longer applies. */
-export function buildNotification(slot: ReminderSlot, context: ReminderContext): Notification | null {
+export function buildNotification(slot: ReminderSlot, context: ReminderContext, language: Language = "it"): Notification | null {
+  const text = TEXTS[language];
+  // "1.950" as in the web app (Italian and Dutch do not group four-digit numbers by default)
+  const integer = new Intl.NumberFormat(LOCALES[language], { maximumFractionDigits: 0, useGrouping: "always" } as unknown as Intl.NumberFormatOptions);
+  const liters = new Intl.NumberFormat(LOCALES[language], { maximumFractionDigits: 2 });
+  const l = (ml: number) => liters.format(Math.round(ml / 10) / 100);
   switch (slot.kind) {
     case "meal":
     case "todo": {
@@ -88,8 +129,8 @@ export function buildNotification(slot: ReminderSlot, context: ReminderContext):
         return { title: `${entry.title} · ${entry.time}`, body: `${entry.foods}${kcal}`, url: "/", tag: `meal-${entry.index}` };
       }
       return {
-        title: `${entry.title} delle ${entry.time}: l'hai registrato?`,
-        body: "Apri Intake: Mangiato come previsto, Altro… o Salta.",
+        title: text.todoTitle(entry.title, entry.time),
+        body: text.todoBody,
         url: "/",
         tag: `meal-${entry.index}`,
       };
@@ -100,15 +141,15 @@ export function buildNotification(slot: ReminderSlot, context: ReminderContext):
       const share = Math.min(Math.max((minutes(context.now) - WATER_DAY_START) / WATER_DAY_LENGTH, 0), 1);
       const total = context.totals.waterMl;
       if (total >= goal * share - WATER_MARGIN_ML) return null;
-      return { title: `Acqua: ${l(total)} su ${l(goal)} L`, body: `Un bicchiere adesso? Ne mancano ${l(goal - total)} L.`, url: "/", tag: "water" };
+      return { title: text.waterTitle(l(total), l(goal)), body: text.waterBody(l(goal - total)), url: "/", tag: "water" };
     }
     case "summary": {
       const totals = context.totals;
       if (!totals || totals.kcal <= 0) return null;
       const goals = context.goals;
-      const kcal = `${integer.format(totals.kcal)} kcal${goals?.kcal ? ` su ${integer.format(goals.kcal)}` : ""}`;
-      const protein = `proteine ${integer.format(totals.protein)}${goals?.protein ? ` su ${integer.format(goals.protein)}` : ""} g`;
-      return { title: "Riepilogo di oggi", body: `${kcal} · ${protein}`, url: "/andamento", tag: "summary" };
+      const kcal = `${integer.format(totals.kcal)} kcal${goals?.kcal ? ` ${text.of} ${integer.format(goals.kcal)}` : ""}`;
+      const protein = `${text.protein} ${integer.format(totals.protein)}${goals?.protein ? ` ${text.of} ${integer.format(goals.protein)}` : ""} g`;
+      return { title: text.summaryTitle, body: `${kcal} · ${protein}`, url: "/andamento", tag: "summary" };
     }
   }
 }

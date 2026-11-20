@@ -1,3 +1,5 @@
+import type { LanguageStore } from "./db/languageStore.js";
+import { languageRoutes } from "./routes/language.js";
 import { existsSync } from "node:fs";
 import fastifyCookie from "@fastify/cookie";
 import fastifyStatic from "@fastify/static";
@@ -74,6 +76,8 @@ export interface AppOptions {
   healthIngest?: HealthIngestRoutesOptions;
   /** Optional parts (Allenamenti, Salute, Promemoria): GET/PUT /api/features and 404 on the routes of a part that is off. */
   features?: Omit<FeatureRoutesOptions, "requireOwner">;
+  /** UI language for the whole installation (Profilo › Lingua); registered together with `auth`. */
+  language?: LanguageStore;
 }
 
 export async function buildApp(options: AppOptions = {}): Promise<FastifyInstance> {
@@ -128,6 +132,9 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     const requireOwner = createRequireOwner(cookies, ownerEmail);
 
     await app.register(authRoutes, { google, cookies, ownerEmail, requireOwner });
+    if (options.language) {
+      await app.register(languageRoutes, { prefix: "/api", language: options.language, requireOwner });
+    }
     if (features) {
       await app.register(featureRoutes, { prefix: "/api", ...features, requireOwner });
     }
@@ -152,7 +159,8 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
       await app.register(pushRoutes, { prefix: "/api", ...options.push, requireOwner });
     }
     if (options.insightApi) {
-      await app.register(insightRoutes, { prefix: "/api", api: options.insightApi, health: options.insightHealth, requireOwner });
+      const language = options.language;
+      await app.register(insightRoutes, { prefix: "/api", api: options.insightApi, health: options.insightHealth, language: language ? () => language.get() : undefined, requireOwner });
     }
     if (options.weekApi) {
       await app.register(weekRoutes, { prefix: "/api", api: options.weekApi, plans: options.plans, health: options.weekHealth, requireOwner });

@@ -6,6 +6,7 @@ import { SecretBox } from "./db/secretBox.js";
 import { FeatureStore } from "./db/featureStore.js";
 import { HealthStore } from "./db/healthStore.js";
 import { HevySyncStore } from "./db/hevySyncStore.js";
+import { LanguageStore } from "./db/languageStore.js";
 import { PlanStore } from "./db/planStore.js";
 import { ReminderStore } from "./db/reminderStore.js";
 import { SecretStore } from "./db/secretStore.js";
@@ -19,6 +20,7 @@ export interface Services {
   health: HealthStore;
   hevySync: HevySyncStore;
   features: FeatureStore;
+  language: LanguageStore;
   nutrition: NutritionConnection;
   close(): Promise<void>;
 }
@@ -41,6 +43,7 @@ export function createServices(config: Config): Services {
     health: new HealthStore(db),
     hevySync: new HevySyncStore(db),
     features: new FeatureStore(db),
+    language: new LanguageStore(db),
     nutrition,
     async close() {
       await nutrition.close();

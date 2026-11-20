@@ -1,4 +1,4 @@
-import type { InsightResponse } from "@intake/shared";
+import type { InsightResponse, Language } from "@intake/shared";
 import type { FastifyPluginAsync, preHandlerHookHandler } from "fastify";
 import type { HealthStore } from "../db/healthStore.js";
 import type { NutritionApi } from "../mcp/nutritionApi.js";
@@ -8,6 +8,8 @@ export interface InsightRoutesOptions {
   api: Pick<NutritionApi, "clock" | "mealPatterns" | "mealsByRange" | "summary" | "goals">;
   /** Apple Health data for the sentences that cross sleep and steps with meals (SQLite, no Nutrition calls). */
   health?: Pick<HealthStore, "sleep" | "daily" | "settings">;
+  /** Installation language of the sentence (Profilo › Lingua); Italian when missing. */
+  language?: () => Language;
   requireOwner: preHandlerHookHandler;
   now?: () => number;
 }
@@ -24,13 +26,15 @@ function shiftDate(value: string, days: number): string {
  * GET /api/insight: the daily "Dai tuoi dati" sentence, also from Apple Health when imported. It costs four Nutrition requests, so the
  * result is kept in memory for an hour (per date) to stay well within the 60 requests per minute.
  */
-export const insightRoutes: FastifyPluginAsync<InsightRoutesOptions> = async (app, { api, health, requireOwner, now = Date.now }) => {
+export const insightRoutes: FastifyPluginAsync<InsightRoutesOptions> = async (app, { api, health, language = () => "it", requireOwner, now = Date.now }) => {
   app.addHook("preHandler", requireOwner);
   const cache = new Map<string, { expires: number; value: InsightResponse }>();
 
   app.get("/insight", async (): Promise<InsightResponse> => {
     const today = (await api.clock()).localDate;
-    const cached = cache.get(today);
+    const lang = language();
+    const key = `${today}:${lang}`;
+    const cached = cache.get(key);
     if (cached && cached.expires > now()) return cached.value;
 
     const start = shiftDate(today, -(WINDOW_DAYS - 1));
@@ -45,9 +49,9 @@ export const insightRoutes: FastifyPluginAsync<InsightRoutesOptions> = async (ap
     const nights = health?.sleep(healthStart, today) ?? [];
     const steps = health?.daily(healthStart, today, ["steps"]).map((d) => ({ date: d.date, value: d.value })) ?? [];
     const healthData = health && (nights.length > 0 || steps.length > 0) ? { nights, steps, stepGoal: health.settings().stepGoal } : undefined;
-    const value: InsightResponse = { insight: pickInsight({ today, patterns, meals: range.meals, summary, proteinGoal: goals.protein, health: healthData }) };
+    const value: InsightResponse = { insight: pickInsight({ today, patterns, meals: range.meals, summary, proteinGoal: goals.protein, health: healthData }, lang) };
     cache.clear();
-    cache.set(today, { expires: now() + CACHE_MS, value });
+    cache.set(key, { expires: now() + CACHE_MS, value });
     return value;
   });
 };

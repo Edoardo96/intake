@@ -1,6 +1,6 @@
-/** Italian number and date formatting for the UI. */
+/** Number and date formatting for the UI, in the locale of the installation language (Italian by default). */
 
-const LOCALE = "it-IT";
+import { locale as LOCALE } from "./strings";
 
 // Italian skips the thousands separator below 10,000 by default ("1762"); always group ("1.762")
 const integer = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 0, useGrouping: "always" });

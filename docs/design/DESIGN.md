@@ -4,7 +4,7 @@ The `screens/` folder holds the approved mockups as `.dc.html` files (one per sc
 They are **reference markup**, not production code: read them for layout, spacing,
 colors, copy and behavior, then rebuild them as React components in `apps/web`.
 They load a `support.js` runtime that is not included, so they will not render as-is.
-All UI copy is in Italian (the app language); code, comments and docs stay in English.
+All UI copy is designed in Italian (the default language; English and Dutch translations live next to it in `apps/web/src/lib/i18n/`); code, comments and docs stay in English.
 
 ## Screens
 

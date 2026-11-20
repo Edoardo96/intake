@@ -5,7 +5,7 @@ import { TrendsSwitch, TrendsTitle } from "../components/TrendsSwitch";
 import { HeartRateChart } from "../components/WorkoutCard";
 import { addDays } from "../lib/dates";
 import { formatDuration, formatKcal, formatOneDecimal, formatWeekday, formatWeekdayDay } from "../lib/format";
-import { t } from "../lib/strings";
+import { language, t } from "../lib/strings";
 
 const LETTERS = ["L", "M", "M", "G", "V", "S", "D"];
 const MONTHS = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
@@ -32,7 +32,7 @@ export function exerciseName(exercise: Pick<TrainingTargetExercise, "title" | "t
 const liftName = (title: string) => exerciseName({ title, templateTitle: title });
 
 export function targetText(e: TrainingTargetExercise): string {
-  if (e.label) return e.label.replace(/(\d)\.(\d)/g, "$1,$2");
+  if (e.label) return language === "en" ? e.label : e.label.replace(/(\d)\.(\d)/g, "$1,$2");
   const range = e.repRange ? (e.repRange.start === e.repRange.end ? String(e.repRange.start) : `${e.repRange.start}–${e.repRange.end}`) : null;
   // openGym: the opening sets it computed, with the routine's range for context
   if (e.openingReps != null && e.sets > 0) {

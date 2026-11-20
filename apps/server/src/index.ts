@@ -31,6 +31,7 @@ const scheduler = new ReminderScheduler({
   api,
   sender: new WebPushSender(vapid, config.PUBLIC_BASE_URL),
   enabled: () => features.enabled("reminders"),
+  language: () => services.language.get(),
   log: { warn: (details, message) => app.log.warn(details, message), info: (details, message) => app.log.info(details, message) },
 });
 
@@ -83,6 +84,7 @@ const app = await buildApp({
   hevySync: { sync: hevySync, store: services.hevySync },
   appleHealth: { store: services.health, api, sync: { token: healthToken, endpoint: `${config.PUBLIC_BASE_URL}/api/health/ingest` } },
   healthIngest: { store: services.health, token: healthToken },
+  language: services.language,
   features: { features, gymApps: { hevy: Boolean(hevy), opengym: Boolean(openGym) } },
 });
 

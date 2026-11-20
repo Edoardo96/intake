@@ -743,3 +743,12 @@ export interface FeaturesResponse {
 
 /** PUT /api/features body: any subset. */
 export type FeaturesUpdate = Partial<Pick<FeaturesResponse, "setupDone" | FeatureKey>>;
+
+/** UI language, one for the whole installation (Profilo › Lingua). Italian is the default. */
+export const LANGUAGES = ["it", "en", "nl"] as const;
+export type Language = (typeof LANGUAGES)[number];
+
+/** GET / PUT /api/language */
+export interface LanguageResponse {
+  language: Language;
+}
