@@ -67,7 +67,7 @@ and page hide the AI part and the last opinion.
 - The proposal always goes through `limitTargets`: calories between the floor and maintenance −25% / +20%, protein
   0.8–3 g/kg, fat at least 0.5 g/kg, carbohydrates recomputed so the grams add up. When anything changed the page
   says so.
-- The card shows the summary, the standard calculation and the proposal side by side, the tips (collapsed) and
+- The card shows the summary, the standard calculation and the proposal side by side, the tips and
   "Tieni il calcolo" / "Usa la proposta" ("✓ Proposta dell'IA in uso" once applied). Nothing changes in Nutrition
   until one is chosen. The last opinion is kept until the next one.
 

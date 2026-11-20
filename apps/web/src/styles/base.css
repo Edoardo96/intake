@@ -7818,10 +7818,6 @@ div.connection-row {
   padding: 0 16px;
 }
 
-.needs-tips-box summary {
-  font-weight: 700;
-  cursor: pointer;
-}
 
 .needs-tips-box .needs-tips {
   margin-top: 6px;

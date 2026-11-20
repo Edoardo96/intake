@@ -240,7 +240,7 @@ A card at the top of Piano, above the week's plan, with three bands divided by a
    "✓ in linea con l'obiettivo" (accent pill) or "Per il tuo obiettivo: X kcal" with "Applica"; a muted note that it
    is plain arithmetic, no AI. With too few data, one muted sentence with what is missing.
 3. "IL PARERE DELL'IA" with the sparkles, separate from the settings: the last opinion (date, summary, a
-   three-column table Calcolo / Proposta IA with the differing AI values in bold, tips collapsed, "Tieni il calcolo" /
+   three-column table Calcolo / Proposta IA with the differing AI values in bold, tips, "Tieni il calcolo" /
    "Usa la proposta" or "✓ Proposta dell'IA in uso"), then "Chiedi" (asks again from the card, with a spinner
    while it waits).
 

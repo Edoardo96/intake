@@ -110,14 +110,14 @@ function AiBand({ view }: { view: NeedsView }) {
             )}
             {ai.limited && <span className="needs-status" data-kind="warn">{t.needs.aiLimited}</span>}
             {ai.tips.length > 0 && (
-              <details className="needs-tips-box">
-                <summary>{t.needs.tips}</summary>
+              <div className="needs-tips-box">
+                <span className="needs-band-title">{t.needs.tips}</span>
                 <ul className="needs-tips">
                   {ai.tips.map((tip, i) => (
                     <li key={i}>{tip}</li>
                   ))}
                 </ul>
-              </details>
+              </div>
             )}
             {sameGoal(goals, ai.targets) ? (
               <span className="needs-status" data-kind="ok">
