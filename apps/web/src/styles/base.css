@@ -91,6 +91,17 @@ strong,
   overscroll-behavior-y: contain;
 }
 
+/* Touch screens: no grey scroll indicator on the right of the page while scrolling (desktop keeps its scrollbar) */
+@media (pointer: coarse) {
+  .shell-main {
+    scrollbar-width: none;
+  }
+
+  .shell-main::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* Pull to refresh (components/PullToRefresh.tsx): grows with the pull, springs back when released */
 .ptr {
   overflow: hidden;
