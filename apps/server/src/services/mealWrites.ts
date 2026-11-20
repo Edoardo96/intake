@@ -43,7 +43,9 @@ const ALL_OR_NONE = ["saturated_fat_g", "sodium_mg", "fiber_g", "sugar_g", "adde
 export function itemsAllOrNone(items: Record<string, unknown>[]): Record<string, unknown>[] {
   // A key on some items only; a key no item has is already "none"
   const drop = ALL_OR_NONE.filter((key) => items.some((item) => key in item) && items.some((item) => !(key in item)));
+  // Sugar and added sugar go together: Nutrition refuses sugar without added sugar (e.g. meals logged before it was tracked)
   if (drop.includes("sugar_g") && !drop.includes("added_sugar_g") && items.some((item) => "added_sugar_g" in item)) drop.push("added_sugar_g");
+  if (drop.includes("added_sugar_g") && !drop.includes("sugar_g") && items.some((item) => "sugar_g" in item)) drop.push("sugar_g");
   if (drop.length === 0) return items;
   return items.map((item) => Object.fromEntries(Object.entries(item).filter(([key]) => !drop.includes(key))));
 }

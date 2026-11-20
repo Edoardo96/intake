@@ -67,6 +67,17 @@ describe("updateMealFields", () => {
     expect(itemsAllOrNone([{ name: "a", sugar_g: 2, added_sugar_g: 0 }, { name: "b", added_sugar_g: 1 }])).toEqual([{ name: "a" }, { name: "b" }]);
   });
 
+  it("drops sugar too when every item has it but only some have added sugar (meals logged before it was tracked)", () => {
+    const items = [
+      { name: "Yogurt", fiber_g: 0, sugar_g: 5, added_sugar_g: 0 },
+      { name: "Biscotti", fiber_g: 1, sugar_g: 8 },
+    ];
+    expect(itemsAllOrNone(items)).toEqual([
+      { name: "Yogurt", fiber_g: 0 },
+      { name: "Biscotti", fiber_g: 1 },
+    ]);
+  });
+
   it("sends totals for a meal without items", () => {
     const fields = updateMealFields({ date: "2026-11-04", time: "16:31", type: "snack", description: "Caffè", totals: { kcal: 3, protein: 0.2, carbs: 0.4, fat: 0 } });
     expect(fields).toMatchObject({ calories: 3, protein_g: 0.2, carbs_g: 0.4, fat_g: 0 });
