@@ -30,7 +30,8 @@ keeps "Chiedi a Claude" as before.
 
 - The model is chosen in **Impostazioni › Funzioni**, under Pasti da foto: **Haiku 5.5 (default)** or Sonnet 5.5
   (settings key `recognition_model`, `db/recognitionModelStore.ts`). `RECOGNITION_MODEL` in `.env` sets the starting
-  model and, if it names another one, adds it to the choice. The change applies to the next request.
+  model and, if it names another one, adds it to the choice. The change applies to the next request. The AI opinion
+  of Piano › Il tuo fabbisogno uses the same model ([needs.md](needs.md)).
 - One request per "Analizza" or "+ Aggiungi alimento" (new or edited meal); nothing runs in the background. The SDK retries 429, 529 and
   connection errors twice by itself; each attempt times out after 60 s.
 - Thinking is on by default on the 5.5 models and cannot be turned off on Sonnet 5.5; its tokens are billed as output

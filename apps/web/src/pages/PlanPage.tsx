@@ -16,6 +16,7 @@ import { CloseIcon, PlanIcon } from "../components/icons";
 import { formatKcal, formatMediumDate, formatShortDate } from "../lib/format";
 import { t } from "../lib/strings";
 import { Scrim } from "../components/Scrim";
+import { NeedsCard } from "../components/NeedsCard";
 
 const roundTo = (value: number, step: number) => Math.round(value / step) * step;
 
@@ -152,6 +153,8 @@ export function PlanPage() {
           )}
         </div>
       )}
+
+      <NeedsCard />
 
       {plans.isPending && <div className="card skeleton" style={{ height: 320 }} />}
 
