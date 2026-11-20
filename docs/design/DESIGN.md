@@ -25,7 +25,7 @@ All UI copy is designed in Italian (the default language; English and Dutch tran
 | `SaluteImport.dc.html` | Import preview | Preview, duplicates resolved, ignored data, result; states via the `stato` tweak |
 | `Aggiungi.dc.html` | Add sheet (opened by `+`) | Water shortcuts, today's plan meals, repeat / saved / search / barcode |
 | `Pasto.dc.html` | Meal detail | kcal, macro split bar, items with quantities, fiber/sugar/caffeine |
-| `Modifica.dc.html` | Edit meal | Header: back arrow on the left (as on the meal detail; leaves without saving) and the centred title; Elimina pasto (secondary, red) and Salva (primary) side by side at the bottom with the same sizes as Modifica / Salva come preferito on the meal detail, at the end of the page after the meal values. Meal type, time, items (edit/remove/add; with Pasti da foto on, "+ Aggiungi alimento" opens "Cosa hai aggiunto?" with "Aggiungi con Claude" and "Inserisci a mano"), values; delete with confirmation sheet |
+| `Modifica.dc.html` | Edit meal | Header: back arrow on the left (as on the meal detail; leaves without saving) and the centred title; Elimina pasto (secondary, red) and Salva (primary) side by side at the bottom with the same sizes as Modifica / Salva come preferito on the meal detail, at the end of the page after the meal values. Meal type, time, items (edit/remove/add; with Pasti da foto on, "+ Aggiungi alimento" opens "Cosa hai aggiunto?" with "Aggiungi con IA" and "Inserisci a mano"), values; delete with confirmation sheet |
 | `Settimana.dc.html` | Andamento › Alimentazione | Nutrition only: kcal bars with workout marks, averages, kcal share (P/C/F), protein per day vs goal, Consistency |
 | `Piano.dc.html` | Meal plan | Day tabs (today preselected), meals of the selected day, "Libero" cards; `⋯` menu for upload + history |
 | `Desktop.dc.html` | Desktop / iPad — Today | Fluid layout: sticky sidebar; left column = calories, macros, water; right column = Next meal, insight. Timeline stays its own section, never inside Today |
@@ -219,6 +219,14 @@ The first release builds the grid only; editing comes later.
   return English template names and workouts the app's language). Read live, no local storage.
 - In the app: "Apri in Hevy" and the meal-plan reminder line are not shown yet (no stable Hevy deep link; the plan has
   no structured "full-body day" flag).
+
+## AI features
+
+Everything that asks the AI inside Intake (the "Foto del piatto" and "Descrivi a parole" tiles, Analizza, the
+"+ Aggiungi alimento" of the new and edited meal, the Pasti da foto switch and the AI model in Impostazioni) carries
+the sparkles icon (`SparklesIcon`) and is called "IA" in Italian and "AI" in English and Dutch, never "Claude". Texts
+that speak of Claude as the chat outside Intake (logging by talking to Claude, the plan made in a Claude project, the
+"Chiedi a Claude" row that opens the Claude app) keep the name; that row gets the sparkles too.
 
 ## Add sheet (`+`) — what is really possible
 

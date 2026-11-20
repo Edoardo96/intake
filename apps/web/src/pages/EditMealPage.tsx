@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useDay, useFeatures, useRecognizeMeal, useUpdateMeal } from "../api/queries";
 import { ConfirmDeleteSheet } from "../components/ConfirmDeleteSheet";
-import { CloseIcon } from "../components/icons";
+import { CloseIcon, SparklesIcon } from "../components/icons";
 import { formatGrams, formatKcal } from "../lib/format";
 import { t } from "../lib/strings";
 import { dayHref } from "./MealPage";
@@ -285,8 +285,9 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
                   disabled={recognizeFood.isPending}
                   onChange={(e) => setFoodText(e.target.value)}
                 />
-                <button type="submit" className="button-primary edit-add-food-claude" disabled={recognizeFood.isPending || !foodText.trim()}>
-                  {recognizeFood.isPending ? t.newMeal.addFoodPending : t.edit.addWithClaude}
+                <button type="submit" className="button-primary button-ai edit-add-food-claude" disabled={recognizeFood.isPending || !foodText.trim()}>
+                  <SparklesIcon size={18} />
+                  {recognizeFood.isPending ? t.newMeal.addFoodPending : t.edit.addWithAi}
                 </button>
                 <button type="button" className="text-button" disabled={recognizeFood.isPending} onClick={addManualFood}>
                   {t.edit.addManually}

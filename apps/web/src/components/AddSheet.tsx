@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { useAddWater, useDay, useFeature, useFeatures, useLogPlanned, useLogSavedMeal, useDeleteSavedMeal, useRecentMeals, useRepeatMeal, useSavedMeals } from "../api/queries";
 import { formatKcal, formatShortDate } from "../lib/format";
 import { t } from "../lib/strings";
-import { CloseIcon } from "./icons";
+import { CloseIcon, SparklesIcon } from "./icons";
 import { mealSummary, mealTitle } from "./Timeline";
 import { Scrim } from "./Scrim";
 
@@ -11,7 +11,8 @@ import { Scrim } from "./Scrim";
 const ROW_ICONS = {
   repeat: "M4 12a8 8 0 1 0 3-6.2M4 4v5h5",
   saved: "M12 17l-5 3 1-6-4-4 6-1 2-5 2 5 6 1-4 4 1 6z",
-  claude: "M4 5h16v11H9l-5 4zM8 9h8M8 12h5",
+  // Sparkles: the row opens Claude, an AI
+  claude: "M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2-2a2 2 0 0 1-2-2a2 2 0 0 1-2 2zm0-12a2 2 0 0 1 2 2a2 2 0 0 1 2-2a2 2 0 0 1-2-2a2 2 0 0 1-2 2zm-7 12a6 6 0 0 1 6-6a6 6 0 0 1-6-6a6 6 0 0 1-6 6a6 6 0 0 1 6 6z",
 };
 
 /** Opens Claude (the app when installed, via universal link) with the start of the request. */
@@ -98,6 +99,9 @@ export function AddSheet({ onClose }: Props) {
         {recognition && (
           <div className="capture-tiles">
             <Link href="/pasto/nuovo" className="capture-tile" data-primary onClick={onClose}>
+              <span className="ai-badge" aria-hidden="true">
+                <SparklesIcon size={16} />
+              </span>
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
                 <circle cx="12" cy="13" r="3.5" />
@@ -108,6 +112,9 @@ export function AddSheet({ onClose }: Props) {
               </span>
             </Link>
             <Link href="/pasto/nuovo/testo" className="capture-tile" onClick={onClose}>
+              <span className="ai-badge" aria-hidden="true">
+                <SparklesIcon size={16} />
+              </span>
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M4 6h16v10H9l-5 4z" />
                 <path d="M8 10h8M8 13h5" />

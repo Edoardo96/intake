@@ -3,7 +3,7 @@ import { useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { ApiError, newIdempotencyKey } from "../api/client";
 import { useCreateMeal, useDay, useRecognizeMeal } from "../api/queries";
-import { CloseIcon } from "../components/icons";
+import { CloseIcon, SparklesIcon } from "../components/icons";
 import { formatGrams, formatKcal } from "../lib/format";
 import { photoForRecognition } from "../lib/image";
 import { t } from "../lib/strings";
@@ -275,7 +275,8 @@ export function NewMealPage({ initialMode }: { initialMode: Mode }) {
             </div>
             <p className="sheet-note">{t.newMeal.photoTip}</p>
             {photo && (
-              <button type="button" className="button-primary" onClick={analyzePhoto}>
+              <button type="button" className="button-primary button-ai" onClick={analyzePhoto}>
+                <SparklesIcon size={18} />
                 {t.newMeal.analyze}
               </button>
             )}
@@ -286,7 +287,8 @@ export function NewMealPage({ initialMode }: { initialMode: Mode }) {
               <span className="sheet-section">{t.newMeal.textLabel}</span>
               <textarea value={text} rows={5} maxLength={1000} placeholder={t.newMeal.textPlaceholder} onChange={(e) => setText(e.target.value)} />
             </label>
-            <button type="button" className="button-primary" disabled={!text.trim()} onClick={analyzeText}>
+            <button type="button" className="button-primary button-ai" disabled={!text.trim()} onClick={analyzeText}>
+              <SparklesIcon size={18} />
               {t.newMeal.analyze}
             </button>
           </>
@@ -390,6 +392,7 @@ export function NewMealPage({ initialMode }: { initialMode: Mode }) {
               onChange={(e) => setExtra(e.target.value)}
             />
             <button type="submit" className="text-button text-button-strong" disabled={recognizeExtra.isPending || !extra.trim()}>
+              <SparklesIcon size={16} />
               {recognizeExtra.isPending ? t.newMeal.addFoodPending : t.newMeal.addFoodSubmit}
             </button>
           </form>
