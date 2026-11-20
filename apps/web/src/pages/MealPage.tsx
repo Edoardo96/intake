@@ -1,7 +1,7 @@
 import type { Meal } from "@intake/shared";
 import { useState } from "react";
 import { Link } from "wouter";
-import { useDay, useFavoriteMeal } from "../api/queries";
+import { mealPhotoUrl, useDay, useFavoriteMeal, useMealPhotos } from "../api/queries";
 import { CloseIcon } from "../components/icons";
 import { mealTitle } from "../components/Timeline";
 import { formatGrams, formatKcal, formatPercent, formatWeekday } from "../lib/format";
@@ -32,6 +32,7 @@ export function MealPage({ date, id }: { date: string; id: string }) {
   const meal = day.data?.meals.find((m) => m.id === id);
   const back = dayHref(date, day.data?.clock.localDate);
   const [favoriteOpen, setFavoriteOpen] = useState(false);
+  const hasPhoto = useMealPhotos().data?.has(id) ?? false;
 
   if (day.isPending) {
     return (
@@ -72,6 +73,7 @@ export function MealPage({ date, id }: { date: string; id: string }) {
   return (
     <div className="page detail-page">
       <BackHeader href={back} label={`${formatWeekday(date)} · ${meal.time}`} />
+      {hasPhoto && <img className="detail-photo" src={mealPhotoUrl(meal.id)} alt={t.meal.photoAlt(mealTitle(meal))} />}
 
       <section className="detail-hero">
         <h1>{mealTitle(meal)}</h1>

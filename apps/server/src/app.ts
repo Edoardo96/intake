@@ -51,6 +51,10 @@ export interface AppOptions {
   api?: DayRoutesOptions["api"];
   /** Logged meal writes (edit, delete, favorite, repeat); registered together with `auth`. */
   mealsApi?: MealRoutesOptions["api"];
+  /** Photo and text recognition for new meals (ANTHROPIC_API_KEY); optional. */
+  recognizer?: MealRoutesOptions["recognizer"];
+  /** Photos of meals logged from a photo; optional. */
+  mealPhotos?: MealRoutesOptions["photos"];
   /** Daily insight ("Dai tuoi dati"); registered together with `auth`. */
   insightApi?: InsightRoutesOptions["api"];
   /** Apple Health data for the insight; optional. */
@@ -175,7 +179,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
       await app.register(profileRoutes, { prefix: "/api", ...options.profile, requireOwner });
     }
     if (options.mealsApi) {
-      await app.register(mealRoutes, { prefix: "/api", api: options.mealsApi, requireOwner });
+      await app.register(mealRoutes, { prefix: "/api", api: options.mealsApi, recognizer: options.recognizer, photos: options.mealPhotos, requireOwner });
     }
     if (options.api) {
       await app.register(dayRoutes, { prefix: "/api", api: options.api, plans: options.plans, requireOwner });

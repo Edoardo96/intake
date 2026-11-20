@@ -466,7 +466,7 @@ function HevySyncRow() {
   );
 }
 
-const FEATURE_ROWS: FeatureKey[] = ["water", "training", "health", "reminders"];
+const FEATURE_ROWS: FeatureKey[] = ["photoMeals", "water", "training", "health", "reminders"];
 
 /** Profilo › Funzioni (docs/features.md): Alimentazione always on, a switch for each optional part. */
 function FeaturesCard() {
@@ -491,7 +491,7 @@ function FeaturesCard() {
         <label key={key} className="profile-row-item feature-row">
           <span className="connection-text">
             <strong>{s[key]}</strong>
-            <span className="muted">{s[`${key}Note`]}</span>
+            <span className="muted">{key === "photoMeals" && !data.recognitionConfigured ? s.photoMealsMissing : s[`${key}Note`]}</span>
           </span>
           <input
             type="checkbox"
@@ -499,7 +499,7 @@ function FeaturesCard() {
             className="switch"
             aria-label={s.toggle(s[key])}
             checked={data[key]}
-            disabled={save.isPending}
+            disabled={save.isPending || (key === "photoMeals" && !data.recognitionConfigured && !data[key])}
             onChange={(event) => save.mutate({ [key]: event.target.checked })}
           />
         </label>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useAddWater, useDay, useFeature, useLogPlanned, useLogSavedMeal, useRecentMeals, useRepeatMeal, useSavedMeals } from "../api/queries";
+import { Link } from "wouter";
+import { useAddWater, useDay, useFeature, useFeatures, useLogPlanned, useLogSavedMeal, useRecentMeals, useRepeatMeal, useSavedMeals } from "../api/queries";
 import { formatKcal, formatShortDate } from "../lib/format";
 import { t } from "../lib/strings";
 import { CloseIcon } from "./icons";
@@ -39,6 +40,7 @@ const WATER_AMOUNTS = [200, 250];
 export function AddSheet({ onClose }: Props) {
   const addWater = useAddWater("today");
   const water = useFeature("water");
+  const recognition = useFeatures().data?.recognition ?? false;
   const today = useDay("today");
   const logPlanned = useLogPlanned("today");
   const [showRecent, setShowRecent] = useState(false);
@@ -72,6 +74,31 @@ export function AddSheet({ onClose }: Props) {
             <CloseIcon size={18} strokeWidth={2.5} />
           </button>
         </div>
+
+        {recognition && (
+          <div className="capture-tiles">
+            <Link href="/pasto/nuovo" className="capture-tile" data-primary onClick={onClose}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
+                <circle cx="12" cy="13" r="3.5" />
+              </svg>
+              <span>
+                <strong>{t.newMeal.photo}</strong>
+                <span className="capture-tile-hint">{t.newMeal.photoHint}</span>
+              </span>
+            </Link>
+            <Link href="/pasto/nuovo/testo" className="capture-tile" onClick={onClose}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4 6h16v10H9l-5 4z" />
+                <path d="M8 10h8M8 13h5" />
+              </svg>
+              <span>
+                <strong>{t.newMeal.text}</strong>
+                <span className="capture-tile-hint">{t.newMeal.textHint}</span>
+              </span>
+            </Link>
+          </div>
+        )}
 
         {water && (
           <div className="sheet-water">
@@ -190,14 +217,16 @@ export function AddSheet({ onClose }: Props) {
               </span>
             </div>
           )}
-          <a className="sheet-row" href={CLAUDE_URL} target="_blank" rel="noreferrer">
-            <RowIcon path={ROW_ICONS.claude} />
-            <span className="sheet-row-text">
-              <strong>{t.addSheet.claude}</strong>
-              <span className="muted">{t.addSheet.claudeHint}</span>
-            </span>
-            <span className="sheet-row-action">{t.addSheet.open}</span>
-          </a>
+          {!recognition && (
+            <a className="sheet-row" href={CLAUDE_URL} target="_blank" rel="noreferrer">
+              <RowIcon path={ROW_ICONS.claude} />
+              <span className="sheet-row-text">
+                <strong>{t.addSheet.claude}</strong>
+                <span className="muted">{t.addSheet.claudeHint}</span>
+              </span>
+              <span className="sheet-row-action">{t.addSheet.open}</span>
+            </a>
+          )}
         </div>
       </div>
     </Scrim>

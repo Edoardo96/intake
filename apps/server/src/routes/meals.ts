@@ -4,11 +4,29 @@ import { z } from "zod";
 import type { NutritionApi } from "../mcp/nutritionApi.js";
 import { isValidDate } from "../services/dayView.js";
 import { copyMealFields, recentDistinctMeals, updateMealFields } from "../services/mealWrites.js";
+import { MEAL_PHOTO_MAX_BYTES, MealPhotoStore } from "../db/mealPhotoStore.js";
+import { RecognitionError, type MealRecognizer, type RecognitionFailure } from "../services/mealRecognition.js";
 
 export interface MealRoutesOptions {
   api: Pick<NutritionApi, "clock" | "mealsByDate" | "mealsByRange" | "logMeal" | "updateMeal" | "deleteMeal" | "saveMeal" | "savedMeals" | "logSavedMeal">;
   requireOwner: preHandlerHookHandler;
+  /** Photo and text recognition with the Claude API; the route answers 503 without it. */
+  recognizer?: Pick<MealRecognizer, "recognize">;
+  /** Photos kept with meals logged from a photo; without it photos are not stored. */
+  photos?: MealPhotoStore;
 }
+
+/** Room for a resized photo (the app sends at most about 1 MB of base64). */
+const RECOGNIZE_MAX_BYTES = 8 * 1024 * 1024;
+
+const recognizeSchema = z
+  .object({
+    image: z.object({ mediaType: z.enum(["image/jpeg", "image/png", "image/webp"]), data: z.string().min(16).max(RECOGNIZE_MAX_BYTES) }).optional(),
+    text: z.string().trim().max(1000).optional(),
+  })
+  .refine((body) => body.image || body.text, "A photo or a description is required");
+
+const RECOGNITION_STATUS: Record<RecognitionFailure, number> = { auth: 502, credit: 402, busy: 503, unreadable: 502, failed: 502 };
 
 const date = z.string().refine(isValidDate, "Invalid date");
 const nullableNumber = z.number().nonnegative().nullable();
@@ -69,8 +87,67 @@ function shiftDate(value: string, days: number): string {
 }
 
 /** Logged meals under /api/meals: edit, delete, save as favorite, repeat. */
-export const mealRoutes: FastifyPluginAsync<MealRoutesOptions> = async (app, { api, requireOwner }) => {
+export const mealRoutes: FastifyPluginAsync<MealRoutesOptions> = async (app, { api, requireOwner, recognizer, photos }) => {
   app.addHook("preHandler", requireOwner);
+
+  // Foods, grams and nutrition per 100 g from a photo or a description; nothing is logged until the user confirms
+  app.post("/meals/recognize", { bodyLimit: RECOGNIZE_MAX_BYTES }, async (request, reply) => {
+    if (!recognizer) return reply.code(503).send({ error: "recognition_not_configured" });
+    const body = recognizeSchema.safeParse(request.body);
+    if (!body.success) return reply.code(400).send({ error: "Invalid request" });
+    try {
+      return await recognizer.recognize(body.data);
+    } catch (error) {
+      if (!(error instanceof RecognitionError)) throw error;
+      request.log.warn({ reason: error.reason }, error.message);
+      return reply.code(RECOGNITION_STATUS[error.reason]).send({ error: `recognition_${error.reason}` });
+    }
+  });
+
+  // A new meal, e.g. confirmed after the recognition; its photo (optional) is kept under the new meal's id
+  app.post("/meals", { bodyLimit: RECOGNIZE_MAX_BYTES }, async (request, reply) => {
+    const body = updateSchema.safeParse(request.body);
+    const extra = z
+      .object({
+        idempotencyKey: z.string().min(8).max(255),
+        photo: z.object({ mediaType: z.literal("image/jpeg"), data: z.string().min(16) }).optional(),
+        favoriteName: z.string().trim().min(1).max(100).optional(),
+      })
+      .safeParse(request.body);
+    if (!body.success || !extra.success) return reply.code(400).send({ error: "Invalid meal" });
+    const jpeg = extra.data.photo ? Buffer.from(extra.data.photo.data, "base64") : null;
+    if (jpeg && (!MealPhotoStore.isJpeg(jpeg) || jpeg.length > MEAL_PHOTO_MAX_BYTES)) return reply.code(400).send({ error: "Invalid photo" });
+    const result = await api.logMeal({ ...updateMealFields(body.data), description: body.data.description, meal_type: body.data.type, idempotency_key: extra.data.idempotencyKey });
+    let photoSaved = false;
+    if (jpeg && photos && result.id) {
+      try {
+        photos.save(result.id, jpeg);
+        photoSaved = true;
+      } catch (error) {
+        request.log.warn({ err: error }, "meal photo not saved");
+      }
+    }
+    // "Salva anche come preferito": a saved meal made from the new meal; the meal itself is already logged
+    let favoriteSaved = false;
+    if (extra.data.favoriteName && result.id) {
+      try {
+        await api.saveMeal(extra.data.favoriteName, result.id);
+        favoriteSaved = true;
+      } catch (error) {
+        request.log.warn({ err: error }, "favorite not saved");
+      }
+    }
+    return reply.code(201).send({ mealId: result.id, photoSaved, favoriteSaved });
+  });
+
+  // Meal photos: the ids that have one (for the timeline) and the image itself
+  app.get("/meals/photos", async () => ({ mealIds: photos?.list() ?? [] }));
+
+  app.get<{ Params: { id: string } }>("/meals/:id/photo", async (request, reply) => {
+    const jpeg = photos?.get(request.params.id) ?? null;
+    if (!jpeg) return reply.code(404).send({ error: "No photo" });
+    return reply.header("content-type", "image/jpeg").header("cache-control", "private, max-age=31536000, immutable").send(jpeg);
+  });
 
   // Distinct meals of the last two weeks, for "Ripeti un pasto recente"
   app.get("/meals/recent", async () => {
@@ -107,6 +184,7 @@ export const mealRoutes: FastifyPluginAsync<MealRoutesOptions> = async (app, { a
   // Deleting is confirmed in the UI; it removes the meal from Nutrition (and from Claude's view of it)
   app.delete<{ Params: { id: string } }>("/meals/:id", async (request) => {
     await api.deleteMeal(request.params.id);
+    photos?.delete(request.params.id);
     return { ok: true };
   });
 

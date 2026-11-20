@@ -14,7 +14,7 @@ describe("feature switches", () => {
   it("starts a new installation with only Alimentazione, waiting for the setup", () => {
     const features = new FeatureStore(openDatabase(":memory:"));
     features.adoptExisting({ gymConfigured: true });
-    expect(features.get()).toEqual({ setupDone: false, training: false, health: false, reminders: false, water: true });
+    expect(features.get()).toEqual({ setupDone: false, training: false, health: false, reminders: false, water: true, photoMeals: false });
     expect(features.set({ setupDone: true, training: true })).toMatchObject({ setupDone: true, training: true, health: false });
     expect(features.enabled("training")).toBe(true);
   });
@@ -24,7 +24,7 @@ describe("feature switches", () => {
     new HealthStore(db).save({ daily: [{ date: "2026-11-19", metric: "steps", value: 4000 }], sleep: [], workouts: [], ignored: { metrics: [], sections: {}, routes: 0 } } as unknown as HealthExport, "sync");
     const features = new FeatureStore(db);
     features.adoptExisting({ gymConfigured: true });
-    expect(features.get()).toEqual({ setupDone: true, training: true, health: true, reminders: true, water: true });
+    expect(features.get()).toEqual({ setupDone: true, training: true, health: true, reminders: true, water: true, photoMeals: false });
     // A stored choice is never overwritten
     features.set({ training: false });
     new FeatureStore(db).adoptExisting({ gymConfigured: true });
@@ -63,7 +63,10 @@ describe("feature switches", () => {
       health: false,
       reminders: false,
       water: true,
+      photoMeals: false,
       gymApps,
+      recognition: false,
+      recognitionConfigured: false,
     });
     const off = await app.inject({ method: "GET", url: "/api/health/status", headers: { cookie } });
     expect(off.statusCode).toBe(404);
@@ -81,6 +84,34 @@ describe("feature switches", () => {
     const water = await app.inject({ method: "POST", url: "/api/water", headers: { cookie }, payload: { amountMl: 250 } });
     expect(water.statusCode).toBe(404);
     expect(water.json()).toEqual({ error: "feature_disabled", feature: "water" });
+  });
+
+  it("uses the photo meals only when the switch is on and the Claude key is set, hiding their routes otherwise", async () => {
+    const features = new FeatureStore(openDatabase(":memory:"));
+    const app = await buildApp({ auth: authOptions(), features: { features, gymApps, recognition: true } });
+    const { cookie } = await signIn(app);
+    const get = async () => (await app.inject({ method: "GET", url: "/api/features", headers: { cookie } })).json();
+    expect(await get()).toMatchObject({ photoMeals: false, recognition: false, recognitionConfigured: true });
+    for (const url of ["/api/meals/photos", "/api/meals/abc-123/photo"]) {
+      expect((await app.inject({ method: "GET", url, headers: { cookie } })).json()).toEqual({ error: "feature_disabled", feature: "photoMeals" });
+    }
+    expect((await app.inject({ method: "POST", url: "/api/meals/recognize", headers: { cookie }, payload: {} })).statusCode).toBe(404);
+
+    await app.inject({ method: "PUT", url: "/api/features", headers: { cookie }, payload: { photoMeals: true } });
+    expect(await get()).toMatchObject({ photoMeals: true, recognition: true });
+
+    // Without the key the switch alone does nothing
+    const noKey = await buildApp({ auth: authOptions(), features: { features, gymApps } });
+    const signed = await signIn(noKey);
+    expect((await noKey.inject({ method: "GET", url: "/api/features", headers: { cookie: signed.cookie } })).json()).toMatchObject({ photoMeals: true, recognition: false });
+  });
+
+  it("does not hide the other meal routes with the photo meals", () => {
+    const off = () => false;
+    expect(blockedBy("/api/meals/recent", off)).toBeNull();
+    expect(blockedBy("/api/meals/saved", off)).toBeNull();
+    expect(blockedBy("/api/meals", off)).toBeNull();
+    expect(blockedBy("/api/meals/photos", off)).toBe("photoMeals");
   });
 
   it("gives the other screens no Apple Health data while Salute is off", () => {
