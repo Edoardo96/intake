@@ -45,6 +45,10 @@ export function trackViewportHeight(): () => void {
   document.body.appendChild(probe);
 
   const measure = () => {
+    // While a text field has focus the keyboard is open: Safari shrinks the visual viewport and scrolls the
+    // page to the field. Following it (new height, scroll back to 0) made the page jump up and down; the
+    // keyboard is left to Safari and the height is measured again when the field loses focus.
+    if (editableFocused()) return;
     const vv = window.visualViewport;
     const height = vv ? vv.height * vv.scale : window.innerHeight;
     const valid = document.visibilityState === "visible" && height >= MIN_HEIGHT && height <= MAX_HEIGHT;
@@ -66,6 +70,9 @@ export function trackViewportHeight(): () => void {
   };
   const windowEvents = ["resize", "orientationchange", "pageshow", "focus"] as const;
   for (const name of windowEvents) window.addEventListener(name, update);
+  // Keyboard closed: measure once focus has really left the fields (focusout fires before the next focus)
+  const onFocusOut = () => window.setTimeout(() => !editableFocused() && update(), 0);
+  document.addEventListener("focusout", onFocusOut);
   document.addEventListener("visibilitychange", onVisible);
   window.visualViewport?.addEventListener("resize", update);
   const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
@@ -78,6 +85,15 @@ export function trackViewportHeight(): () => void {
     probe.remove();
     for (const name of windowEvents) window.removeEventListener(name, update);
     document.removeEventListener("visibilitychange", onVisible);
+    document.removeEventListener("focusout", onFocusOut);
     window.visualViewport?.removeEventListener("resize", update);
   };
+}
+
+/** A text field (or anything editable) has focus, so the on-screen keyboard is likely open. */
+function editableFocused(): boolean {
+  const el = document.activeElement;
+  if (!(el instanceof HTMLElement)) return false;
+  if (el.isContentEditable || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) return true;
+  return el instanceof HTMLInputElement && !["checkbox", "radio", "button", "submit", "reset", "range", "color", "file", "image"].includes(el.type);
 }
