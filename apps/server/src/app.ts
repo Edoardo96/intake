@@ -1,5 +1,3 @@
-import type { LanguageStore } from "./db/languageStore.js";
-import { languageRoutes } from "./routes/language.js";
 import { existsSync } from "node:fs";
 import fastifyCookie from "@fastify/cookie";
 import fastifyStatic from "@fastify/static";
@@ -27,6 +25,8 @@ import { healthRoutes } from "./routes/health.js";
 import { appleHealthRoutes, type AppleHealthRoutesOptions } from "./routes/appleHealth.js";
 import { healthIngestRoutes, type HealthIngestRoutesOptions } from "./routes/healthIngest.js";
 import { blockedBy, featureRoutes, type FeatureRoutesOptions } from "./routes/features.js";
+import type { LanguageStore } from "./db/languageStore.js";
+import { languageRoutes } from "./routes/language.js";
 import { nutritionApiRoutes, nutritionConnectRoutes } from "./routes/nutrition.js";
 
 export interface AuthOptions {

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { useHealthTrends, useWorkouts } from "../api/queries";
 import { TrendsSwitch, TrendsTitle } from "../components/TrendsSwitch";
-import { formatDayLongMonth, formatDurationShort, formatKcal, formatOneDecimal, formatShortDate, formatWeekdayDay } from "../lib/format";
+import { formatDayLongMonth, formatDurationShort, formatKcal, formatOneDecimal, formatShortDate, formatWeekdayDay, formatWeekdayLetter } from "../lib/format";
 import { t } from "../lib/strings";
 
 type Period = 7 | 30 | 90;
@@ -11,12 +11,11 @@ type Tab = "sleep" | "activity" | "heart";
 const PERIODS: Period[] = [7, 30, 90];
 const TABS: Tab[] = ["sleep", "activity", "heart"];
 
-const LETTERS = ["D", "L", "M", "M", "G", "V", "S"];
 const weekdayOf = (date: string) => new Date(`${date}T12:00:00Z`).getUTCDay();
 
 /** x-axis label: the weekday letter over 7 days, Mondays as "d/m" over 30 days, the first Monday of each month over 90. */
 function axisLabel(date: string, period: Period): string {
-  if (period === 7) return LETTERS[weekdayOf(date)]!;
+  if (period === 7) return formatWeekdayLetter(date);
   const day = Number(date.slice(8, 10));
   if (weekdayOf(date) !== 1 || (period === 90 && day > 7)) return "";
   return `${day}/${Number(date.slice(5, 7))}`;

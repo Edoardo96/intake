@@ -205,10 +205,13 @@ export const nl: Strings = {
     waterFailed: "Water niet geregistreerd. Probeer het opnieuw.",
   },
 
+  weekStrip: "Dagen van de week",
   weekdaysShort: ["M", "D", "W", "D", "V", "Z", "Z"],
   weekdaysLong: ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"],
 
   calories: {
+    label: "Calorieën",
+    ringLabel: (eaten: string, goal: string) => `${eaten} van ${goal} kcal`,
     left: "kcal over",
     over: "kcal te veel",
     eaten: "Gegeten",
@@ -219,6 +222,7 @@ export const nl: Strings = {
   },
 
   macros: {
+    label: "Macronutriënten",
     protein: "Eiwit",
     carbs: "Koolhydraten",
     fat: "Vet",
@@ -282,8 +286,8 @@ export const nl: Strings = {
     source: (label: string) => `Bron: ${label}`,
     hrFrom: (label: string) => `hartslag uit ${label}`,
     kcalFrom: (label: string) => `calorieën uit ${label}`,
-    discarded: (labels: string[]) => `dubbele verwijderd: ${labels.join(", ")}`,
-    noDuplicates: "geen dubbele",
+    discarded: (labels: string[]) => `duplicaten verwijderd: ${labels.join(", ")}`,
+    noDuplicates: "geen duplicaten",
     expand: (title: string) => `Details van ${title}`,
   },
 
@@ -317,6 +321,7 @@ export const nl: Strings = {
   },
 
   timeline: {
+    mealMacros: "Macronutriënten van de maaltijd",
     title: "Tijdlijn",
     previousDay: "Vorige dag",
     nextDay: "Volgende dag",
@@ -416,6 +421,7 @@ export const nl: Strings = {
 
 
   plan: {
+    daysTabs: "Dagen",
     title: "Plan",
     activeFrom: (date: string) => `Actief sinds ${date}`,
     startsOn: (date: string) => `Begint op ${date}`,
@@ -443,6 +449,7 @@ export const nl: Strings = {
   },
 
   week: {
+    bestOf: (day: string, value: string, goal: string) => `${day} ${value} van ${goal}`,
     title: "Voeding",
     previous: "Vorige week",
     next: "Volgende week",
@@ -553,7 +560,7 @@ export const nl: Strings = {
       "Controleer in Health Auto Export dat de meting \"Actieve energie\" geselecteerd is en exporteer opnieuw.",
     ],
     importTitle: "Bestand importeren",
-    importHint: "Voor de geschiedenis of een incidentele update. Dezelfde periode opnieuw uploaden werkt de gegevens bij zonder dubbele.",
+    importHint: "Voor de geschiedenis of een incidentele update. Dezelfde periode opnieuw uploaden werkt de gegevens bij zonder duplicaten.",
     importButton: "Bestand van Health Auto Export uploaden (.json)",
     stepGoalLess: "Doel verlagen",
     stepGoalMore: "Doel verhogen",
@@ -583,15 +590,15 @@ export const nl: Strings = {
     irregular: "onregelmatig",
     workoutsTitle: "Trainingen",
     workoutsSummary: (found: number, discarded: number, sessions: number) =>
-      `${found} gevonden · ${discarded} ${discarded === 1 ? "dubbele verwijderd" : "dubbele verwijderd"} · ${sessions} te importeren`,
+      `${found} gevonden · ${discarded} ${discarded === 1 ? "duplicaat verwijderd" : "duplicaten verwijderd"} · ${sessions} te importeren`,
     families: { Ciclismo: "Fietsen en hometrainer" } as Record<string, string>,
-    showDuplicates: (n: number) => `Opgeloste dubbele bekijken (${n})`,
-    hideDuplicates: "Dubbele verbergen",
+    showDuplicates: (n: number) => `Opgeloste duplicaten bekijken (${n})`,
+    hideDuplicates: "Duplicaten verbergen",
     joined: (range: string, source: string) => `Samengevoegd tot ${range} · gegevens ${source}`,
     single: "Eén training",
     kept: (source: string) => `${source} behouden`,
     heartRateFrom: (source: string) => `Hartslag uit ${source}`,
-    discarded: (n: number) => `${n} dubbele verwijderd`,
+    discarded: (n: number) => (n === 1 ? "1 duplicaat verwijderd" : `${n} duplicaten verwijderd`),
     ignoredTitle: "Genegeerd",
     ignored: {
       nutrition: ["Voeding, water, cafeïne", "al in Nutrition"],

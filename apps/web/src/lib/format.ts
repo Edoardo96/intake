@@ -139,3 +139,24 @@ const fixedOneDecimal = new Intl.NumberFormat(LOCALE, { minimumFractionDigits: 1
 export function formatWeight(kg: number): string {
   return fixedOneDecimal.format(kg);
 }
+
+const lists = new Intl.ListFormat(LOCALE, { type: "conjunction" });
+
+/** ["A", "B", "C"] -> "A, B e C" ("A, B and C" in English) */
+export function formatList(items: string[]): string {
+  return lists.format(items);
+}
+
+const weekdayNarrow = new Intl.DateTimeFormat(LOCALE, { weekday: "narrow", timeZone: "UTC" });
+
+/** "2026-11-04" -> "M" (Wednesday's initial in the chosen language) */
+export function formatWeekdayLetter(date: string): string {
+  return weekdayNarrow.format(parseDate(date)).toUpperCase();
+}
+
+const monthLong = new Intl.DateTimeFormat(LOCALE, { month: "long", timeZone: "UTC" });
+
+/** "2026-09-14" -> "settembre" */
+export function formatMonth(date: string): string {
+  return monthLong.format(parseDate(date));
+}

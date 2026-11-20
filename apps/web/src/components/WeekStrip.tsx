@@ -11,7 +11,7 @@ interface Props {
 /** Monday to Sunday of the selected week; today is marked, the selected day is filled. */
 export function WeekStrip({ selected, today, onSelect }: Props) {
   return (
-    <nav className="week-strip" aria-label="Giorni della settimana">
+    <nav className="week-strip" aria-label={t.weekStrip}>
       {weekOf(selected).map((date, i) => (
         <button
           key={date}

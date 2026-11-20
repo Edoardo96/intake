@@ -41,12 +41,14 @@ if (typeof document !== "undefined") document.documentElement.lang = language;
 /** Keeps the installation language on this device; returns true when it changed (the caller reloads). */
 export function rememberLanguage(next: unknown): boolean {
   if (!isLanguage(next) || next === language) return false;
+  // Reload only when the language was really kept: with storage blocked (Safari "Block all cookies") every start
+  // would read Italian again, see a different language and reload, forever
   try {
     globalThis.localStorage?.setItem(STORAGE_KEY, next);
+    return globalThis.localStorage?.getItem(STORAGE_KEY) === next;
   } catch {
-    // Storage blocked: the language applies until the next load
+    return false;
   }
-  return true;
 }
 
 /**

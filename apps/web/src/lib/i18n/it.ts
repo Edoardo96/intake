@@ -205,10 +205,13 @@ export const it = {
     waterFailed: "Acqua non registrata. Riprova.",
   },
 
+  weekStrip: "Giorni della settimana",
   weekdaysShort: ["L", "M", "M", "G", "V", "S", "D"],
   weekdaysLong: ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"],
 
   calories: {
+    label: "Calorie",
+    ringLabel: (eaten: string, goal: string) => `${eaten} di ${goal} kcal`,
     left: "kcal rimanenti",
     over: "kcal in eccesso",
     eaten: "Mangiate",
@@ -219,6 +222,7 @@ export const it = {
   },
 
   macros: {
+    label: "Macronutrienti",
     protein: "Proteine",
     carbs: "Carboidrati",
     fat: "Grassi",
@@ -317,6 +321,7 @@ export const it = {
   },
 
   timeline: {
+    mealMacros: "Macronutrienti del pasto",
     title: "Timeline",
     previousDay: "Giorno precedente",
     nextDay: "Giorno successivo",
@@ -415,6 +420,7 @@ export const it = {
   },
 
   plan: {
+    daysTabs: "Giorni",
     title: "Piano",
     activeFrom: (date: string) => `Attivo dal ${date}`,
     startsOn: (date: string) => `Parte dal ${date}`,
@@ -443,6 +449,7 @@ export const it = {
   },
 
   week: {
+    bestOf: (day: string, value: string, goal: string) => `${day} ${value} su ${goal}`,
     title: "Alimentazione",
     previous: "Settimana precedente",
     next: "Settimana successiva",

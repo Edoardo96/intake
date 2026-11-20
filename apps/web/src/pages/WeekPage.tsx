@@ -313,7 +313,7 @@ function ConsistencyCard({ week }: { week: WeekView }) {
     ...(c.fiber.goal ? [{ label: t.week.fiberTarget, note: targetNote(c.fiber, (v) => `${formatKcal(v)} g`), value: `${c.fiber.hit}/${c.fiber.total}` }] : []),
     {
       label: t.week.waterTarget,
-      note: c.water.best && c.water.goal ? `${lower(c.water.best.date)} ${formatWater(c.water.best.value)} su ${formatWater(c.water.goal)}${almost(c.water.best.value, c.water.goal)}` : t.week.noCompletedDays,
+      note: c.water.best && c.water.goal ? `${t.week.bestOf(lower(c.water.best.date), formatWater(c.water.best.value), formatWater(c.water.goal))}${almost(c.water.best.value, c.water.goal)}` : t.week.noCompletedDays,
       value: `${c.water.hit}/${c.water.total}`,
     },
     { label: t.week.asPlanned, note: t.week.asPlannedNote(c.skipped), value: String(c.asPlanned) },

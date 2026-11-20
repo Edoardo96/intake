@@ -6,7 +6,7 @@ export const DEFAULT_LANGUAGE: Language = "it";
 
 export const isLanguage = (value: unknown): value is Language => typeof value === "string" && (LANGUAGES as readonly string[]).includes(value);
 
-/** UI language for the whole installation (settings table). Also used for notifications, the daily insight and recognized food names. */
+/** UI language for the whole installation (settings table). Also used for the notifications and the daily insight. */
 export class LanguageStore {
   private cached: Language | null = null;
 

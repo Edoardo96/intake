@@ -23,9 +23,9 @@ export function CalorieCard({ eaten, goal, children }: Props) {
   const dash = CIRCUMFERENCE * Math.min(ratio, 1);
 
   return (
-    <section className="card calorie-card" aria-label="Calorie">
+    <section className="card calorie-card" aria-label={t.calories.label}>
       <div className="ring" data-over={over || undefined}>
-        <svg viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label={hasGoal ? `${formatKcal(eaten)} di ${formatKcal(goal)} kcal` : `${formatKcal(eaten)} kcal`}>
+        <svg viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label={hasGoal ? t.calories.ringLabel(formatKcal(eaten), formatKcal(goal)) : `${formatKcal(eaten)} kcal`}>
           <circle className="ring-track" cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} strokeWidth={STROKE} />
           {hasGoal && ratio > 0 && (
             <circle
