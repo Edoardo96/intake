@@ -68,7 +68,7 @@ keeps "Chiedi a Claude" as before.
 - Shown as a carousel on top of the meal detail (swipe, arrows, "2 / 3") and as the first photo with the number of
   photos on the Timeline card.
 - **Modifica pasto** (part on): the same carousel with a × on each photo and an "Aggiungi foto" tile (camera or library).
-  A new photo asks "Vuoi aggiungere al pasto i cibi di questa foto?": "Aggiungi i cibi con Claude" recognizes only
+  A new photo asks "Vuoi aggiungere al pasto i cibi di questa foto?": "Aggiungi i cibi con l'IA" recognizes only
   that photo (with an optional note) and adds its foods as rows, "Solo la foto" keeps it as a photo. Nothing is saved
   until "Salva": the meal is updated first, then removed photos are deleted and new ones uploaded; if a photo fails, the
   meal stays saved and the screen says so.
