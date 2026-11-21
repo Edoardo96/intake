@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
-import { useAddWater, useDay, useFeature, useFeatures, useLogPlanned, useLogSavedMeal, useDeleteSavedMeal, useRecentMeals, useRepeatMeal, useSavedMeals } from "../api/queries";
+import { useAddWater, useDay, useFeature, useFeatures, useLogPlanned, useDeleteSavedMeal, useRecentMeals, useRepeatMeal, useSavedMeals } from "../api/queries";
 import { formatKcal, formatShortDate } from "../lib/format";
 import { t } from "../lib/strings";
 import { CloseIcon, SparklesIcon } from "./icons";
@@ -62,7 +62,6 @@ export function AddSheet({ onClose }: Props) {
   const recent = useRecentMeals(showRecent);
   const repeat = useRepeatMeal();
   const saved = useSavedMeals();
-  const logSaved = useLogSavedMeal();
   const deleteSaved = useDeleteSavedMeal();
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [showSaved, setShowSaved] = useState(false);
@@ -213,7 +212,8 @@ export function AddSheet({ onClose }: Props) {
                     </div>
                   ) : (
                     <div key={meal.id} className="sheet-row saved-row" data-static>
-                      <button type="button" className="sheet-row" disabled={logSaved.isPending} onClick={() => logSaved.mutate(meal, { onSuccess: onClose })}>
+                      {/* Opens the confirmation screen with its foods, to correct amounts, type and time before logging */}
+                      <Link href={`/pasto/nuovo/preferito/${meal.id}`} className="sheet-row" onClick={onClose}>
                         <span className="sheet-row-text">
                           <strong>
                             {meal.name}
@@ -221,8 +221,8 @@ export function AddSheet({ onClose }: Props) {
                           </strong>
                           {meal.description && <span className="muted">{meal.description}</span>}
                         </span>
-                        <span className="sheet-row-action">{t.addSheet.log}</span>
-                      </button>
+                        <span className="sheet-row-action">{t.addSheet.open}</span>
+                      </Link>
                       <button
                         type="button"
                         className="icon-button saved-delete"
@@ -242,7 +242,6 @@ export function AddSheet({ onClose }: Props) {
                       {t.addSheet.savedMore(hiddenSaved)}
                     </button>
                   )}
-                  {logSaved.isError && <p className="error-text">{t.timeline.logFailed}</p>}
                   {deleteSaved.isError && <p className="error-text">{t.addSheet.deleteSavedFailed}</p>}
                 </div>
               )}

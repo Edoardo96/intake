@@ -327,15 +327,6 @@ export function useSavedMeals() {
   });
 }
 
-/** Logs a saved meal now; the server picks the meal type (the saved meal's default, else the time of day). */
-export function useLogSavedMeal() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (meal: SavedMeal) => apiFetch(`/api/meals/saved/${meal.id}/log`, { method: "POST", json: { idempotencyKey: newIdempotencyKey() } }),
-    onSettled: () => invalidateDays(queryClient),
-  });
-}
-
 /** Deletes a favorite on Nutrition; the list of the add sheet reloads. */
 export function useDeleteSavedMeal() {
   const queryClient = useQueryClient();
