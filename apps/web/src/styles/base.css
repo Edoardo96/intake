@@ -8600,11 +8600,6 @@ div.connection-row {
   font-weight: 700;
 }
 
-.print-foods {
-  color: var(--color-text-muted);
-  font-size: 12px;
-}
-
 .print-shopping-columns {
   columns: 2 220px;
   column-gap: 24px;
@@ -8706,11 +8701,6 @@ div.connection-row {
   .print-days {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
-  }
-
-  /* The dish line already names the foods */
-  .print-foods {
-    display: none;
   }
 
   .print-sheet {
@@ -9001,6 +8991,95 @@ div.connection-row {
   align-items: center;
 }
 
+/* Alternativa per oggi (Timeline and Oggi's next meal): the hint field and the proposal */
+.day-alt-open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.day-alt {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-divider);
+}
+
+.day-alt form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.day-alt .field input {
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-input);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 16px;
+}
+
+.day-alt-note {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.day-alt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.day-alt-actions .button-secondary-small {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+}
+
+.day-alt-actions .button-primary-inline {
+  flex: 0 0 auto;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  gap: 6px;
+}
+
+.day-alt-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-accent-soft);
+}
+
+.day-alt-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+}
+
+.day-alt-reason {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 /* Oggi: Nutrition on UTC while the device is elsewhere */
 .timezone-notice {
   display: flex;
@@ -9041,4 +9120,17 @@ div.connection-row {
 .timezone-state button {
   font-size: 14px;
   white-space: nowrap;
+}
+
+/* "Usa …" second step, on Oggi and in Collegamenti */
+.timezone-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.profile-list > .timezone-confirm {
+  padding: 4px 0 12px;
 }

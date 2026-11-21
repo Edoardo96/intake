@@ -33,21 +33,15 @@ const goalsBody = z
     return targetWeight >= limits.min && targetWeight <= limits.max;
   });
 
-/** An IANA timezone name the runtime knows, e.g. "Europe/Rome". */
+/**
+ * IANA zone names the runtime lists, plus UTC. Intl.DateTimeFormat alone would also take "+01:00", "GMT" or
+ * "europe/rome", which are not zone names.
+ */
+const TIME_ZONES = new Set([...Intl.supportedValuesOf("timeZone"), "UTC"]);
+
 const timezoneBody = z
   .object({
-    timezone: z
-      .string()
-      .min(1)
-      .max(64)
-      .refine((name) => {
-        try {
-          new Intl.DateTimeFormat("en", { timeZone: name });
-          return true;
-        } catch {
-          return false;
-        }
-      }),
+    timezone: z.string().refine((name) => TIME_ZONES.has(name)),
   })
   .strict();
 
