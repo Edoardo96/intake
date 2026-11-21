@@ -154,6 +154,12 @@ export class NutritionApi {
     await this.call("set_nutrition_goals", args);
   }
 
+  /** Sets the Nutrition profile timezone (IANA name); the next clock() reads it again. */
+  async setTimezone(timezone: string): Promise<void> {
+    await this.call("set_timezone", { timezone });
+    this.timezone = null;
+  }
+
   /** Daily goals and totals (including water) from structured content. */
   goalProgress(date: string): Promise<GoalProgress> {
     return this.callStructured("get_goal_progress", { date }, parseGoalProgress);

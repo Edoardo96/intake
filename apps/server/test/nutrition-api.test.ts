@@ -114,6 +114,16 @@ describe("NutritionApi request budget (60 requests per minute on the Nutrition s
     expect(callTool).toHaveBeenCalledTimes(2);
   });
 
+  it("sets the timezone with set_timezone and reads the clock again after it", async () => {
+    const callTool = vi.fn(async (tool: string) => result(tool === "set_timezone" ? "Timezone set to Europe/Rome. Local today is 2026-11-05." : clockText));
+    const api = new NutritionApi({ callTool });
+    await api.clock();
+    await api.setTimezone("Europe/Rome");
+    await api.clock();
+    expect(callTool.mock.calls.map((c) => c[0])).toEqual(["get_current_time", "set_timezone", "get_current_time"]);
+    expect(callTool).toHaveBeenCalledWith("set_timezone", { timezone: "Europe/Rome" });
+  });
+
   it("handles the date change at midnight in the profile timezone", () => {
     expect(clockIn("Europe/Rome", new Date("2026-11-05T23:30:00Z"))).toMatchObject({ localDate: "2026-11-06", localTime: "00:30:00" });
     expect(clockIn("America/New_York", new Date("2026-11-06T03:30:00Z"))).toMatchObject({ localDate: "2026-11-05", localTime: "22:30:00" });
