@@ -37,7 +37,7 @@ export const nl: Strings = {
     title: "Instellingen",
     signedInGoogle: "ingelogd met Google",
     sections: "Onderdelen van de instellingen",
-    nav: { weight: "Gewicht", goals: "Doelen", features: "Functies", training: "Trainingen", connections: "Koppelingen", reminders: "Herinneringen", appearance: "Weergave en taal", account: "Account", backup: "Back-up" },
+    nav: { weight: "Gewicht", goals: "Doelen", features: "Functies", home: "Startscherm", training: "Trainingen", connections: "Koppelingen", reminders: "Herinneringen", appearance: "Weergave en taal", account: "Account", backup: "Back-up" },
     backups: {
       title: "Back-up van Nutrition",
       note: "Elke nacht om middernacht bewaart Intake een volledige kopie van je Nutrition-gegevens (maaltijden, water, gewicht, doelen) op de server, in het oorspronkelijke formaat van Nutrition.",
@@ -79,6 +79,17 @@ export const nl: Strings = {
     language: "Taal",
     languageNote: "Geldt voor de hele app op elk apparaat, ook voor meldingen en de zin van de dag.",
     languageFailed: "Taal niet gewijzigd. Probeer het opnieuw.",
+    home: {
+      title: "Startscherm aanpassen",
+      note: "Volgorde en kaarten van Vandaag, op elk apparaat. Kaarten van uitgeschakelde functies verschijnen niet.",
+      cards: { nextMeal: "Volgende maaltijd", calories: "Calorieën", macros: "Macronutriënten", water: "Water", training: "Training van vandaag", plan: "Plan en werkelijkheid", activity: "Activiteit en rust", insight: "Uit je gegevens" },
+      planNote: "alleen met een actief plan",
+      up: (name: string) => `${name} omhoog`,
+      down: (name: string) => `${name} omlaag`,
+      show: (name: string) => `${name} tonen`,
+      reset: "Oorspronkelijke volgorde herstellen",
+      failed: "Wijziging niet opgeslagen. Probeer het opnieuw.",
+    },
     features: {
       title: "Functies",
       nutrition: "Voeding",

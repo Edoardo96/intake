@@ -37,7 +37,7 @@ export const en: Strings = {
     title: "Settings",
     signedInGoogle: "signed in with Google",
     sections: "Settings sections",
-    nav: { weight: "Weight", goals: "Goals", features: "Features", training: "Workouts", connections: "Connections", reminders: "Reminders", appearance: "Appearance and language", account: "Account", backup: "Backup" },
+    nav: { weight: "Weight", goals: "Goals", features: "Features", home: "Home", training: "Workouts", connections: "Connections", reminders: "Reminders", appearance: "Appearance and language", account: "Account", backup: "Backup" },
     backups: {
       title: "Nutrition backup",
       note: "Every night at midnight Intake saves a full copy of your Nutrition data (meals, water, weight, goals) on the server, in Nutrition's original format.",
@@ -79,6 +79,17 @@ export const en: Strings = {
     language: "Language",
     languageNote: "Applies to the whole app on every device, including notifications and the daily sentence.",
     languageFailed: "Language not changed. Try again.",
+    home: {
+      title: "Customize home",
+      note: "Order and cards of Today, on every device. Cards of features that are off don't appear.",
+      cards: { nextMeal: "Next meal", calories: "Calories", macros: "Macronutrients", water: "Water", training: "Today's workout", plan: "Plan and reality", activity: "Activity and rest", insight: "From your data" },
+      planNote: "only with an active plan",
+      up: (name: string) => `Move ${name} up`,
+      down: (name: string) => `Move ${name} down`,
+      show: (name: string) => `Show ${name}`,
+      reset: "Restore the original order",
+      failed: "Change not saved. Try again.",
+    },
     features: {
       title: "Features",
       nutrition: "Nutrition",
