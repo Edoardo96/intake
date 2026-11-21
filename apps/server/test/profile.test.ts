@@ -46,10 +46,11 @@ describe("profile routes", () => {
     const ok = await app.inject({ method: "POST", url: "/api/timezone", headers, payload: { timezone: "Europe/Rome" } });
     expect(ok.json()).toEqual({ timezone: "Europe/Rome" });
     expect(setTimezone).toHaveBeenCalledWith("Europe/Rome");
-    for (const timezone of ["Mars/Olympus", "", 42]) {
+    expect((await app.inject({ method: "POST", url: "/api/timezone", headers, payload: { timezone: "UTC" } })).statusCode).toBe(200);
+    for (const timezone of ["Mars/Olympus", "", 42, "+01:00", "GMT", "europe/rome"]) {
       expect((await app.inject({ method: "POST", url: "/api/timezone", headers, payload: { timezone } })).statusCode).toBe(400);
     }
-    expect(setTimezone).toHaveBeenCalledTimes(1);
+    expect(setTimezone).toHaveBeenCalledTimes(2);
   });
 
   it("changes only the goals sent, clears with null and refuses impossible values", async () => {

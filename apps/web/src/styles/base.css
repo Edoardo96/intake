@@ -9035,21 +9035,10 @@ div.connection-row {
 }
 
 .day-alt-actions {
-
-/* Oggi: Nutrition on UTC while the device is elsewhere */
-.timezone-notice {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  line-height: 1.45;
-}
-
-.timezone-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-<<<<<<< HEAD
   gap: 8px;
 }
 
@@ -9089,7 +9078,21 @@ div.connection-row {
   margin: 0;
   font-size: 13px;
   line-height: 1.45;
-=======
+}
+
+/* Oggi: Nutrition on UTC while the device is elsewhere */
+.timezone-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  line-height: 1.45;
+}
+
+.timezone-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
   gap: 8px 16px;
 }
 
@@ -9117,5 +9120,17 @@ div.connection-row {
 .timezone-state button {
   font-size: 14px;
   white-space: nowrap;
->>>>>>> 7bb232e (Ask to use the device's timezone when Nutrition is still on UTC)
+}
+
+/* "Usa …" second step, on Oggi and in Collegamenti */
+.timezone-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.profile-list > .timezone-confirm {
+  padding: 4px 0 12px;
 }
