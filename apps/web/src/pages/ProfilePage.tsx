@@ -1,9 +1,9 @@
 import type { ProfileView, TrainingSourceId } from "@intake/shared";
 import { Fragment, type ReactNode, useState } from "react";
 import { Link } from "wouter";
-import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useRecognitionModel, useSetRecognitionModel, usePlanGeneration, useSetPlanModel, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeature, useFeatures, useSetFeatures, useSetLanguage, useSetGoals, useBackups, useBackupAction, deviceTimezone } from "../api/queries";
+import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useRecognitionModel, useSetRecognitionModel, usePlanGeneration, useSetPlanModel, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeature, useFeatures, useSetFeatures, useSetLanguage, useSetGoals, useBackups, useBackupAction, deviceTimezone, useHomeLayout, useSetHomeLayout } from "../api/queries";
 import { TimezoneConfirm } from "../components/TimezoneNotice";
-import { BACKUP_KEEP, LANGUAGES, parseGoalInput, weightUnitOf, type FeatureKey, type GoalsUpdate, type WeightUnit } from "@intake/shared";
+import { BACKUP_KEEP, LANGUAGES, completeHomeLayout, parseGoalInput, weightUnitOf, type FeatureKey, type GoalsUpdate, type HomeCardId, type HomeLayout, type WeightUnit } from "@intake/shared";
 import { Avatar } from "../components/ProfileLink";
 import { RemindersSheet } from "../components/RemindersSheet";
 import { BackIcon, SparklesIcon } from "../components/icons";
@@ -493,6 +493,81 @@ function HevySyncRow() {
   );
 }
 
+/** Profilo › Personalizza home: the cards of Oggi in their order, with up / down and a switch to hide each one. */
+function HomeLayoutCard() {
+  const features = useFeatures().data;
+  const stored = useHomeLayout();
+  const save = useSetHomeLayout();
+  if (!stored.data || !features) return null;
+  const layout = stored.data;
+  const s = t.profile.home;
+  // Cards of parts that are off are not listed; they keep their place for when the part comes back
+  const available = (id: HomeCardId) =>
+    (id !== "water" || features.water) && (id !== "training" || features.training) && (id !== "activity" || features.health);
+  const listed = layout.order.filter(available);
+
+  const move = (id: HomeCardId, step: -1 | 1) => {
+    const neighbour = listed[listed.indexOf(id) + step];
+    if (!neighbour) return;
+    const order = [...layout.order];
+    const a = order.indexOf(id);
+    const b = order.indexOf(neighbour);
+    [order[a], order[b]] = [order[b]!, order[a]!];
+    save.mutate({ ...layout, order });
+  };
+  const toggle = (id: HomeCardId, shown: boolean) => {
+    const hidden = shown ? layout.hidden.filter((h) => h !== id) : [...layout.hidden, id];
+    save.mutate({ ...layout, hidden });
+  };
+  const isDefault = (l: HomeLayout) => {
+    const base = completeHomeLayout(null);
+    return l.hidden.length === 0 && l.order.every((id, i) => id === base.order[i]);
+  };
+
+  return (
+    <section id="settings-home" className="card profile-card profile-list settings-section" aria-label={s.title}>
+      <div className="profile-card-head">
+        <h2>{s.title}</h2>
+      </div>
+      <ol className="home-layout-list">
+        {listed.map((id, i) => {
+          const name = s.cards[id];
+          const shown = !layout.hidden.includes(id);
+          return (
+            <li key={id} className="profile-row-item home-layout-row" data-hidden={shown ? undefined : ""}>
+              <span className="home-layout-moves">
+                <button type="button" className="icon-button home-layout-move" aria-label={s.up(name)} disabled={i === 0} onClick={() => move(id, -1)}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M6 15l6-6 6 6" />
+                  </svg>
+                </button>
+                <button type="button" className="icon-button home-layout-move" aria-label={s.down(name)} disabled={i === listed.length - 1} onClick={() => move(id, 1)}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </button>
+              </span>
+              <span className="connection-text">
+                <strong>{name}</strong>
+                {id === "plan" && <span className="muted">{s.planNote}</span>}
+              </span>
+              <input type="checkbox" role="switch" className="switch" aria-label={s.show(name)} checked={shown} onChange={(e) => toggle(id, e.target.checked)} />
+            </li>
+          );
+        })}
+      </ol>
+      <div className="profile-row-item feature-foot">
+        <span className="muted feature-hint">{save.isError ? s.failed : s.note}</span>
+        {!isDefault(layout) && (
+          <button type="button" className="button-secondary-small" onClick={() => save.mutate(completeHomeLayout(null))}>
+            {s.reset}
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
 const FEATURE_ROWS: FeatureKey[] = ["photoMeals", "water", "training", "health", "reminders"];
 
 /** Profilo › Funzioni (docs/features.md): Alimentazione always on, a switch for each optional part. */
@@ -695,7 +770,7 @@ function BackupCard() {
   );
 }
 
-type SectionId = "weight" | "goals" | "features" | "training" | "connections" | "backup" | "reminders" | "appearance" | "account";
+type SectionId = "weight" | "goals" | "features" | "home" | "training" | "connections" | "backup" | "reminders" | "appearance" | "account";
 
 /** Section links on the left from desktop width (docs/design: Impostazioni · desktop / iPad); only sections on screen. */
 function SectionNav({ sections }: { sections: SectionId[] }) {
@@ -736,7 +811,7 @@ export function ProfilePage({ user }: { user: User }) {
   const sections: SectionId[] = [
     ...(data ? (["weight"] as const) : []),
     ...(showGoals ? (["goals"] as const) : []),
-    ...(features ? (["features"] as const) : []),
+    ...(features ? (["features", "home"] as const) : []),
     ...(showTraining ? (["training"] as const) : []),
     "connections",
     "backup",
@@ -768,6 +843,7 @@ export function ProfilePage({ user }: { user: User }) {
           {showGoals && <GoalsCard goals={data?.goals ?? null} targetWeight={data?.weight.target ?? null} weightUnit={weightUnitOf(data?.weight.unit)} stepGoal={health.data?.settings.stepGoal ?? null} />}
 
           <FeaturesCard />
+          <HomeLayoutCard />
 
           {features?.training && <TrainingCard />}
 

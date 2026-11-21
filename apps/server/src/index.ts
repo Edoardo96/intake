@@ -145,6 +145,7 @@ const app = await buildApp({
   appleHealth: { store: services.health, api, sync: { token: healthToken, endpoint: `${config.PUBLIC_BASE_URL}/api/health/ingest` } },
   healthIngest: { store: services.health, token: healthToken },
   language: services.language,
+  homeLayout: services.homeLayout,
   backups: { backups },
   features: { features, gymApps: { hevy: Boolean(hevy), opengym: Boolean(openGym) }, recognition: Boolean(config.ANTHROPIC_API_KEY) },
 });

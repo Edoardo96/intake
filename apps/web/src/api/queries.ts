@@ -60,6 +60,7 @@ import type {
   NeedsProfile,
   NeedsView,
   SetTimezoneRequest,
+  HomeLayout,
 } from "@intake/shared";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, apiFetch, newIdempotencyKey } from "./client";
@@ -885,5 +886,30 @@ export function useAlternativeMeal() {
 export function useDayAlternative() {
   return useMutation({
     mutationFn: (request: { index: number; note: string }) => apiFetch<DayAlternative>("/api/days/today/alternative", { method: "POST", json: request }),
+  });
+}
+
+const homeLayoutKey = ["home-layout"] as const;
+
+/** Order and visibility of the cards of Oggi (Profilo › Personalizza home). */
+export function useHomeLayout() {
+  return useQuery({ queryKey: homeLayoutKey, queryFn: () => apiFetch<HomeLayout>("/api/home-layout"), staleTime: Infinity });
+}
+
+/** Saves the layout; the change shows at once and goes back if the server refuses it. */
+export function useSetHomeLayout() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (layout: HomeLayout) => apiFetch<HomeLayout>("/api/home-layout", { method: "PUT", json: layout }),
+    onMutate: async (layout) => {
+      await queryClient.cancelQueries({ queryKey: homeLayoutKey });
+      const previous = queryClient.getQueryData<HomeLayout>(homeLayoutKey);
+      queryClient.setQueryData(homeLayoutKey, layout);
+      return { previous };
+    },
+    onError: (_error, _layout, context) => {
+      if (context?.previous) queryClient.setQueryData(homeLayoutKey, context.previous);
+    },
+    onSuccess: (layout) => queryClient.setQueryData(homeLayoutKey, layout),
   });
 }

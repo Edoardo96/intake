@@ -37,7 +37,7 @@ export const it = {
     title: "Impostazioni",
     signedInGoogle: "accesso con Google",
     sections: "Sezioni delle impostazioni",
-    nav: { weight: "Peso", goals: "Obiettivi", features: "Funzioni", training: "Allenamenti", connections: "Collegamenti", reminders: "Promemoria", appearance: "Aspetto e lingua", account: "Account", backup: "Backup" },
+    nav: { weight: "Peso", goals: "Obiettivi", features: "Funzioni", home: "Home", training: "Allenamenti", connections: "Collegamenti", reminders: "Promemoria", appearance: "Aspetto e lingua", account: "Account", backup: "Backup" },
     backups: {
       title: "Backup di Nutrition",
       note: "Ogni notte a mezzanotte Intake salva sul server una copia completa dei tuoi dati Nutrition (pasti, acqua, peso, obiettivi), nel formato originale di Nutrition.",
@@ -79,6 +79,17 @@ export const it = {
     language: "Lingua",
     languageNote: "Vale per tutta l’app su ogni dispositivo, anche per notifiche e frase del giorno.",
     languageFailed: "Lingua non cambiata. Riprova.",
+    home: {
+      title: "Personalizza home",
+      note: "Ordine e card di Oggi, su ogni dispositivo. Le card delle parti spente non compaiono.",
+      cards: { nextMeal: "Prossimo pasto", calories: "Calorie", macros: "Macronutrienti", water: "Acqua", training: "Allenamento di oggi", plan: "Piano e realtà", activity: "Attività e riposo", insight: "Dai tuoi dati" },
+      planNote: "solo con un piano attivo",
+      up: (name: string) => `Sposta su ${name}`,
+      down: (name: string) => `Sposta giù ${name}`,
+      show: (name: string) => `Mostra ${name}`,
+      reset: "Ripristina l’ordine iniziale",
+      failed: "Modifica non salvata. Riprova.",
+    },
     features: {
       title: "Funzioni",
       nutrition: "Alimentazione",

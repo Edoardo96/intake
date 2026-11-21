@@ -7,6 +7,7 @@ import { FeatureStore } from "./db/featureStore.js";
 import { HealthStore } from "./db/healthStore.js";
 import { HevySyncStore } from "./db/hevySyncStore.js";
 import { LanguageStore } from "./db/languageStore.js";
+import { HomeLayoutStore } from "./db/homeLayoutStore.js";
 import { BackupStore } from "./db/backupStore.js";
 import { MealPhotoStore } from "./db/mealPhotoStore.js";
 import { RecognitionModelStore } from "./db/recognitionModelStore.js";
@@ -26,6 +27,7 @@ export interface Services {
   hevySync: HevySyncStore;
   features: FeatureStore;
   language: LanguageStore;
+  homeLayout: HomeLayoutStore;
   backups: BackupStore;
   mealPhotos: MealPhotoStore;
   recognitionModel: RecognitionModelStore;
@@ -54,6 +56,7 @@ export function createServices(config: Config): Services {
     hevySync: new HevySyncStore(db),
     features: new FeatureStore(db),
     language: new LanguageStore(db),
+    homeLayout: new HomeLayoutStore(db),
     backups: new BackupStore(db),
     mealPhotos: new MealPhotoStore(join(config.DATA_DIR, "meal-photos")),
     recognitionModel: new RecognitionModelStore(db, config.RECOGNITION_MODEL),

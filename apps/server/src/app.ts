@@ -32,6 +32,8 @@ import { healthIngestRoutes, type HealthIngestRoutesOptions } from "./routes/hea
 import { blockedBy, featureRoutes, type FeatureRoutesOptions } from "./routes/features.js";
 import type { LanguageStore } from "./db/languageStore.js";
 import { languageRoutes } from "./routes/language.js";
+import type { HomeLayoutStore } from "./db/homeLayoutStore.js";
+import { homeLayoutRoutes } from "./routes/homeLayout.js";
 import { nutritionApiRoutes, nutritionConnectRoutes } from "./routes/nutrition.js";
 
 export interface AuthOptions {
@@ -97,6 +99,8 @@ export interface AppOptions {
   features?: Omit<FeatureRoutesOptions, "requireOwner">;
   /** UI language for the whole installation (Profilo › Lingua); registered together with `auth`. */
   language?: LanguageStore;
+  /** Order and visibility of the cards of Oggi (Profilo › Personalizza home); registered together with `auth`. */
+  homeLayout?: HomeLayoutStore;
 }
 
 export async function buildApp(options: AppOptions = {}): Promise<FastifyInstance> {
@@ -153,6 +157,9 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     await app.register(authRoutes, { google, cookies, ownerEmail, requireOwner });
     if (options.language) {
       await app.register(languageRoutes, { prefix: "/api", language: options.language, requireOwner });
+    }
+    if (options.homeLayout) {
+      await app.register(homeLayoutRoutes, { prefix: "/api", layout: options.homeLayout, requireOwner });
     }
     if (features) {
       await app.register(featureRoutes, { prefix: "/api", ...features, requireOwner });
