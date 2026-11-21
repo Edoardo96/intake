@@ -165,7 +165,7 @@ function parseMealBlock(block: string, index: number, warnings: string[]): Meal 
 const QUANTITY = /^~?(\d+(?:\.\d+)?)\s*(.*)$/;
 
 /** "Banana — 120 g — 107 kcal · P 1.3 g · …". Names may contain " — ", so split from the right. */
-function parseItem(line: string, context: string, warnings: string[]): MealItem | null {
+export function parseItem(line: string, context: string, warnings: string[]): MealItem | null {
   const parts = line.split(" — ");
   if (parts.length < 3) {
     warnings.push(`${context}: unrecognized item line "${line}"`);
