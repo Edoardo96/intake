@@ -38,6 +38,18 @@ import type {
   FeaturesUpdate,
   GoalsUpdate,
   BackupStatus,
+  PlanGenerationJob,
+  EstimatedMacrosDto,
+  FoodCandidateDto,
+  FoodMacrosDto,
+  MealEdit,
+  MealMove,
+  MealReplace,
+  PlannedFood,
+  PlannedMeal,
+  MealTimeChange,
+  PlanGenerationView,
+  PlanPreferences,
   MealPhotosResponse,
   MealPhotoUpload,
   Language,
@@ -688,5 +700,172 @@ export function useAskNeedsAi() {
   return useMutation({
     mutationFn: () => apiFetch<NeedsAiOpinion>("/api/needs/ai", { method: "POST" }),
     onSuccess: (ai) => queryClient.setQueryData<NeedsView>(needsKey, (view) => (view ? { ...view, ai } : view)),
+  });
+}
+
+const planGenerationKey = ["plan-generation"] as const;
+
+/** "Genera con l'IA": the preferences (or the defaults), the targets and the plan model. */
+export function usePlanGeneration(enabled = true) {
+  return useQuery({ queryKey: planGenerationKey, queryFn: () => apiFetch<PlanGenerationView>("/api/plans/generation"), enabled });
+}
+
+export function useSavePlanPreferences() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (preferences: PlanPreferences) => apiFetch<PlanGenerationView>("/api/plans/generation/preferences", { method: "PUT", json: preferences }),
+    onSuccess: (view) => queryClient.setQueryData(planGenerationKey, view),
+  });
+}
+
+export function useSetPlanModel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (model: string) => apiFetch<PlanGenerationView>("/api/plans/generation/model", { method: "PUT", json: { model } }),
+    onSuccess: (view) => queryClient.setQueryData(planGenerationKey, view),
+  });
+}
+
+/** Starts a generation with the saved preferences; the job is then read every few seconds. */
+export function useStartPlanGeneration() {
+  return useMutation({ mutationFn: () => apiFetch<{ id: string }>("/api/plans/generate", { method: "POST" }) });
+}
+
+export function usePlanGenerationJob(id: string | null) {
+  return useQuery({
+    queryKey: ["plan-generation-job", id ?? ""],
+    queryFn: () => apiFetch<PlanGenerationJob>(`/api/plans/generate/${id}`),
+    enabled: id !== null,
+    refetchInterval: (query) => (query.state.data?.status === "running" || !query.state.data ? 2000 : false),
+  });
+}
+
+/** "Attiva piano": the draft becomes a new plan version. */
+export function useActivatePlanDraft() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, validFrom }: { id: string; validFrom: string }) => apiFetch(`/api/plans/generate/${id}/activate`, { method: "POST", json: { validFrom } }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["plans"] });
+      return invalidateDays(queryClient);
+    },
+  });
+}
+
+const planJobKey = (id: string) => ["plan-generation-job", id] as const;
+
+/** A meal time of the draft, on one day or on every day. */
+export function useSetDraftTime(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (change: MealTimeChange) => apiFetch<PlanGenerationJob>(`/api/plans/generate/${id}/time`, { method: "PATCH", json: change }),
+    onSuccess: (job) => queryClient.setQueryData(planJobKey(id), job),
+  });
+}
+
+/** "Sostituisci": another dish for one meal of the draft. */
+export function useReplaceDraftMeal(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: MealReplace) => apiFetch<PlanGenerationJob>(`/api/plans/generate/${id}/replace`, { method: "POST", json: request }),
+    onSuccess: (job) => queryClient.setQueryData(planJobKey(id), job),
+  });
+}
+
+/** One stored plan version (Piano shows the scheduled one when none is active yet). */
+export function usePlan(id: number | undefined) {
+  return useQuery({ queryKey: ["plans", id], queryFn: () => apiFetch<StoredPlan>(`/api/plans/${id}`), enabled: id !== undefined });
+}
+
+/** A meal time of a stored version; Oggi and Timeline follow the new time. */
+export function useSetPlanTime() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...change }: MealTimeChange & { id: number }) => apiFetch<StoredPlan>(`/api/plans/${id}/time`, { method: "PATCH", json: change }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["plans"] });
+      return invalidateDays(queryClient);
+    },
+  });
+}
+
+/** The plan Piano shows: the one in effect today, or the next scheduled one when none is active yet. */
+export function useShownPlan() {
+  const plans = usePlans();
+  const data = plans.data;
+  const scheduled = data?.versions.filter((v) => v.status === "scheduled").at(-1);
+  const scheduledPlan = usePlan(data && !data.active ? scheduled?.id : undefined).data ?? null;
+  return { plans, shown: data?.active ?? scheduledPlan };
+}
+
+/** "Sposta": a dish of the draft swapped with the same meal of another day. */
+export function useSwapDraftMeal(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (move: MealMove) => apiFetch<PlanGenerationJob>(`/api/plans/generate/${id}/swap`, { method: "PATCH", json: move }),
+    onSuccess: (job) => queryClient.setQueryData(planJobKey(id), job),
+  });
+}
+
+/** "Sposta" on a stored version; Oggi and Timeline follow. */
+export function useSwapPlanMeal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...move }: MealMove & { id: number }) => apiFetch<StoredPlan>(`/api/plans/${id}/swap`, { method: "PATCH", json: move }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["plans"] });
+      return invalidateDays(queryClient);
+    },
+  });
+}
+
+/** "Modifica": one dish of the draft edited by hand. */
+export function useEditDraftMeal(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (edit: MealEdit) => apiFetch<PlanGenerationJob>(`/api/plans/generate/${id}/meal`, { method: "PATCH", json: edit }),
+    onSuccess: (job) => queryClient.setQueryData(planJobKey(id), job),
+  });
+}
+
+/** "Modifica" on a stored version; Oggi and Timeline follow. */
+export function useEditPlanMeal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...edit }: MealEdit & { id: number }) => apiFetch<StoredPlan>(`/api/plans/${id}/meal`, { method: "PATCH", json: edit }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["plans"] });
+      return invalidateDays(queryClient);
+    },
+  });
+}
+
+/** "Applica da oggi": a scheduled plan version starts on the given day (today). */
+export function useStartPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, validFrom }: { id: number; validFrom: string }) => apiFetch<StoredPlan>(`/api/plans/${id}/start`, { method: "PATCH", json: { validFrom } }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["plans"] });
+      return invalidateDays(queryClient);
+    },
+  });
+}
+
+/** "Cerca nel database": USDA foods by English name (free; Nutrition server). */
+export const searchFoods = (query: string) => apiFetch<{ foods: FoodCandidateDto[] }>(`/api/foods/search?q=${encodeURIComponent(query)}`);
+
+/** One USDA food scaled to a number of grams. */
+export const foodMacros = (id: number, amountG: number) => apiFetch<FoodMacrosDto>(`/api/foods/${id}?amount=${amountG}`);
+
+/** "Ricalcola con l'IA": the nutrients of a meal from its foods (Claude API; nothing is saved). */
+export function useEstimateMacros() {
+  return useMutation({ mutationFn: (meal: { description: string; foods: PlannedFood[] }) => apiFetch<EstimatedMacrosDto>("/api/plans/estimate", { method: "POST", json: meal }) });
+}
+
+/** "Alternativa": another dish for a meal of a stored plan (Claude API; nothing is saved until it is used). */
+export function useAlternativeMeal() {
+  return useMutation({
+    mutationFn: ({ id, ...request }: MealReplace & { id: number }) => apiFetch<{ meal: PlannedMeal }>(`/api/plans/${id}/alternative`, { method: "POST", json: request }),
   });
 }

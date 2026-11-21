@@ -341,3 +341,23 @@ Reference screens: `OggiDark.dc.html` and `PianoDark.dc.html`.
 | Water segments | `#DCE6EF` | `#22303D` |
 | To-log card bg / border / label | `#FFF7F0` / `#EDC3A3` / `#8F4310` | `#2A1F17` / `#6E4428` / `#F0A872` |
 | Now marker / destructive text | `#C2492E` / `#A53A22` | `#E0714F` / `#F08F6E` |
+
+## Piano — generate with AI and the day view (21 Nov)
+
+Piano › ⋯ › "Genera con l'IA" opens a pushed screen: targets, meals of the day, free meals, variety, food, cooking, notes, then "Genera piano" (with sparkles). The review starts with a summary card ("Alcune cose non tornano": days off target in one line, repeated dishes), each line opening its day; affected meals have a ⚠ line with the reason, a "Sostituisci" pill (optional wish, then a spinner on that meal) and a time chip that opens the system picker. The day totals card shows each macro against the goal with a bar and a text label ("in linea", "▲ 250 sopra", "▼ 24 sotto"); "Stesso orario tutti i giorni" is on by default.
+
+The same day view (`components/PlanDay.tsx`) is the Piano page: header, switch, day tabs and meals share one centred column (max 1040 px); at ≥ 1000 px a 320 px aside holds the totals, the time switch and the notes.
+
+## Piano — shopping list and print page (21 Nov)
+
+⋯ menu entries "Lista della spesa" and "Stampa o salva PDF" (disabled without a plan). The list is a pushed screen (no tab bar): intro, "Copia lista" (turns into "Copiata ✓") next to "Stampa o salva PDF", then one card per supermarket section with each line and "in N pasti". The print page is a paper-like sheet on screen: title, validity and averages, the seven days in a responsive grid, then the shopping list on its own page in two columns with a box before each item. When printing, the app chrome is hidden and the colors are forced light.
+
+The print page's main button is "Salva PDF" (a compact A4 made by the app, share sheet on phones, download on desktop; disabled with "Preparo il PDF…" until ready); "Stampa" sits next to it on desktop browsers only.
+
+Piano (active plan and AI review): every meal has a "Sposta" pill next to "Sostituisci". It opens a list titled "Scambia con lo stesso pasto di…" with one row per other day and the dish that day would send back ("Giovedì · Pasta al ragù…"); tapping a row swaps the two dishes at once, the times stay. A free meal ("libero") can be moved the same way.
+
+Every meal also has a "Modifica" pill (before "Sposta"; "Sostituisci" stays AI-only in the review). It opens an editor under the meal: the dish text, one row per food (name, amount, unit, ×) with "+ Aggiungi alimento", and the nutrients of the meal (Calorie, Proteine, Carboidrati, Grassi, Fibre; five columns from 560 px), with the note that they are not recalculated. "Salva" applies it at once; a missing food name or a non-numeric value shows an error line.
+
+The dish editor ends with two tools: "Cerca nel database" (free: a panel with one row per food, its grams, a "Cerca" button that opens an English search with the USDA results and their values per 100 g, then "Usa i valori (N alimenti su M)") and "Ricalcola con l'IA" with the sparkles (paid). Both only fill the nutrient fields; "Salva" is still the person's. On the plan, "Alternativa" (sparkles) opens a wish field, then a green card with the proposed dish next to "Ora: 655 kcal · P 32 g" and "Annulla / Un'altra / Usa questo".
+
+When a plan is scheduled (not in effect yet), Piano shows a notice "Un piano è programmato: parte il …" with "Applica da oggi".

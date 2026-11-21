@@ -22,6 +22,8 @@ import { HevyError } from "./hevy/hevyApi.js";
 import { weekRoutes, type WeekRoutesOptions } from "./routes/weeks.js";
 import { profileRoutes, type ProfileRoutesOptions } from "./routes/profile.js";
 import { needsRoutes, type NeedsRoutesOptions } from "./routes/needs.js";
+import { foodRoutes, type FoodRoutesOptions } from "./routes/foods.js";
+import { planGenerationRoutes, type PlanGenerationRoutesOptions } from "./routes/planGeneration.js";
 import { authRoutes } from "./routes/auth.js";
 import { healthRoutes } from "./routes/health.js";
 import { appleHealthRoutes, type AppleHealthRoutesOptions } from "./routes/appleHealth.js";
@@ -70,6 +72,9 @@ export interface AppOptions {
   profile?: Omit<ProfileRoutesOptions, "requireOwner">;
   /** "Il tuo fabbisogno" (Piano) and the AI opinion; registered together with `auth`. */
   needs?: Omit<NeedsRoutesOptions, "requireOwner">;
+  /** "Genera con l'IA" in Piano (part Pasti da foto). */
+  planGeneration?: Omit<PlanGenerationRoutesOptions, "requireOwner">;
+  foods?: Omit<FoodRoutesOptions, "requireOwner">;
   /** Meal plan storage; registered together with `api`. */
   plans?: PlanStore;
   /** Reminders (Web Push); registered together with `auth`. */
@@ -182,6 +187,12 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     }
     if (options.profile) {
       await app.register(profileRoutes, { prefix: "/api", ...options.profile, requireOwner });
+    }
+    if (options.planGeneration) {
+      await app.register(planGenerationRoutes, { prefix: "/api", ...options.planGeneration, requireOwner });
+    }
+    if (options.foods) {
+      await app.register(foodRoutes, { prefix: "/api", ...options.foods, requireOwner });
     }
     if (options.needs) {
       await app.register(needsRoutes, { prefix: "/api", ...options.needs, requireOwner });

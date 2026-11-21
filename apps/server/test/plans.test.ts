@@ -277,6 +277,66 @@ describe("plan routes", () => {
     expect(list.versions[0].status).toBe("active");
   });
 
+  it("changes a meal time of a stored version on one day or on every day", async () => {
+    const { app, plans, headers } = await signedIn();
+    const { id } = (await app.inject({ method: "POST", url: "/api/plans", headers, payload: examplePlan })).json();
+    const all = await app.inject({ method: "PATCH", url: `/api/plans/${id}/time`, headers, payload: { day: "monday", index: 0, time: "06:45", allDays: true } });
+    expect(all.statusCode).toBe(200);
+    expect(plans.get(id)?.plan.days.sunday.meals[0]?.time).toBe("06:45");
+    await app.inject({ method: "PATCH", url: `/api/plans/${id}/time`, headers, payload: { day: "tuesday", index: 0, time: "08:15", allDays: false } });
+    expect([plans.get(id)?.plan.days.tuesday.meals[0]?.time, plans.get(id)?.plan.days.monday.meals[0]?.time]).toEqual(["08:15", "06:45"]);
+    expect(plans.versions("2026-11-05")).toHaveLength(1);
+    expect((await app.inject({ method: "PATCH", url: `/api/plans/${id}/time`, headers, payload: { day: "monday", index: 42, time: "06:45", allDays: true } })).statusCode).toBe(400);
+    expect((await app.inject({ method: "PATCH", url: "/api/plans/999/time", headers, payload: { day: "monday", index: 0, time: "06:45", allDays: true } })).statusCode).toBe(404);
+  });
+
+  it("swaps a dish with the same meal of another day in a stored version", async () => {
+    const { app, plans, headers } = await signedIn();
+    const { id } = (await app.inject({ method: "POST", url: "/api/plans", headers, payload: examplePlan })).json();
+    const before = plans.get(id)!.plan;
+    const swap = await app.inject({ method: "PATCH", url: `/api/plans/${id}/swap`, headers, payload: { day: "monday", index: 2, toDay: "thursday" } });
+    expect(swap.statusCode).toBe(200);
+    const after = plans.get(id)!.plan;
+    expect(after.days.monday.meals[2]?.description).toBe(before.days.thursday.meals[2]?.description);
+    expect(after.days.thursday.meals[2]?.description).toBe(before.days.monday.meals[2]?.description);
+    expect(after.days.monday.meals[2]?.time).toBe(before.days.monday.meals[2]?.time);
+    expect(plans.versions("2026-11-05")).toHaveLength(1);
+    for (const payload of [{ day: "monday", index: 2, toDay: "monday" }, { day: "monday", index: 42, toDay: "friday" }, { day: "monday" }]) {
+      expect((await app.inject({ method: "PATCH", url: `/api/plans/${id}/swap`, headers, payload })).statusCode).toBe(400);
+    }
+    expect((await app.inject({ method: "PATCH", url: "/api/plans/999/swap", headers, payload: { day: "monday", index: 2, toDay: "friday" } })).statusCode).toBe(404);
+  });
+
+  it("edits one dish of a stored version by hand", async () => {
+    const { app, plans, headers } = await signedIn();
+    const { id } = (await app.inject({ method: "POST", url: "/api/plans", headers, payload: examplePlan })).json();
+    const edit = { day: "monday", index: 2, description: "Riso e pollo", foods: [{ name: "Riso", quantity: 80, unit: "g" }, { name: "Pollo", quantity: 150, unit: "g" }], macros: { kcal: 650, protein: 45, carbs: 80, fat: 12, fiber: 4 } };
+    expect((await app.inject({ method: "PATCH", url: `/api/plans/${id}/meal`, headers, payload: edit })).statusCode).toBe(200);
+    const meal = plans.get(id)!.plan.days.monday.meals[2]!;
+    expect(meal).toMatchObject({ description: "Riso e pollo", macros: { kcal: 650 } });
+    expect(plans.versions("2026-11-05")).toHaveLength(1);
+    for (const payload of [{ ...edit, foods: [] }, { ...edit, index: 42 }, { ...edit, macros: { ...edit.macros, kcal: -1 } }, { ...edit, extra: true }]) {
+      expect((await app.inject({ method: "PATCH", url: `/api/plans/${id}/meal`, headers, payload })).statusCode).toBe(400);
+    }
+    expect((await app.inject({ method: "PATCH", url: "/api/plans/999/meal", headers, payload: edit })).statusCode).toBe(404);
+  });
+
+  it("starts a scheduled version today, and refuses one that already started", async () => {
+    const { app, plans, headers } = await signedIn();
+    const first = (await app.inject({ method: "POST", url: "/api/plans", headers, payload: { ...examplePlan, validFrom: "2026-11-01" } })).json();
+    const later = (await app.inject({ method: "POST", url: "/api/plans", headers, payload: { ...examplePlan, validFrom: "2099-01-01" } })).json();
+    expect(plans.activeOn("2026-11-05")?.id).toBe(first.id);
+    const started = await app.inject({ method: "PATCH", url: `/api/plans/${later.id}/start`, headers, payload: { validFrom: "2026-11-05" } });
+    expect(started.statusCode).toBe(200);
+    expect(plans.activeOn("2026-11-05")?.id).toBe(later.id);
+    expect(plans.get(later.id)?.plan.validFrom).toBe("2026-11-05");
+    expect(plans.get(first.id)?.validFrom).toBe("2026-11-01");
+    expect((await app.inject({ method: "PATCH", url: `/api/plans/${later.id}/start`, headers, payload: { validFrom: "2026-11-06" } })).statusCode).toBe(409);
+    expect((await app.inject({ method: "PATCH", url: `/api/plans/${first.id}/start`, headers, payload: { validFrom: "2026-11-05" } })).statusCode).toBe(409);
+    expect((await app.inject({ method: "PATCH", url: `/api/plans/${later.id}/start`, headers, payload: { validFrom: "domani" } })).statusCode).toBe(400);
+    expect((await app.inject({ method: "PATCH", url: "/api/plans/999/start", headers, payload: { validFrom: "2026-11-05" } })).statusCode).toBe(404);
+  });
+
   it("rejects an invalid plan with readable issues", async () => {
     const { app, headers } = await signedIn();
     const response = await app.inject({ method: "POST", url: "/api/plans", headers, payload: { ...examplePlan, validFrom: "domani" } });
