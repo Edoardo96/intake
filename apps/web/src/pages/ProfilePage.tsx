@@ -1,7 +1,8 @@
 import type { ProfileView, TrainingSourceId } from "@intake/shared";
 import { Fragment, type ReactNode, useState } from "react";
 import { Link } from "wouter";
-import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useRecognitionModel, useSetRecognitionModel, usePlanGeneration, useSetPlanModel, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeature, useFeatures, useSetFeatures, useSetLanguage, useSetGoals, useBackups, useBackupAction } from "../api/queries";
+import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useRecognitionModel, useSetRecognitionModel, usePlanGeneration, useSetPlanModel, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeature, useFeatures, useSetFeatures, useSetLanguage, useSetGoals, useBackups, useBackupAction, deviceTimezone } from "../api/queries";
+import { TimezoneConfirm } from "../components/TimezoneNotice";
 import { BACKUP_KEEP, LANGUAGES, parseGoalInput, weightUnitOf, type FeatureKey, type GoalsUpdate, type WeightUnit } from "@intake/shared";
 import { Avatar } from "../components/ProfileLink";
 import { RemindersSheet } from "../components/RemindersSheet";
@@ -329,6 +330,31 @@ function ConnectionRow({ name, note, state, href, action }: { name: string; note
     </Link>
   ) : (
     <div className="profile-row-item connection-row">{body}</div>
+  );
+}
+
+/** Collegamenti › Fuso orario: the Nutrition profile timezone, with "Usa …" when this device is elsewhere. */
+function TimezoneRow({ timezone }: { timezone: string }) {
+  const device = deviceTimezone();
+  const [confirming, setConfirming] = useState(false);
+  return (
+    <>
+      <div className="profile-row-item connection-row">
+        <span className="connection-text">
+          <strong>{t.profile.timezone}</strong>
+          <span className="muted">{t.profile.timezoneNote}</span>
+        </span>
+        <span className="connection-state timezone-state">
+          <strong>{timezone}</strong>
+          {device && device !== timezone && !confirming && (
+            <button type="button" className="text-button text-button-strong" onClick={() => setConfirming(true)}>
+              {t.profile.useTimezone(device)}
+            </button>
+          )}
+        </span>
+      </div>
+      {device && device !== timezone && confirming && <TimezoneConfirm device={device} onCancel={() => setConfirming(false)} />}
+    </>
   );
 }
 
@@ -770,6 +796,7 @@ export function ProfilePage({ user }: { user: User }) {
                 ) : undefined
               }
             />
+            {data && <TimezoneRow timezone={data.timezone} />}
             {features?.health && (
               <ConnectionRow
                 name={t.profile.appleHealth}

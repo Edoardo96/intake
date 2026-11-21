@@ -241,6 +241,13 @@ export interface ProfileView {
   };
   /** HEVY_API_KEY is set on the server. */
   hevyConfigured: boolean;
+  /** IANA timezone of the Nutrition profile, e.g. "Europe/Rome" ("UTC" on a new account). */
+  timezone: string;
+}
+
+/** POST /api/timezone: an IANA name, e.g. "Europe/Rome". */
+export interface SetTimezoneRequest {
+  timezone: string;
 }
 
 export interface LogWeightRequest {
