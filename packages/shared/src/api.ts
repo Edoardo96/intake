@@ -885,3 +885,23 @@ export interface MealPhotoUpload {
 export interface MealPhotosResponse {
   photos: Record<string, string[]>;
 }
+
+/** Cards of Oggi that can be moved or hidden (Profilo › Personalizza home), in the default order. */
+export const HOME_CARDS = ["nextMeal", "calories", "macros", "water", "training", "plan", "activity", "insight"] as const;
+export type HomeCardId = (typeof HOME_CARDS)[number];
+
+/** GET / PUT /api/home-layout: one layout for the whole installation. */
+export interface HomeLayout {
+  /** Every card, in the order shown (cards added in a later version are appended). */
+  order: HomeCardId[];
+  hidden: HomeCardId[];
+}
+
+/** A stored layout made whole: unknown and repeated ids dropped, missing cards appended at the end. */
+export function completeHomeLayout(layout: Partial<HomeLayout> | null | undefined): HomeLayout {
+  const known = new Set<string>(HOME_CARDS);
+  const order = (layout?.order ?? []).filter((id, i, all): id is HomeCardId => known.has(id) && all.indexOf(id) === i);
+  for (const id of HOME_CARDS) if (!order.includes(id)) order.push(id);
+  const hidden = (layout?.hidden ?? []).filter((id, i, all): id is HomeCardId => known.has(id) && all.indexOf(id) === i);
+  return { order, hidden };
+}

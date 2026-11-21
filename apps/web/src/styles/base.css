@@ -3067,8 +3067,15 @@ a.bar-column:hover .bar:not([data-empty]) {
   display: contents;
 }
 
-.today-side .next-meal {
-  order: -1;
+/* One wrapper per card of Oggi: its CSS order is the position chosen in Profilo › Personalizza home */
+.home-slot {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.home-slot:empty {
+  display: none;
 }
 
 @media (min-width: 1000px) {
@@ -9133,4 +9140,43 @@ div.connection-row {
 
 .profile-list > .timezone-confirm {
   padding: 4px 0 12px;
+}
+
+/* Impostazioni › Personalizza home: ▲ / ▼, the card's name and its switch on one line */
+.home-layout-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.home-layout-row {
+  flex-wrap: nowrap;
+  gap: 10px;
+}
+
+.home-layout-row .connection-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.home-layout-row[data-hidden] .connection-text strong {
+  color: var(--color-text-muted);
+}
+
+.home-layout-moves {
+  display: flex;
+  gap: 2px;
+  flex: none;
+}
+
+.home-layout-move {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+
+.home-layout-move:disabled {
+  opacity: 0.3;
 }
