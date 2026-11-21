@@ -11,6 +11,7 @@ import { MacroCard } from "../components/MacroCard";
 import { NextMealCard } from "../components/NextMealCard";
 import { DayPlanCard } from "../components/PlanCompare";
 import { WaterCard } from "../components/WaterCard";
+import { TimezoneNotice } from "../components/TimezoneNotice";
 import { formatWeekday } from "../lib/format";
 import { t } from "../lib/strings";
 
@@ -51,6 +52,7 @@ function Summary({ view, selected, onAdd }: { view: DayView; selected: string; o
   return (
     <div className="today-grid">
       <div className="today-main">
+        {view.isToday && <TimezoneNotice timezone={view.clock.timezone} />}
         {features?.health && <ScoreRings date={view.date} />}
         <CalorieCard eaten={view.totals.kcal} goal={view.goals.kcal}>
           <DayCurve view={view} />

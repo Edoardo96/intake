@@ -15,6 +15,7 @@ describe("profile routes", () => {
       weightTrends: async () => ({ unit: "kg", target: null, entries: [{ date: "2026-11-06", weight: 75.4 }, { date: "2026-11-13", weight: 75 }] }),
       logWeight: async () => {},
       setGoals: async () => {},
+      setTimezone: async () => {},
       ...overrides,
     };
   }
@@ -35,7 +36,20 @@ describe("profile routes", () => {
       weight: { unit: "kg", target: null, entries: [{ date: "2026-11-06", weight: 75.4 }, { date: "2026-11-13", weight: 75 }] },
       goals: { kcal: 2200, protein: 135, carbs: 255, fat: 70, fiber: 30, waterMl: 2500 },
       hevyConfigured: true,
+      timezone: "Europe/Rome",
     });
+  });
+
+  it("sets the Nutrition timezone to a valid IANA name only", async () => {
+    const setTimezone = vi.fn(async () => {});
+    const { app, headers } = await signedIn(fakeApi({ setTimezone }));
+    const ok = await app.inject({ method: "POST", url: "/api/timezone", headers, payload: { timezone: "Europe/Rome" } });
+    expect(ok.json()).toEqual({ timezone: "Europe/Rome" });
+    expect(setTimezone).toHaveBeenCalledWith("Europe/Rome");
+    for (const timezone of ["Mars/Olympus", "", 42]) {
+      expect((await app.inject({ method: "POST", url: "/api/timezone", headers, payload: { timezone } })).statusCode).toBe(400);
+    }
+    expect(setTimezone).toHaveBeenCalledTimes(1);
   });
 
   it("changes only the goals sent, clears with null and refuses impossible values", async () => {

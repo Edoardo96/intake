@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { NutritionApi } from "../mcp/nutritionApi.js";
 
 export interface ProfileRoutesOptions {
-  api: Pick<NutritionApi, "clock" | "goals" | "weightTrends" | "logWeight" | "setGoals">;
+  api: Pick<NutritionApi, "clock" | "goals" | "weightTrends" | "logWeight" | "setGoals" | "setTimezone">;
   hevyConfigured: boolean;
   requireOwner: preHandlerHookHandler;
 }
@@ -33,24 +33,53 @@ const goalsBody = z
     return targetWeight >= limits.min && targetWeight <= limits.max;
   });
 
+/** An IANA timezone name the runtime knows, e.g. "Europe/Rome". */
+const timezoneBody = z
+  .object({
+    timezone: z
+      .string()
+      .min(1)
+      .max(64)
+      .refine((name) => {
+        try {
+          new Intl.DateTimeFormat("en", { timeZone: name });
+          return true;
+        } catch {
+          return false;
+        }
+      }),
+  })
+  .strict();
+
 const logWeightBody = z.object({
   weightKg: z.number().min(20).max(400),
   idempotencyKey: z.string().min(8).max(255),
 });
 
-/** Profilo (/api/profile) and weigh-ins (/api/weight). Two Nutrition reads per visit. */
+/** Profilo (/api/profile), weigh-ins (/api/weight) and the Nutrition timezone (/api/timezone). Two Nutrition reads per visit. */
 export const profileRoutes: FastifyPluginAsync<ProfileRoutesOptions> = async (app, { api, hevyConfigured, requireOwner }) => {
   app.addHook("preHandler", requireOwner);
 
   app.get("/profile", async (): Promise<ProfileView> => {
-    const today = (await api.clock()).localDate;
+    const clock = await api.clock();
+    const today = clock.localDate;
     const [goals, weight] = await Promise.all([api.goals(), api.weightTrends(WEIGHT_WINDOW_DAYS, today)]);
     return {
       today,
       weight,
       goals: { kcal: goals.kcal, protein: goals.protein, carbs: goals.carbs, fat: goals.fat, fiber: goals.fiber, waterMl: goals.waterMl },
       hevyConfigured,
+      timezone: clock.timezone,
     };
+  });
+
+  // The Nutrition profile timezone decides "today" and the time of new meals; a new account starts on UTC.
+  // Changed only when the user taps "Usa …" (Oggi or Profilo), never on its own.
+  app.post("/timezone", async (request, reply) => {
+    const body = timezoneBody.safeParse(request.body);
+    if (!body.success) return reply.code(400).send({ error: "Invalid timezone" });
+    await api.setTimezone(body.data.timezone);
+    return { timezone: body.data.timezone };
   });
 
   // Goals live in Nutrition (set_nutrition_goals): the same ones Claude reads and changes in chat

@@ -9035,10 +9035,21 @@ div.connection-row {
 }
 
 .day-alt-actions {
+
+/* Oggi: Nutrition on UTC while the device is elsewhere */
+.timezone-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  line-height: 1.45;
+}
+
+.timezone-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
+<<<<<<< HEAD
   gap: 8px;
 }
 
@@ -9078,4 +9089,33 @@ div.connection-row {
   margin: 0;
   font-size: 13px;
   line-height: 1.45;
+=======
+  gap: 8px 16px;
+}
+
+/* Profilo › Collegamenti › Fuso orario: the zone, and "Usa …" under it when the device is elsewhere */
+.timezone-state {
+  flex: none;
+  margin-left: 12px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+  text-align: right;
+}
+
+.timezone-state strong {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.connection-row:has(.timezone-state) .connection-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.timezone-state button {
+  font-size: 14px;
+  white-space: nowrap;
+>>>>>>> 7bb232e (Ask to use the device's timezone when Nutrition is still on UTC)
 }

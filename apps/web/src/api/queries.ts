@@ -59,6 +59,7 @@ import type {
   NeedsApplyRequest,
   NeedsProfile,
   NeedsView,
+  SetTimezoneRequest,
 } from "@intake/shared";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, apiFetch, newIdempotencyKey } from "./client";
@@ -639,6 +640,24 @@ export function useSetGoals() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (update: GoalsUpdate) => apiFetch<{ ok: true }>("/api/goals", { method: "PUT", json: update }),
+    onSuccess: () => queryClient.invalidateQueries(),
+  });
+}
+
+/** This device's IANA timezone, e.g. "Europe/Rome"; null when the browser does not say. */
+export function deviceTimezone(): string | null {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Sets the Nutrition profile timezone; every screen reloads, since "today" and the meal times depend on it. */
+export function useSetTimezone() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (timezone: string) => apiFetch<{ timezone: string }>("/api/timezone", { method: "POST", json: { timezone } satisfies SetTimezoneRequest }),
     onSuccess: () => queryClient.invalidateQueries(),
   });
 }
