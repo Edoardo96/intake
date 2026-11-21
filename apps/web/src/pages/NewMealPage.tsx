@@ -1,28 +1,84 @@
-import { MEAL_PHOTOS_MAX, MEAL_TYPES, type MealItemInput, type Nutrients, type NutritionMealType, type RecognizedItem, type RecognizedMeal } from "@intake/shared";
-import { useMemo, useRef, useState } from "react";
+import { MEAL_PHOTOS_MAX, MEAL_TYPES, NUTRITION_MEAL_TYPES, type MealItem, type MealItemInput, type Nutrients, type NutritionMealType, type RecognizedItem, type RecognizedMeal, type SavedMeal } from "@intake/shared";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { ApiError, newIdempotencyKey } from "../api/client";
-import { useCreateMeal, useDay, useRecognizeMeal } from "../api/queries";
+import { useCreateMeal, useDay, useFeatures, useRecognizeMeal, useSavedMeals } from "../api/queries";
 import { CloseIcon, SparklesIcon } from "../components/icons";
 import { PhotoCarousel } from "../components/PhotoCarousel";
-import { formatGrams, formatKcal } from "../lib/format";
+import { formatGrams, formatKcal, formatOneDecimal } from "../lib/format";
 import { photoForRecognition } from "../lib/image";
 import { t } from "../lib/strings";
 
 type Mode = "photo" | "text";
 
-interface Draft extends RecognizedItem {
-  key: number;
+interface PerUnit {
+  kcal: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number | null;
+  sugar: number | null;
+  addedSugar: number | null;
 }
 
-/** Step of the − / + buttons: finer for small amounts such as oil or cheese. */
-const stepFor = (grams: number) => (grams <= 30 ? 5 : 10);
+/** One food on the confirmation screen: an amount in its unit and the nutrients of one unit. */
+interface Draft {
+  key: number;
+  name: string;
+  amount: number;
+  /** "g" or "ml" for weights, or a count unit from a favorite ("pcs", "cucchiaini", "porzione"). */
+  unit: string;
+  visible: boolean;
+  perUnit: PerUnit;
+}
+
+const isMass = (unit: string) => /^(g|ml)$/i.test(unit);
+
+/** Step of the − / + buttons: 5 or 10 g for weights (finer for small amounts such as oil), half a unit for counts. */
+const stepFor = (item: Draft, down: boolean) => (isMass(item.unit) ? ((down ? item.amount - 1 : item.amount) <= 30 ? 5 : 10) : 0.5);
+const minFor = (item: Draft) => (isMass(item.unit) ? 5 : 0.5);
 
 const round = (value: number, digits = 2) => Math.round(value * 10 ** digits) / 10 ** digits;
 
-function nutrientsOf(item: Draft): Nutrients {
-  const f = item.grams / 100;
+function fromRecognized(item: RecognizedItem, key: number): Draft {
   const p = item.per100g;
+  const per = (v: number | null) => (v === null ? null : v / 100);
+  return {
+    key,
+    name: item.name,
+    amount: item.grams,
+    unit: "g",
+    visible: item.visible,
+    // Added sugar never above sugar, as Nutrition expects
+    perUnit: { kcal: p.kcal / 100, protein: p.protein / 100, carbs: p.carbs / 100, fat: p.fat / 100, fiber: per(p.fiber), sugar: per(p.sugar), addedSugar: p.sugar === null || p.addedSugar === null ? null : Math.min(p.addedSugar, p.sugar) / 100 },
+  };
+}
+
+function fromMealItem(item: MealItem, key: number): Draft {
+  const counted = item.quantity !== null && item.quantity > 0;
+  const amount = counted ? item.quantity! : 1;
+  const n = item.nutrients;
+  const per = (v: number | null) => (v === null ? null : v / amount);
+  return {
+    key,
+    name: item.name,
+    amount,
+    unit: counted ? item.unit || t.newMeal.portion : t.newMeal.portion,
+    visible: true,
+    perUnit: { kcal: n.kcal / amount, protein: n.protein / amount, carbs: n.carbs / amount, fat: n.fat / amount, fiber: per(n.fiber), sugar: per(n.sugar), addedSugar: per(n.addedSugar) },
+  };
+}
+
+/** A favorite as foods to confirm: its items, or one portion with its totals when it has none. */
+function fromSavedMeal(meal: SavedMeal): Draft[] {
+  if (meal.items.length > 0) return meal.items.map(fromMealItem);
+  const perUnit = { kcal: meal.kcal ?? 0, protein: meal.protein ?? 0, carbs: meal.carbs ?? 0, fat: meal.fat ?? 0, fiber: null, sugar: null, addedSugar: null };
+  return [{ key: 0, name: meal.name, amount: 1, unit: t.newMeal.portion, visible: true, perUnit }];
+}
+
+function nutrientsOf(item: Draft): Nutrients {
+  const f = item.amount;
+  const p = item.perUnit;
   return {
     kcal: round(p.kcal * f, 1),
     protein: round(p.protein * f),
@@ -32,12 +88,15 @@ function nutrientsOf(item: Draft): Nutrients {
     transFat: null,
     fiber: p.fiber === null ? null : round(p.fiber * f),
     sugar: p.sugar === null ? null : round(p.sugar * f),
-    addedSugar: p.sugar === null || p.addedSugar === null ? null : round(Math.min(p.addedSugar, p.sugar) * f),
+    addedSugar: p.sugar === null || p.addedSugar === null ? null : round(p.addedSugar * f),
     alcohol: null,
     caffeineMg: null,
     sodiumMg: null,
   };
 }
+
+/** "150 g", "1,5 pcs" */
+const formatAmount = (item: Draft) => `${isMass(item.unit) ? formatKcal(item.amount) : formatOneDecimal(item.amount)} ${item.unit}`;
 
 /**
  * Nutrition refuses an itemized meal that gives fiber, sugar or added sugar on some items and not others:
@@ -75,11 +134,14 @@ export function errorText(error: unknown): string {
 }
 
 /**
- * "Nuovo pasto": a photo of the plate or a free description is recognized by Claude (foods, grams, nutrition per
- * 100 g); the user corrects quantities, type and time, then the meal is logged on Nutrition with its items.
+ * "Nuovo pasto": a photo of the plate or a free description is recognized by the AI (foods, grams, nutrition per
+ * 100 g), or a favorite is opened with its foods (`savedId`); the user corrects quantities, type and time, then the
+ * meal is logged on Nutrition with its items.
  */
-export function NewMealPage({ initialMode }: { initialMode: Mode }) {
+export function NewMealPage({ initialMode, savedId }: { initialMode: Mode; savedId?: string }) {
   const day = useDay("today");
+  const recognition = useFeatures().data?.recognition ?? false;
+  const saved = useSavedMeals();
   const [, navigate] = useLocation();
   const recognize = useRecognizeMeal();
   const recognizeExtra = useRecognizeMeal();
@@ -122,8 +184,17 @@ export function NewMealPage({ initialMode }: { initialMode: Mode }) {
 
   function showResult(meal: RecognizedMeal) {
     setResult(meal);
-    setItems(meal.items.map((item, key) => ({ ...item, key })));
+    setItems(meal.items.map(fromRecognized));
   }
+
+  // A favorite opens straight on the confirmation screen, with its foods to correct before logging
+  const savedMeal = savedId ? (saved.data?.find((meal) => meal.id === savedId) ?? null) : null;
+  useEffect(() => {
+    if (!savedMeal || result) return;
+    setResult({ description: savedMeal.description || savedMeal.name, items: [] });
+    setItems(fromSavedMeal(savedMeal));
+    if (savedMeal.mealType && (NUTRITION_MEAL_TYPES as readonly string[]).includes(savedMeal.mealType)) setType(savedMeal.mealType as NutritionMealType);
+  }, [savedMeal, result]);
 
   async function onPhoto(file: File | undefined) {
     if (!file) return;
@@ -176,7 +247,7 @@ export function NewMealPage({ initialMode }: { initialMode: Mode }) {
         onSuccess: (meal) => {
           setItems((list) => {
             const next = list.reduce((max, item) => Math.max(max, item.key), -1) + 1;
-            return [...list, ...meal.items.map((item, i) => ({ ...item, key: next + i }))];
+            return [...list, ...meal.items.map((item, i) => fromRecognized(item, next + i))];
           });
           setExtra("");
           setAdding(false);
@@ -185,12 +256,11 @@ export function NewMealPage({ initialMode }: { initialMode: Mode }) {
     );
   }
 
-  function changeGrams(index: number, direction: 1 | -1) {
+  function changeAmount(index: number, direction: 1 | -1) {
     setItems((list) =>
       list.map((item, i) => {
         if (i !== index) return item;
-        const step = stepFor(direction < 0 ? item.grams - 1 : item.grams);
-        return { ...item, grams: Math.max(5, item.grams + direction * step) };
+        return { ...item, amount: Math.max(minFor(item), round(item.amount + direction * stepFor(item, direction < 0), 2)) };
       }),
     );
   }
@@ -199,7 +269,7 @@ export function NewMealPage({ initialMode }: { initialMode: Mode }) {
 
   function log() {
     if (!clock || !result || items.length === 0) return;
-    const inputs = allOrNone(items.map((item) => ({ name: item.name, quantity: item.grams, unit: "g", nutrients: nutrientsOf(item) })));
+    const inputs = allOrNone(items.map((item) => ({ name: item.name, quantity: round(item.amount, 2), unit: item.unit, nutrients: nutrientsOf(item) })));
     create.mutate(
       {
         date: clock.localDate,
@@ -212,6 +282,22 @@ export function NewMealPage({ initialMode }: { initialMode: Mode }) {
         ...(favorite && name.trim() ? { favoriteName: name.trim() } : {}),
       },
       { onSuccess: () => navigate("/") },
+    );
+  }
+
+  // A favorite still loading, or gone from Nutrition
+  if (!result && savedId) {
+    return (
+      <div className="page detail-page edit-page new-meal-page">
+        <header className="edit-header">
+          <Link href="/" className="text-button">
+            {t.newMeal.cancel}
+          </Link>
+          <h1>{t.newMeal.title}</h1>
+          <span />
+        </header>
+        {saved.isPending ? <div className="card skeleton" style={{ height: 220 }} aria-label={t.loading} /> : <p className="notice" data-kind="error">{t.newMeal.favoriteMissing}</p>}
+      </div>
     );
   }
 
@@ -311,9 +397,15 @@ export function NewMealPage({ initialMode }: { initialMode: Mode }) {
   return (
     <div className="page detail-page edit-page new-meal-page">
       <header className="edit-header">
-        <button type="button" className="text-button" onClick={restart}>
-          {t.newMeal.retake}
-        </button>
+        {savedId ? (
+          <Link href="/" className="text-button">
+            {t.newMeal.cancel}
+          </Link>
+        ) : (
+          <button type="button" className="text-button" onClick={restart}>
+            {t.newMeal.retake}
+          </button>
+        )}
         <h1>{t.newMeal.title}</h1>
         <span />
       </header>
@@ -330,9 +422,9 @@ export function NewMealPage({ initialMode }: { initialMode: Mode }) {
           </span>
         )}
         <span className="recognized-text">
-          <span className="eyebrow">{t.newMeal.recognized}</span>
+          <span className="eyebrow">{savedId ? t.newMeal.favoriteEyebrow : t.newMeal.recognized}</span>
           <strong className="stat-value">
-            {formatKcal(totals.kcal)} <span className="muted">{t.newMeal.estimatedKcal}</span>
+            {formatKcal(totals.kcal)} <span className="muted">{savedId ? "kcal" : t.newMeal.estimatedKcal}</span>
           </strong>
           <span className="muted">{result.description}</span>
         </span>
@@ -353,7 +445,7 @@ export function NewMealPage({ initialMode }: { initialMode: Mode }) {
         </label>
       </div>
 
-      <span className="sheet-section">{t.newMeal.foods}</span>
+      <span className="sheet-section">{savedId ? t.newMeal.foodsSaved : t.newMeal.foods}</span>
       <div className="form-card">
         {items.map((item, index) => (
           <div key={item.key} className="item-edit">
@@ -364,13 +456,13 @@ export function NewMealPage({ initialMode }: { initialMode: Mode }) {
                 <span className="muted">{formatKcal(nutrientsOf(item).kcal)} kcal</span>
               </span>
               <span className="stepper">
-                <button type="button" aria-label={t.newMeal.less(item.name)} disabled={item.grams <= 5} onClick={() => changeGrams(index, -1)}>
+                <button type="button" aria-label={t.newMeal.less(item.name)} disabled={item.amount <= minFor(item)} onClick={() => changeAmount(index, -1)}>
                   −
                 </button>
                 <span className="stat-value" aria-live="polite">
-                  {formatKcal(item.grams)} g
+                  {formatAmount(item)}
                 </span>
-                <button type="button" aria-label={t.newMeal.more(item.name)} onClick={() => changeGrams(index, 1)}>
+                <button type="button" aria-label={t.newMeal.more(item.name)} onClick={() => changeAmount(index, 1)}>
                   +
                 </button>
               </span>
@@ -405,11 +497,11 @@ export function NewMealPage({ initialMode }: { initialMode: Mode }) {
               {recognizeExtra.isPending ? t.newMeal.addFoodPending : t.newMeal.addFoodSubmit}
             </button>
           </form>
-        ) : (
+        ) : recognition ? (
           <button type="button" className="text-button text-button-strong add-food" onClick={() => setAdding(true)}>
             {t.newMeal.addFood}
           </button>
-        )}
+        ) : null}
         {recognizeExtra.isError && <p className="error-text">{errorText(recognizeExtra.error)}</p>}
       </div>
 
@@ -422,27 +514,30 @@ export function NewMealPage({ initialMode }: { initialMode: Mode }) {
           </div>
         ))}
       </div>
-      <p className="sheet-note">{t.newMeal.estimateNote}</p>
+      {!savedId && <p className="sheet-note">{t.newMeal.estimateNote}</p>}
 
-      <div className="form-card favorite-card">
-        <label className="profile-row-item setup-switch-row">
-          <span className="connection-text">
-            <strong>{t.newMeal.saveFavorite}</strong>
-            <span className="muted">{t.newMeal.saveFavoriteNote}</span>
-          </span>
-          <input type="checkbox" role="switch" className="switch" checked={favorite} onChange={(event) => setFavorite(event.target.checked)} />
-        </label>
-        {favorite && (
-          <input
-            className="note-input favorite-name"
-            value={name}
-            maxLength={100}
-            placeholder={t.newMeal.favoriteName}
-            aria-label={t.newMeal.favoriteName}
-            onChange={(e) => setFavoriteName(e.target.value)}
-          />
-        )}
-      </div>
+      {/* A favorite is already saved: no "Salva anche come preferito" */}
+      {!savedId && (
+        <div className="form-card favorite-card">
+          <label className="profile-row-item setup-switch-row">
+            <span className="connection-text">
+              <strong>{t.newMeal.saveFavorite}</strong>
+              <span className="muted">{t.newMeal.saveFavoriteNote}</span>
+            </span>
+            <input type="checkbox" role="switch" className="switch" checked={favorite} onChange={(event) => setFavorite(event.target.checked)} />
+          </label>
+          {favorite && (
+            <input
+              className="note-input favorite-name"
+              value={name}
+              maxLength={100}
+              placeholder={t.newMeal.favoriteName}
+              aria-label={t.newMeal.favoriteName}
+              onChange={(e) => setFavoriteName(e.target.value)}
+            />
+          )}
+        </div>
+      )}
 
       <div className="detail-spacer" />
       {create.isError && <p className="notice" data-kind="error">{t.newMeal.logFailed}</p>}

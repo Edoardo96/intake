@@ -1,5 +1,5 @@
 import type { MealPlan, MealTypeValue, PlannedMacros } from "./mealPlan.js";
-import type { MealType, Nutrients, NutritionMealType } from "./nutrition.js";
+import type { MealItem, MealType, Nutrients, NutritionMealType } from "./nutrition.js";
 
 /** A stored meal plan version. */
 export interface StoredPlan {
@@ -844,6 +844,8 @@ export interface SavedMeal {
   protein: number | null;
   carbs: number | null;
   fat: number | null;
+  /** Its foods with amounts and nutrients, as get_saved_meals lists them (empty for a saved meal with totals only). */
+  items: MealItem[];
 }
 
 /** GET /api/meals/saved */
