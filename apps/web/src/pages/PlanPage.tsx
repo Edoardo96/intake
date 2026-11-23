@@ -18,6 +18,7 @@ import { shareFile } from "../lib/shareFile";
 import { t } from "../lib/strings";
 import { Scrim } from "../components/Scrim";
 import { NeedsCard } from "../components/NeedsCard";
+import { DishesTab } from "../components/DishesTab";
 import { DishAlternatives, DishGroupsCard, dishAsEdit } from "../components/DishAlternatives";
 import { PLAN_TAB_PARAM, planTabFromSearch, preferredPlanTab, type PlanTab } from "../lib/planTab";
 
@@ -201,7 +202,7 @@ export function PlanPage() {
       </header>
 
       <div className="segmented plan-switch" role="tablist" aria-label={t.plan.switch}>
-        {(["plan", "needs"] as const).map((option) => (
+        {(["plan", "dishes", "needs"] as const).map((option) => (
           <button
             key={option}
             type="button"
@@ -220,6 +221,8 @@ export function PlanPage() {
 
       {tab === "needs" ? (
         <NeedsCard />
+      ) : tab === "dishes" ? (
+        <DishesTab />
       ) : (
         <>
           {message && (

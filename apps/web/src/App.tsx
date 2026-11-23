@@ -13,6 +13,9 @@ import { HealthTrendsPage } from "./pages/HealthTrendsPage";
 import { MealPage } from "./pages/MealPage";
 import { NewMealPage } from "./pages/NewMealPage";
 import { NeedsPage } from "./pages/NeedsPage";
+import { DishPage } from "./pages/DishPage";
+import { DishEditPage } from "./pages/DishEditPage";
+import { RecipePage } from "./pages/RecipePage";
 import { PlanPrintPage } from "./pages/PlanPrintPage";
 import { ShoppingListPage } from "./pages/ShoppingListPage";
 import { PlanGeneratePage } from "./pages/PlanGeneratePage";
@@ -117,6 +120,12 @@ function SignedIn({ user, notice, adding, openAdd, closeAdd }: SignedInProps) {
           <PlanPrintPage />
         </Route>
         <Route path="/piano/genera">{on?.recognition ? <PlanGeneratePage /> : home}</Route>
+        <Route path="/piano/piatti/nuovo">
+          <DishEditPage key="new" />
+        </Route>
+        <Route path="/piano/piatti/:id/modifica">{(params) => <DishEditPage key={params.id} id={params.id} />}</Route>
+        <Route path="/piano/piatti/:id/ricetta">{(params) => <RecipePage key={params.id} id={params.id} />}</Route>
+        <Route path="/piano/piatti/:id">{(params) => <DishPage key={params.id} id={params.id} />}</Route>
         <Route path="/piano/fabbisogno">
           <NeedsPage />
         </Route>
