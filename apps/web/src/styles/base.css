@@ -9356,6 +9356,26 @@ div.connection-row {
   font-size: 13px;
 }
 
+/* "Dai preferiti": a sheet with a search, so a long list of favorites stays usable */
+.dish-fav-for {
+  margin: -4px 0 10px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.dish-fav-search {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 12px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-input);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 16px;
+}
+
 
 /* Pasti da foto › "Conserva le foto dei pasti": the kept photos and their deletion, confirmed in the row */
 .meal-photos-clear {
