@@ -116,6 +116,13 @@ const MIGRATIONS: string[] = [
      dishes TEXT NOT NULL,
      updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
    )`,
+  // Piatti: what Intake adds to a Nutrition saved meal, by its id: category and recipe (docs/dishes.md)
+  `CREATE TABLE dish_meta (
+     saved_meal_id TEXT PRIMARY KEY,
+     category TEXT,
+     recipe TEXT,
+     updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+   )`,
 ];
 
 /** Opens (and migrates) the SQLite database. Pass ":memory:" for tests. */

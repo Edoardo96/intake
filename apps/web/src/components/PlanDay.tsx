@@ -243,7 +243,7 @@ function MoveIcon() {
 }
 
 /** A food row of the editor; a food that came with its values remembers them, to keep or scale them on save. */
-interface FoodRow {
+export interface FoodRow {
   name: string;
   quantity: string;
   unit: string;
@@ -257,7 +257,7 @@ interface FoodRow {
  * The values of a saved food when its row is saved: kept as they are when nothing changed, scaled in proportion when
  * only the amount changed, dropped when the name or the unit changed (they would no longer describe the food).
  */
-function foodNutrients(row: FoodRow, quantity: number | undefined): PlannedFood["nutrients"] {
+export function foodNutrients(row: FoodRow, quantity: number | undefined): PlannedFood["nutrients"] {
   const n = row.nutrients;
   if (!n || row.origQuantity === undefined || quantity === undefined) return undefined;
   if (row.name.trim() !== row.origName || row.unit.trim() !== (row.origUnit ?? "")) return undefined;

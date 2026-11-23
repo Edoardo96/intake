@@ -2,6 +2,10 @@ import type {
   RecognitionModelResponse,
   Dish,
   DishGroupsResponse,
+  DishesResponse,
+  DishWrite,
+  Recipe,
+  RecipeResponse,
   DishLink,
   DailyScores,
   AddWaterRequest,
@@ -991,5 +995,70 @@ export function useChangeDishGroups() {
           ? apiFetch<DishGroupsResponse>(`/api/dish-groups/${change.remove}`, { method: "DELETE" })
           : apiFetch<DishGroupsResponse>(`/api/dish-groups/${change.id}`, { method: "PUT", json: { dishes: change.dishes } }),
     onSuccess: (response) => queryClient.setQueryData(dishGroupsKey, response.groups),
+  });
+}
+
+const dishesKey = ["dishes"] as const;
+
+/** Piatti: the Nutrition saved meals with their category and whether a recipe is kept. */
+export function useDishes() {
+  return useQuery({ queryKey: dishesKey, queryFn: () => apiFetch<DishesResponse>("/api/dishes"), staleTime: 60_000 });
+}
+
+/** "Salva piatto": a new dish, or changes to one (`id`); the lists of dishes and favorites reload. */
+export function useSaveDish() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, dish }: { id?: string; dish: DishWrite }) =>
+      id ? apiFetch<{ ok: true }>(`/api/dishes/${id}`, { method: "PATCH", json: dish }).then(() => ({ id })) : apiFetch<{ id: string | null }>("/api/dishes", { method: "POST", json: dish }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["saved-meals"] });
+      return queryClient.invalidateQueries({ queryKey: dishesKey });
+    },
+  });
+}
+
+/** Deletes a dish from Nutrition, after a confirmation; meals already logged from it keep their values. */
+export function useDeleteDish() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => apiFetch(`/api/dishes/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["saved-meals"] });
+      return queryClient.invalidateQueries({ queryKey: dishesKey });
+    },
+  });
+}
+
+/** The person's own categories ("+ Nuova" in the dish editor). */
+export function useSetDishCategories() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (custom: string[]) => apiFetch<{ customCategories: string[] }>("/api/dishes/categories", { method: "PUT", json: { custom } }),
+    onSuccess: ({ customCategories }) => queryClient.setQueryData<DishesResponse>(dishesKey, (old) => (old ? { ...old, customCategories } : old)),
+  });
+}
+
+const recipeKey = (id: string) => ["dish-recipe", id] as const;
+
+/** The recipe kept with a dish (free to read again). */
+export function useRecipe(id: string) {
+  return useQuery({ queryKey: recipeKey(id), queryFn: () => apiFetch<RecipeResponse>(`/api/dishes/${id}/recipe`), staleTime: 5 * 60_000 });
+}
+
+/** "Chiedi la ricetta all'IA" / "Rigenera" (part Pasti da foto), "Modifica" of the recipe and its deletion. */
+export function useChangeRecipe(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (change: { generate: { note: string } } | { save: Recipe } | { remove: true }) =>
+      "generate" in change
+        ? apiFetch<RecipeResponse>(`/api/dishes/${id}/recipe/generate`, { method: "POST", json: change.generate })
+        : "save" in change
+          ? apiFetch<RecipeResponse>(`/api/dishes/${id}/recipe`, { method: "PUT", json: change.save })
+          : apiFetch<RecipeResponse>(`/api/dishes/${id}/recipe`, { method: "DELETE" }),
+    onSuccess: (response) => {
+      queryClient.setQueryData(recipeKey(id), response);
+      return queryClient.invalidateQueries({ queryKey: dishesKey });
+    },
   });
 }

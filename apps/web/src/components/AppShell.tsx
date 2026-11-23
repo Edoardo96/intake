@@ -54,8 +54,8 @@ export function AppShell({ user, onAdd, children }: Props) {
   // Pages of the optional parts that are off are left out (docs/features.md)
   const sidebar = SIDEBAR.filter((item) => !("feature" in item) || features?.[item.feature]);
 
-  // Meal detail, edit, Profilo and Apple Salute are pushed screens without the bottom tab bar (docs/design)
-  const pushed = location.startsWith("/pasto/") || location.startsWith("/profilo") || location === "/piano/spesa" || location === "/piano/stampa";
+  // Meal detail, edit, Profilo, Apple Salute and the dish screens are pushed screens without the bottom tab bar (docs/design)
+  const pushed = location.startsWith("/pasto/") || location.startsWith("/profilo") || location === "/piano/spesa" || location === "/piano/stampa" || location.startsWith("/piano/piatti/");
   const section = sectionOf(location);
   const main = useRef<HTMLElement>(null);
   const pull = usePullToRefresh(main);

@@ -14,6 +14,7 @@ import { mealRoutes, type MealRoutesOptions } from "./routes/meals.js";
 import { insightRoutes, type InsightRoutesOptions } from "./routes/insight.js";
 import { planRoutes } from "./routes/plans.js";
 import { dishGroupRoutes } from "./routes/dishGroups.js";
+import { dishRoutes, type DishRoutesOptions } from "./routes/dishes.js";
 import type { DishGroupStore } from "./db/dishGroupStore.js";
 import { pushRoutes, type PushRoutesOptions } from "./routes/push.js";
 import { workoutRoutes, type WorkoutRoutesOptions } from "./routes/workouts.js";
@@ -87,6 +88,8 @@ export interface AppOptions {
   plans?: PlanStore;
   /** Piatti intercambiabili (Piano, Timeline, Oggi); registered together with `api` and `plans`. */
   dishGroups?: DishGroupStore;
+  /** Piatti (Piano › Piatti: Nutrition saved meals with a category and a recipe); registered together with `auth`. */
+  dishes?: Omit<DishRoutesOptions, "requireOwner">;
   /** Reminders (Web Push); registered together with `auth`. */
   push?: Omit<PushRoutesOptions, "requireOwner">;
   /** Hevy workouts; registered together with `auth`. */
@@ -211,6 +214,9 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     }
     if (options.foods) {
       await app.register(foodRoutes, { prefix: "/api", ...options.foods, requireOwner });
+    }
+    if (options.dishes) {
+      await app.register(dishRoutes, { prefix: "/api", ...options.dishes, requireOwner });
     }
     if (options.needs) {
       await app.register(needsRoutes, { prefix: "/api", ...options.needs, requireOwner });

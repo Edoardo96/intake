@@ -39,6 +39,9 @@ export interface MealWriteFields {
   items?: Array<Record<string, unknown>>;
 }
 
+/** save_meal / update_saved_meal: the dish's foods with their values, or its totals (never both). */
+export type SavedMealWriteFields = Omit<MealWriteFields, "logged_at" | "idempotency_key"> & { name?: string };
+
 const UUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i;
 
 /** The tool returned an error result (e.g. invalid arguments). */
@@ -207,6 +210,20 @@ export class NutritionApi {
   /** Saves a logged meal as a favorite ("saved meal") on Nutrition. */
   async saveMeal(name: string, fromMealId: string): Promise<void> {
     await this.call("save_meal", { name, from_meal_id: fromMealId });
+  }
+
+  /**
+   * A new saved meal ("Nuovo piatto" in Piatti) from its foods with values (`items`) or its totals; nothing is logged.
+   * Returns its id when the response carries one.
+   */
+  async createSavedMeal(fields: SavedMealWriteFields & { name: string }): Promise<{ id: string | null }> {
+    const result = await this.call("save_meal", { ...fields });
+    return { id: UUID.exec(result.text)?.[0]?.toLowerCase() ?? null };
+  }
+
+  /** Changes a saved meal ("Modifica" in Piatti); `items` replaces its whole list of foods. */
+  async updateSavedMeal(id: string, fields: SavedMealWriteFields): Promise<void> {
+    await this.call("update_saved_meal", { id, ...fields });
   }
 
   /** Saved meals ("preferiti") with their figures per serving. */

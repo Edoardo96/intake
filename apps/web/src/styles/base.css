@@ -9374,6 +9374,323 @@ div.connection-row {
   color: var(--color-text);
   font: inherit;
   font-size: 16px;
+}
+
+/* ================= Piano › Piatti (docs/dishes.md) ================= */
+.dishes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dishes-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.dishes-search {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+.dishes-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 16px;
+}
+
+.dishes-new {
+  height: 46px;
+  padding: 0 16px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+/* The Modifica link of the dish page, at the end of the header */
+.dish-edit-link {
+  justify-self: end;
+  text-decoration: none;
+}
+
+.dish-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.dish-chips-wrap {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.dish-filter {
+  flex: none;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* The chosen category: inverted, and a check mark before the name (not color alone) */
+.dish-filter[aria-pressed="true"],
+.dish-filter[aria-checked="true"] {
+  border-color: var(--color-inverse);
+  background: var(--color-inverse);
+  color: var(--color-on-inverse);
+  font-weight: 800;
+}
+
+.dish-filter[aria-pressed="true"]::before,
+.dish-filter[aria-checked="true"]::before {
+  content: "✓ ";
+}
+
+.dish-filter-new {
+  border-style: dashed;
+  background: transparent;
+  color: var(--color-accent-strong);
+  font-weight: 800;
+}
+
+.dish-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dish-row {
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.dish-row .sheet-row-text .muted {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dish-row-side {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.dish-row-kcal {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.dish-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.dish-badge-recipe {
+  background: var(--color-surface-2);
+  color: var(--color-text-2);
+}
+
+.dish-page,
+.dish-edit-page,
+.recipe-page {
+  gap: 12px;
+}
+
+.dish-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dish-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.dish-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dish-tag {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--color-segmented);
+  color: var(--color-text-2);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.dish-values,
+.dish-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dish-kcal {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dish-kcal strong {
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.dish-kcal .muted {
+  font-size: 12px;
+}
+
+.dish-macros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  gap: 8px;
+}
+
+.dish-macro {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dish-macro strong {
+  font-size: 15px;
+}
+
+.dish-macro[data-macro="protein"] {
+  background: var(--macro-protein-soft);
+  color: var(--macro-protein-text);
+}
+
+.dish-macro[data-macro="carbs"] {
+  background: var(--macro-carbs-soft);
+  color: var(--macro-carbs-text);
+}
+
+.dish-macro[data-macro="fat"] {
+  background: var(--macro-fat-soft);
+  color: var(--macro-fat-text);
+}
+
+.dish-macro[data-macro="fiber"] {
+  background: var(--macro-fiber-soft);
+  color: var(--macro-fiber-text);
+}
+
+.dish-foods {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.dish-foods li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dish-foods li .muted {
+  flex: none;
+  text-align: right;
+}
+
+.dish-recipe-row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.dish-recipe-text {
+  flex: 1 1 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.dish-recipe-row > a,
+.dish-recipe-row > button {
+  flex: none;
+  text-decoration: none;
+}
+
+.dish-recipe-error {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+.dish-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dish-in-plan {
+  margin: 0;
+  font-size: 13px;
+}
+
+.dish-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dish-actions > * {
+  flex: 1 1 160px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.dish-delete {
 /* Pasti da foto › "Conserva le foto dei pasti": the kept photos and their deletion, confirmed in the row */
 .meal-photos-clear {
   display: flex;
@@ -9383,6 +9700,130 @@ div.connection-row {
   gap: 8px 12px;
 }
 
+.dish-delete > .muted {
+  flex: 1 1 200px;
+  font-size: 13px;
+}
+
+.dish-delete-link {
+  align-self: flex-start;
+  color: var(--color-danger);
+}
+
+.dish-new-link {
+  align-self: flex-start;
+  margin-top: 8px;
+  text-decoration: none;
+}
+
+.dish-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dish-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dish-save {
+  align-self: stretch;
+  height: 50px;
+}
+
+.recipe-of {
+  margin: -6px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.recipe-stale {
+  margin: 0;
+}
+
+.recipe-ingredients {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-2);
+}
+
+.recipe-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recipe-steps li {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.recipe-step-number {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.recipe-tip {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-2);
+}
+
+.recipe-source {
+  margin: 0;
+  font-size: 12px;
+}
+
+.recipe-numbers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dish-form textarea {
+  min-height: 96px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-input);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.recipe-wish {
+  width: 100%;
+  max-width: 420px;
+  text-align: left;
+}
+
+.dish-form .field input {
+  min-width: 0;
 .meal-photos-clear > .muted {
   flex: 1 1 180px;
   font-size: 13px;
