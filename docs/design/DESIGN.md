@@ -366,6 +366,14 @@ When a plan is scheduled (not in effect yet), Piano shows a notice "Un piano è 
 
 Piano ⋯ menu: 280 px wide (never wider than the screen minus 16 px per side), 8 px inside padding and 2 px between rows; rich rows have 10 px of vertical padding so a title and a two-line hint never touch the next row. Entries: Genera con l'IA, Lista della spesa, Stampa o salva PDF, Scarica il piano (JSON), Carica nuovo piano, Storico versioni, Chiudi.
 
+## Piatti intercambiabili (23 Nov)
+
+Under the macros of a fixed meal in Piano, an "ALTERNATIVE" label and one soft green row per interchangeable dish: name, "495 kcal · P 33 g" (or "senza valori"), "Usa questo" and ×. Below, the text link "+ Aggiungi alternativa" opens "Annulla / Dai preferiti / A mano" with one line on where it applies; "Dai preferiti" lists favorites with foods, each with "Aggiungi", and "A mano" opens the dish editor. The AI proposal of "Alternativa" gets a "Tieni come alternativa" button. The side column of Piano adds a collapsible "Piatti intercambiabili" card: each group as rows with the dish, its other names ("Anche: …"), "Collega anche…" (an inline field and "Collega") and ×, then "Elimina gruppo".
+
+In the Timeline planned card and in the expanded next meal of Oggi, "Cosa hai mangiato?" shows chips for the planned dish (tag "Previsto") and each alternative with its kcal; the chosen chip has an accent border, a soft fill and a ✓ before its name. The foods and "Mangiato come previsto" follow the chosen dish.
+
 ## Alternativa per oggi (21 Nov)
 
 A full-width outline button "✨ Alternativa per oggi" (sparkles: it uses the AI) under the actions of a planned meal still to eat, in Oggi's next meal card (inside the expanded details, above "Poi · …") and in the Timeline's planned cards (today only, "da registrare" and "dal piano"). It opens a panel under the button: a "Suggerimento (facoltativo)" field, one sentence on what the proposal is calibrated on, and "Annulla / Genera". The proposal is a soft green card: "PROPOSTA PER OGGI", the dish, one line per food with its dose, kcal and macros, the budget ("Per questo pasto: circa 230 kcal e 18 g di proteine"), "Perché: …", and "Annulla / Un'altra / Registra questo". "Registra questo" opens the confirmation screen of a new meal with the eyebrow "ALTERNATIVA", the type of the planned meal and the time now.
+
+"Modifica pasto" of the plan: on a saved meal whose foods have no values of their own, "Dividi in alimenti con l'IA" (sparkles) sits with the other two tools. It opens, under the editor, a short note (what is estimated, that the sum stays the meal's, that nothing is saved until Conferma) and "Annulla / Proponi"; then "PROPOSTA PER ALIMENTO": one row per food with its amount and "kcal · P g", a line telling to check the amounts, and "Annulla / Conferma". After Conferma the button no longer appears for that meal.

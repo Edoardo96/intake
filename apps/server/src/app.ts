@@ -13,6 +13,8 @@ import { dayRoutes, type DayRoutesOptions } from "./routes/days.js";
 import { mealRoutes, type MealRoutesOptions } from "./routes/meals.js";
 import { insightRoutes, type InsightRoutesOptions } from "./routes/insight.js";
 import { planRoutes } from "./routes/plans.js";
+import { dishGroupRoutes } from "./routes/dishGroups.js";
+import type { DishGroupStore } from "./db/dishGroupStore.js";
 import { pushRoutes, type PushRoutesOptions } from "./routes/push.js";
 import { workoutRoutes, type WorkoutRoutesOptions } from "./routes/workouts.js";
 import { trainingRoutes, type TrainingRoutesOptions } from "./routes/training.js";
@@ -81,6 +83,8 @@ export interface AppOptions {
   dayAlternative?: Omit<DayAlternativeRoutesOptions, "requireOwner">;
   /** Meal plan storage; registered together with `api`. */
   plans?: PlanStore;
+  /** Piatti intercambiabili (Piano, Timeline, Oggi); registered together with `api` and `plans`. */
+  dishGroups?: DishGroupStore;
   /** Reminders (Web Push); registered together with `auth`. */
   push?: Omit<PushRoutesOptions, "requireOwner">;
   /** Hevy workouts; registered together with `auth`. */
@@ -213,9 +217,12 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
       await app.register(mealRoutes, { prefix: "/api", api: options.mealsApi, recognizer: options.recognizer, photos: options.mealPhotos, recognitionModel: options.recognitionModel, requireOwner });
     }
     if (options.api) {
-      await app.register(dayRoutes, { prefix: "/api", api: options.api, plans: options.plans, requireOwner });
+      await app.register(dayRoutes, { prefix: "/api", api: options.api, plans: options.plans, dishGroups: options.dishGroups, requireOwner });
       if (options.plans) {
-        await app.register(planRoutes, { prefix: "/api", plans: options.plans, api: options.api, requireOwner });
+        await app.register(planRoutes, { prefix: "/api", plans: options.plans, api: options.api, dishGroups: options.dishGroups, requireOwner });
+        if (options.dishGroups) {
+          await app.register(dishGroupRoutes, { prefix: "/api", groups: options.dishGroups, requireOwner });
+        }
       }
     }
   }

@@ -1,5 +1,8 @@
 import type {
   RecognitionModelResponse,
+  Dish,
+  DishGroupsResponse,
+  DishLink,
   DailyScores,
   AddWaterRequest,
   CreateMealRequest,
@@ -196,8 +199,11 @@ export function useDisconnectNutrition() {
 export function useLogPlanned(date: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (entry: { date: string; planId: number; index: number }) =>
-      apiFetch<{ mealId: string | null }>(`/api/days/${entry.date}/planned/${entry.planId}/${entry.index}`, { method: "POST" }),
+    mutationFn: (entry: { date: string; planId: number; index: number; alternative?: { groupId: number; dishIndex: number } }) =>
+      apiFetch<{ mealId: string | null }>(`/api/days/${entry.date}/planned/${entry.planId}/${entry.index}`, {
+        method: "POST",
+        ...(entry.alternative ? { json: { alternative: entry.alternative } } : {}),
+      }),
     onMutate: async (entry) => {
       await queryClient.cancelQueries({ queryKey: dayKey(date) });
       const previous = queryClient.getQueryData<DayView>(dayKey(date));
@@ -852,6 +858,27 @@ export function useEditPlanMeal() {
   });
 }
 
+/** "Dividi in alimenti con l'IA": the proposed food values of a saved meal (Claude API; nothing is saved). */
+export function useSplitFoodsProposal() {
+  return useMutation({
+    mutationFn: ({ id, day, index }: { id: number; day: string; index: number }) =>
+      apiFetch<{ foods: Array<PlannedFood & { nutrients: NonNullable<PlannedFood["nutrients"]> }> }>(`/api/plans/${id}/split-foods`, { method: "POST", json: { day, index } }),
+  });
+}
+
+/** Confirms the proposed food values: the meal keeps its totals and its foods get their values. */
+export function useConfirmSplitFoods() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, day, index, foods }: { id: number; day: string; index: number; foods: PlannedFood[] }) =>
+      apiFetch<StoredPlan>(`/api/plans/${id}/split-foods`, { method: "PATCH", json: { day, index, foods } }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["plans"] });
+      return invalidateDays(queryClient);
+    },
+  });
+}
+
 /** "Applica da oggi": a scheduled plan version starts on the given day (today). */
 export function useStartPlan() {
   const queryClient = useQueryClient();
@@ -911,5 +938,30 @@ export function useSetHomeLayout() {
       if (context?.previous) queryClient.setQueryData(homeLayoutKey, context.previous);
     },
     onSuccess: (layout) => queryClient.setQueryData(homeLayoutKey, layout),
+  });
+}
+
+const dishGroupsKey = ["dish-groups"] as const;
+
+/** Piatti intercambiabili: the groups of dishes that can take each other's place (Piano, Timeline, Oggi). */
+export function useDishGroups() {
+  return useQuery({
+    queryKey: dishGroupsKey,
+    queryFn: () => apiFetch<DishGroupsResponse>("/api/dish-groups").then((r) => r.groups),
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** Links an alternative to a dish, changes a group (a dish removed, a name linked) or removes it. */
+export function useChangeDishGroups() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (change: { link: DishLink } | { id: number; dishes: Dish[] } | { remove: number }) =>
+      "link" in change
+        ? apiFetch<DishGroupsResponse>("/api/dish-groups/link", { method: "POST", json: change.link })
+        : "remove" in change
+          ? apiFetch<DishGroupsResponse>(`/api/dish-groups/${change.remove}`, { method: "DELETE" })
+          : apiFetch<DishGroupsResponse>(`/api/dish-groups/${change.id}`, { method: "PUT", json: { dishes: change.dishes } }),
+    onSuccess: (response) => queryClient.setQueryData(dishGroupsKey, response.groups),
   });
 }
