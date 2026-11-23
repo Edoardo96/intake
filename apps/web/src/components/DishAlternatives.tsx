@@ -1,9 +1,11 @@
-import { alternativesFor, dishKeys, dishMacros, dishOfMeal, foodLine, mealFoodsText, plannedFoodsOf, type Dish, type DishGroup, type FixedPlannedMeal, type PlannedMacros } from "@intake/shared";
-import { useState } from "react";
+import { alternativesFor, dishKey, dishKeys, dishMacros, dishOfMeal, foodLine, mealFoodsText, plannedFoodsOf, type Dish, type DishGroup, type FixedPlannedMeal, type PlannedMacros } from "@intake/shared";
+import { useEffect, useState } from "react";
 import { useChangeDishGroups, useDishGroups, useSavedMeals } from "../api/queries";
 import { formatKcal } from "../lib/format";
 import { t } from "../lib/strings";
 import { EditMeal, type DishEdit } from "./PlanDay";
+import { CloseIcon } from "./icons";
+import { Scrim } from "./Scrim";
 
 /** A dish written in "A mano" (the plan editor) as a dish of a group. */
 export function dishOfEdit(meal: FixedPlannedMeal, edit: DishEdit): Dish {
@@ -92,7 +94,7 @@ export function DishAlternatives({ meal, onUse, busy }: { meal: FixedPlannedMeal
           </div>
         </div>
       )}
-      {adding === "favorites" && <FavoritePicker onPick={(dish) => link(dish)} onCancel={() => setAdding(null)} busy={change.isPending} />}
+      {adding === "favorites" && <FavoriteSheet meal={name} onPick={(dish) => link(dish)} onClose={() => setAdding(null)} busy={change.isPending} failed={change.isError} />}
       {adding === "hand" && (
         <EditMeal
           meal={{ title: meal.title, foods: [] }}
@@ -103,7 +105,7 @@ export function DishAlternatives({ meal, onUse, busy }: { meal: FixedPlannedMeal
           onSave={(edit, done) => link(dishOfEdit(meal, edit), done)}
         />
       )}
-      {change.isError && adding !== "hand" && (
+      {change.isError && adding === null && (
         <p className="error-text" role="alert">
           {t.dishes.failed}
         </p>
@@ -112,38 +114,60 @@ export function DishAlternatives({ meal, onUse, busy }: { meal: FixedPlannedMeal
   );
 }
 
-/** "Dai preferiti": a favorite with its foods becomes a dish (its values come with it). */
-function FavoritePicker({ onPick, onCancel, busy }: { onPick: (dish: Dish) => void; onCancel: () => void; busy?: boolean }) {
+/**
+ * "Dai preferiti": a sheet with a search over the favorites that have foods; tapping one adds it as an alternative
+ * (its foods and values come with it).
+ */
+function FavoriteSheet({ meal, onPick, onClose, busy, failed }: { meal: string; onPick: (dish: Dish) => void; onClose: () => void; busy?: boolean; failed?: boolean }) {
   const saved = useSavedMeals();
+  const [query, setQuery] = useState("");
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
   const favorites = (saved.data ?? []).filter((m) => m.items.length > 0);
+  const key = dishKey(query);
+  const shown = key ? favorites.filter((m) => dishKey(`${m.name} ${m.items.map((item) => item.name).join(" ")}`).includes(key)) : favorites;
   return (
-    <div className="dish-alt-choose">
-      <span className="plan-edit-title">{t.dishes.fromFavorites}</span>
-      {saved.isLoading && <p className="muted">{t.dishes.loading}</p>}
-      {saved.isSuccess && favorites.length === 0 && <p className="muted">{t.dishes.favoritesEmpty}</p>}
-      <ul className="dish-alt-list">
-        {favorites.map((favorite) => {
-          const foods = plannedFoodsOf(favorite.items);
-          const dish: Dish = { name: favorite.name, aliases: [], foods, macros: null };
-          return (
-            <li key={favorite.id} className="dish-alt">
-              <span className="dish-alt-text">
-                <strong>{favorite.name}</strong>
-                <span className="muted">{foods.map(foodLine).join(" + ")}</span>
-              </span>
-              <button type="button" className="button-secondary-small" disabled={busy} onClick={() => onPick(dish)}>
-                {t.dishes.pick}
+    <Scrim onClose={onClose}>
+      <div className="sheet dish-fav-sheet" role="dialog" aria-modal="true" aria-label={t.dishes.fromFavorites} onClick={(event) => event.stopPropagation()}>
+        <div className="sheet-grabber" aria-hidden="true" />
+        <div className="sheet-head">
+          <h2>{t.dishes.fromFavorites}</h2>
+          <button type="button" className="icon-button" aria-label={t.close} onClick={onClose}>
+            <CloseIcon size={18} strokeWidth={2.5} />
+          </button>
+        </div>
+        <p className="muted dish-fav-for">{t.dishes.alternativeTo(meal)}</p>
+        <input type="search" className="dish-fav-search" value={query} autoFocus placeholder={t.dishes.searchFavorites} aria-label={t.dishes.searchFavorites} onChange={(e) => setQuery(e.target.value)} />
+        {saved.isLoading && <p className="muted">{t.dishes.loading}</p>}
+        {saved.isSuccess && favorites.length === 0 && <p className="muted">{t.dishes.favoritesEmpty}</p>}
+        {saved.isSuccess && favorites.length > 0 && shown.length === 0 && <p className="muted">{t.dishes.noMatch}</p>}
+        {failed && (
+          <p className="error-text" role="alert">
+            {t.dishes.failed}
+          </p>
+        )}
+        <div className="sheet-list">
+          {shown.map((favorite) => {
+            const foods = plannedFoodsOf(favorite.items);
+            return (
+              <button key={favorite.id} type="button" className="sheet-row" disabled={busy} onClick={() => onPick({ name: favorite.name, aliases: [], foods, macros: null })}>
+                <span className="sheet-row-text">
+                  <strong>{favorite.name}</strong>
+                  <span className="muted">
+                    {favorite.kcal !== null ? `${formatKcal(favorite.kcal)} kcal · ` : ""}
+                    {foods.map(foodLine).join(" + ")}
+                  </span>
+                </span>
+                <span className="sheet-row-action">{t.dishes.pick}</span>
               </button>
-            </li>
-          );
-        })}
-      </ul>
-      <div className="plan-replace-actions">
-        <button type="button" className="button-secondary-small" onClick={onCancel}>
-          {t.dishes.cancel}
-        </button>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </Scrim>
   );
 }
 
