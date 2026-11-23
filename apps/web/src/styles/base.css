@@ -9655,6 +9655,10 @@ div.connection-row {
 .dish-recipe-row > a,
 .dish-recipe-row > button {
   flex: none;
+  gap: 6px;
+  min-width: 88px;
+  padding: 0 16px;
+  white-space: nowrap;
   text-decoration: none;
 }
 
@@ -9762,6 +9766,7 @@ div.connection-row {
 }
 
 .recipe-steps li {
+  list-style: none;
   display: flex;
   gap: 12px;
   font-size: 14px;

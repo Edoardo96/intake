@@ -1,8 +1,9 @@
 import type { DatabaseSync } from "node:sqlite";
-import { DISH_CUSTOM_CATEGORIES_MAX, recipeSchema, type StoredRecipe } from "@intake/shared";
+import { DEFAULT_RECIPE_MODEL, DISH_CUSTOM_CATEGORIES_MAX, RECIPE_MODELS, recipeSchema, type StoredRecipe } from "@intake/shared";
 import { z } from "zod";
 
 const CATEGORIES_KEY = "dish_categories";
+const MODEL_KEY = "recipe_model";
 
 const storedRecipeSchema = z.object({
   recipe: recipeSchema,
@@ -82,6 +83,19 @@ export class DishStore {
       .prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value")
       .run(CATEGORIES_KEY, JSON.stringify(unique));
     return unique;
+  }
+
+  /** Claude model of the AI recipes (settings key `recipe_model`); Haiku until changed. */
+  recipeModel(): string {
+    const row = this.db.prepare("SELECT value FROM settings WHERE key = ?").get(MODEL_KEY) as { value: string } | undefined;
+    return row && (RECIPE_MODELS as readonly string[]).includes(row.value) ? row.value : DEFAULT_RECIPE_MODEL;
+  }
+
+  /** False when the model is not one of RECIPE_MODELS. */
+  setRecipeModel(model: string): boolean {
+    if (!(RECIPE_MODELS as readonly string[]).includes(model)) return false;
+    this.db.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(MODEL_KEY, model);
+    return true;
   }
 
   private row(id: string): Row | undefined {

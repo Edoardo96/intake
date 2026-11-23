@@ -48,6 +48,8 @@ export interface PlanGeneratorOptions {
   apiKey: string;
   /** Impostazioni › Funzioni › Modello per i piani. */
   model: () => string;
+  /** Impostazioni › Funzioni › Modello per le ricette (Piatti); the plan model without it. */
+  recipeModel?: () => string;
   client?: StreamingClient;
   language?: () => Language;
   log?: { info(details: object, message: string): void; warn(details: object, message: string): void };
@@ -338,7 +340,7 @@ export class PlanGenerator {
   async writeRecipe(input: { name: string; description: string; foods: Array<{ name: string; quantity: number | null; unit: string | null }>; note: string }): Promise<Recipe> {
     const foods = input.foods.map((f) => ({ name: f.name, ...(f.quantity !== null ? { amount: f.quantity, unit: f.unit ?? "" } : {}) }));
     const text = `Write the recipe of this dish.\n${JSON.stringify({ dish: input.name, description: input.description || undefined, foods: foods.length > 0 ? foods : undefined }, null, 2)}${input.note ? `\n\nWish: ${input.note}` : ""}`;
-    const answer = await this.ask([{ role: "user", content: text }], RECIPE_JSON_SCHEMA, "recipe", undefined, recipeSystem(this.options.language?.() ?? "it"));
+    const answer = await this.ask([{ role: "user", content: text }], RECIPE_JSON_SCHEMA, "recipe", undefined, recipeSystem(this.options.language?.() ?? "it"), this.options.recipeModel?.());
     const { tip, ...rest } = (answer.json ?? {}) as { tip?: string };
     const parsed = recipeSchema.safeParse({ ...rest, ...(tip ? { tip } : {}) });
     if (!parsed.success) throw new RecognitionError("unreadable", "Claude API answer did not match the recipe schema");
@@ -346,8 +348,8 @@ export class PlanGenerator {
   }
 
   /** One structured-output request, streamed; returns the parsed JSON and the raw text. */
-  private async ask(messages: MessageParam[], schema: unknown, what: string, onText?: (streamed: string) => void, systemText?: string): Promise<{ json: unknown; text: string }> {
-    const model = this.options.model();
+  private async ask(messages: MessageParam[], schema: unknown, what: string, onText?: (streamed: string) => void, systemText?: string, modelOverride?: string): Promise<{ json: unknown; text: string }> {
+    const model = modelOverride ?? this.options.model();
     let streamed = "";
     let response: Message;
     try {

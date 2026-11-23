@@ -6,6 +6,7 @@ import type {
   DishWrite,
   Recipe,
   RecipeResponse,
+  RecipeModelResponse,
   DishLink,
   DailyScores,
   AddWaterRequest,
@@ -1080,5 +1081,18 @@ export function useChangeRecipe(id: string) {
       queryClient.setQueryData(recipeKey(id), response);
       return queryClient.invalidateQueries({ queryKey: dishesKey });
     },
+  });
+}
+
+/** Impostazioni › Funzioni › Modello per le ricette; asked only while Pasti da foto is on and the key is set. */
+export function useRecipeModel(enabled: boolean) {
+  return useQuery({ queryKey: ["recipe-model"], queryFn: () => apiFetch<RecipeModelResponse>("/api/dishes/recipe/model"), enabled, staleTime: 5 * 60_000 });
+}
+
+export function useSetRecipeModel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (model: string) => apiFetch<RecipeModelResponse>("/api/dishes/recipe/model", { method: "PUT", json: { model } }),
+    onSuccess: (data) => queryClient.setQueryData(["recipe-model"], data),
   });
 }

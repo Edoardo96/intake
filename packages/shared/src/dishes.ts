@@ -71,6 +71,16 @@ export const recipeSchema = z.strictObject({
 });
 export type Recipe = z.infer<typeof recipeSchema>;
 
+/** Claude models for "Chiedi la ricetta all'IA" (Impostazioni › Funzioni › Modello per le ricette); Haiku by default. */
+export const RECIPE_MODELS = ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"] as const;
+export const DEFAULT_RECIPE_MODEL = "claude-haiku-5-5";
+
+/** GET / PUT /api/dishes/recipe/model */
+export interface RecipeModelResponse {
+  model: string;
+  models: string[];
+}
+
 /** A recipe as kept with the dish. */
 export interface StoredRecipe {
   recipe: Recipe;

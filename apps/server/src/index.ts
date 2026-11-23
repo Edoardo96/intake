@@ -72,6 +72,7 @@ const planGenerator = config.ANTHROPIC_API_KEY
   ? new PlanGenerator({
       apiKey: config.ANTHROPIC_API_KEY,
       model: () => services.planGeneration.get().model,
+      recipeModel: () => services.dishes.recipeModel(),
       language: () => services.language.get(),
       log: { info: (details, message) => app.log.info(details, message), warn: (details, message) => app.log.warn(details, message) },
     })
@@ -139,7 +140,7 @@ const app = await buildApp({
   insightHealth: health,
   plans: services.plans,
   dishGroups: services.dishGroups,
-  // Piatti: the dishes are Nutrition saved meals; the AI recipe uses the plan model, only while Pasti da foto is on
+  // Piatti: the dishes are Nutrition saved meals; the AI recipe has its own model, only while Pasti da foto is on
   dishes: { api, store: services.dishes, ...(planGenerator ? { recipes: planGenerator } : {}) },
   push: { store: services.reminders, scheduler, publicKey: vapid.publicKey },
   // With Allenamenti off the workouts list keeps only the Apple Health sessions
