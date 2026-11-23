@@ -9730,9 +9730,12 @@ div.connection-row {
   gap: 8px;
 }
 
+/* In a column flex: 1.4 of .button-primary-inline would squash its height */
 .dish-save {
+  flex: none;
   align-self: stretch;
-  height: 50px;
+  height: 52px;
+  margin-bottom: env(safe-area-inset-bottom);
 }
 
 .recipe-of {
