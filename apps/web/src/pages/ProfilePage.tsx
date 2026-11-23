@@ -1,7 +1,7 @@
 import type { ProfileView, TrainingSourceId } from "@intake/shared";
 import { Fragment, type ReactNode, useState } from "react";
 import { Link } from "wouter";
-import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useRecognitionModel, useSetRecognitionModel, usePlanGeneration, useSetPlanModel, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeature, useFeatures, useSetFeatures, useSetLanguage, useSetGoals, useBackups, useBackupAction, deviceTimezone, useHomeLayout, useSetHomeLayout } from "../api/queries";
+import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useRecognitionModel, useSetRecognitionModel, useMealPhotoKeep, useSetMealPhotoKeep, useClearMealPhotos, usePlanGeneration, useSetPlanModel, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeature, useFeatures, useSetFeatures, useSetLanguage, useSetGoals, useBackups, useBackupAction, deviceTimezone, useHomeLayout, useSetHomeLayout } from "../api/queries";
 import { TimezoneConfirm } from "../components/TimezoneNotice";
 import { BACKUP_KEEP, LANGUAGES, completeHomeLayout, parseGoalInput, weightUnitOf, type FeatureKey, type GoalsUpdate, type HomeCardId, type HomeLayout, type WeightUnit } from "@intake/shared";
 import { Avatar } from "../components/ProfileLink";
@@ -612,6 +612,7 @@ function FeaturesCard() {
           {/* The model sits right under its switch, only while the part is on and the key is set */}
           {key === "photoMeals" && data.photoMeals && data.recognitionConfigured && <RecognitionModelRow />}
           {key === "photoMeals" && data.photoMeals && data.recognitionConfigured && <PlanModelRow />}
+          {key === "photoMeals" && data.photoMeals && <MealPhotosRow />}
         </Fragment>
       ))}
       <div className="profile-row-item feature-foot">
@@ -662,6 +663,59 @@ function RecognitionModelRow() {
         ))}
       </div>
     </div>
+  );
+}
+
+/**
+ * Pasti da foto › "Conserva le foto dei pasti": off, a photo only serves the recognition and is never stored. The photos
+ * already kept can be deleted, after a confirmation (docs/photo-meals.md).
+ */
+function MealPhotosRow() {
+  const view = useMealPhotoKeep(true);
+  const save = useSetMealPhotoKeep();
+  const clear = useClearMealPhotos();
+  const [confirming, setConfirming] = useState(false);
+  const s = t.profile.features;
+  if (!view.data) return null;
+  const { keep, count } = view.data;
+  return (
+    <>
+      <label className="profile-row-item settings-row">
+        <span className="connection-text">
+          <strong>{s.keepPhotos}</strong>
+          <span className="muted">{save.isError ? s.keepPhotosFailed : keep ? s.keepPhotosOn : s.keepPhotosOff}</span>
+        </span>
+        <input type="checkbox" role="switch" className="switch" aria-label={s.keepPhotos} checked={save.variables ?? keep} disabled={save.isPending} onChange={(event) => save.mutate(event.target.checked)} />
+      </label>
+      {(count > 0 || clear.isSuccess) && (
+        <div className="profile-row-item settings-row meal-photos-clear" role="group" aria-label={s.clearPhotos(count)}>
+          {confirming ? (
+            <>
+              <span className="muted">{s.clearPhotosConfirm(count)}</span>
+              <span className="meal-photos-clear-actions">
+                <button type="button" className="button-secondary-small" onClick={() => setConfirming(false)}>
+                  {s.clearPhotosNo}
+                </button>
+                <button type="button" className="button-secondary-small button-danger-small" disabled={clear.isPending} onClick={() => clear.mutate(undefined, { onSuccess: () => setConfirming(false) })}>
+                  {s.clearPhotosYes}
+                </button>
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="muted" role="status">
+                {clear.isError ? s.clearPhotosFailed : clear.isSuccess && count === 0 ? s.clearedPhotos(clear.data.deleted) : s.keptPhotos(count)}
+              </span>
+              {count > 0 && (
+                <button type="button" className="button-secondary-small" onClick={() => setConfirming(true)}>
+                  {s.clearPhotos(count)}
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </>
   );
 }
 

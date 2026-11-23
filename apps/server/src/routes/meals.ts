@@ -1,4 +1,4 @@
-import { MEAL_PHOTOS_MAX, NUTRITION_MEAL_TYPES, type NutritionMealType, type RecognitionModelResponse, type MealPhotosResponse } from "@intake/shared";
+import { MEAL_PHOTOS_MAX, NUTRITION_MEAL_TYPES, type NutritionMealType, type RecognitionModelResponse, type MealPhotosResponse, type MealPhotoKeepResponse } from "@intake/shared";
 import type { FastifyPluginAsync, FastifyReply, preHandlerHookHandler } from "fastify";
 import { z } from "zod";
 import type { NutritionApi } from "../mcp/nutritionApi.js";
@@ -6,6 +6,7 @@ import { isValidDate } from "../services/dayView.js";
 import { copyMealFields, recentDistinctMeals, updateMealFields } from "../services/mealWrites.js";
 import { MEAL_PHOTO_MAX_BYTES, MealPhotoStore, TooManyPhotosError } from "../db/mealPhotoStore.js";
 import type { RecognitionModelStore } from "../db/recognitionModelStore.js";
+import type { MealPhotoSettingsStore } from "../db/mealPhotoSettingsStore.js";
 import { RecognitionError, type MealRecognizer, type RecognitionFailure } from "../services/mealRecognition.js";
 
 export interface MealRoutesOptions {
@@ -15,6 +16,8 @@ export interface MealRoutesOptions {
   recognizer?: Pick<MealRecognizer, "recognize">;
   /** Photos kept with meals logged from a photo; without it photos are not stored. */
   photos?: MealPhotoStore;
+  /** "Conserva le foto dei pasti" (Impostazioni › Pasti da foto); without it photos are kept. */
+  photoSettings?: Pick<MealPhotoSettingsStore, "keep" | "setKeep">;
   /** Claude model chosen for the recognition (Impostazioni › Funzioni › Pasti da foto). */
   recognitionModel?: Pick<RecognitionModelStore, "get" | "set" | "models">;
 }
@@ -102,8 +105,10 @@ function shiftDate(value: string, days: number): string {
 }
 
 /** Logged meals under /api/meals: edit, delete, save as favorite, repeat. */
-export const mealRoutes: FastifyPluginAsync<MealRoutesOptions> = async (app, { api, requireOwner, recognizer, photos, recognitionModel }) => {
+export const mealRoutes: FastifyPluginAsync<MealRoutesOptions> = async (app, { api, requireOwner, recognizer, photos, photoSettings, recognitionModel }) => {
   app.addHook("preHandler", requireOwner);
+
+  const photoCount = () => Object.values(photos?.list() ?? {}).reduce((sum, ids) => sum + ids.length, 0);
 
   // Foods, grams and nutrition per 100 g from a photo or a description; nothing is logged until the user confirms
   app.post("/meals/recognize", { bodyLimit: RECOGNIZE_MAX_BYTES }, async (request, reply) => {
@@ -148,7 +153,8 @@ export const mealRoutes: FastifyPluginAsync<MealRoutesOptions> = async (app, { a
     const result = await api.logMeal({ ...updateMealFields(body.data), description: body.data.description, meal_type: body.data.type, idempotency_key: extra.data.idempotencyKey });
     // The meal is logged; a photo that can't be kept does not undo it
     let photosSaved = 0;
-    if (photos && result.id) {
+    // With "Conserva le foto dei pasti" off the photos were only for the recognition: none is stored
+    if (photos && result.id && (photoSettings?.keep() ?? true)) {
       for (const jpeg of jpegs) {
         try {
           photos.add(result.id, jpeg!);
@@ -174,6 +180,22 @@ export const mealRoutes: FastifyPluginAsync<MealRoutesOptions> = async (app, { a
   // Meal photos: the ids that have one (for the timeline) and the image itself
   app.get("/meals/photos", async (): Promise<MealPhotosResponse> => ({ photos: photos?.list() ?? {} }));
 
+  // "Conserva le foto dei pasti": the switch and how many photos are kept now
+  app.get("/meals/photos/keep", async (): Promise<MealPhotoKeepResponse> => ({ keep: photoSettings?.keep() ?? true, count: photoCount() }));
+
+  app.put("/meals/photos/keep", async (request, reply) => {
+    const body = z.object({ keep: z.boolean() }).strict().safeParse(request.body);
+    if (!body.success || !photoSettings) return reply.code(400).send({ error: "Invalid request" });
+    photoSettings.setKeep(body.data.keep);
+    return { keep: photoSettings.keep(), count: photoCount() } satisfies MealPhotoKeepResponse;
+  });
+
+  // "Elimina le foto salvate", confirmed in Impostazioni; the meals stay in Nutrition as they are
+  app.post("/meals/photos/clear", async (): Promise<MealPhotoKeepResponse & { deleted: number }> => {
+    const deleted = photos?.clear() ?? 0;
+    return { keep: photoSettings?.keep() ?? true, count: photoCount(), deleted };
+  });
+
   const sendJpeg = (reply: FastifyReply, jpeg: Buffer | null) =>
     jpeg ? reply.header("content-type", "image/jpeg").header("cache-control", "private, max-age=31536000, immutable").send(jpeg) : reply.code(404).send({ error: "No photo" });
 
@@ -187,6 +209,7 @@ export const mealRoutes: FastifyPluginAsync<MealRoutesOptions> = async (app, { a
   // Modifica pasto: a photo added to a meal already logged (e.g. the second course), at most MEAL_PHOTOS_MAX per meal
   app.post<{ Params: { id: string } }>("/meals/:id/photos", { bodyLimit: RECOGNIZE_MAX_BYTES }, async (request, reply) => {
     if (!photos) return reply.code(503).send({ error: "photos_not_available" });
+    if (!(photoSettings?.keep() ?? true)) return reply.code(409).send({ error: "photos_not_kept" });
     const body = jpegUpload.safeParse(request.body);
     const jpeg = body.success ? decodeJpeg(body.data) : null;
     if (!jpeg || !MealPhotoStore.isMealId(request.params.id)) return reply.code(400).send({ error: "Invalid photo" });

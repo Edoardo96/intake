@@ -77,6 +77,14 @@ keeps "Chiedi a Claude" as before.
   `GET /api/meals/:id/photos/:photoId`; `GET /api/meals/:id/photo` (the first one); `POST /api/meals/:id/photos` with
   `{ mediaType: "image/jpeg", data }` → `{ photoId }` (409 `too_many_photos` after 6); `DELETE /api/meals/:id/photos/:photoId`;
   `POST /api/meals` takes `photos` (up to 6). Only JPEGs up to 3 MB are kept; ids are validated, so no other file can be reached.
+- **Conserva le foto dei pasti** (Impostazioni › Funzioni, under Pasti da foto; settings key `keep_meal_photos`,
+  `db/mealPhotoSettingsStore.ts`; on by default). Off, a photo only serves the recognition: `POST /api/meals` stores
+  none of the photos it gets, `POST /api/meals/:id/photos` answers 409 `photos_not_kept`, and in Modifica pasto a new
+  photo offers "Aggiungi i cibi con l'IA" or "Annulla" (no "Solo la foto"), is dropped once its foods are added and is
+  never uploaded with "Salva"; the screen says the photos are not kept. Photos kept before stay until deleted. The row
+  shows how many photos are on the server and "Elimina le foto salvate (N)", confirmed in the row
+  (`POST /api/meals/photos/clear` → `{ keep, count, deleted }`); the meals in Nutrition do not change.
+  `GET` / `PUT /api/meals/photos/keep` → `{ keep, count }`.
 - Deleting the meal in Intake deletes all its photos. Turning the part off hides the photos (their routes answer 404
   `feature_disabled`) but keeps them.
 - **Backups:** the photos are in the data volume, so every `deploy.sh` volume backup contains all of them (JPEG does

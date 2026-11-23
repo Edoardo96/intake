@@ -1,7 +1,7 @@
 import { MEAL_PHOTOS_MAX, MEAL_TYPES, NUTRITION_MEAL_TYPES, type Meal, type MealItemInput, type Nutrients, type NutritionMealType, type RecognizedItem } from "@intake/shared";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { mealPhotoUrl, useDay, useFeatures, useMealPhotos, useRecognizeMeal, useSaveMealPhotos, useUpdateMeal } from "../api/queries";
+import { mealPhotoUrl, useDay, useFeatures, useMealPhotoKeep, useMealPhotos, useRecognizeMeal, useSaveMealPhotos, useUpdateMeal } from "../api/queries";
 import { ConfirmDeleteSheet } from "../components/ConfirmDeleteSheet";
 import { CloseIcon, SparklesIcon } from "../components/icons";
 import { PhotoCarousel } from "../components/PhotoCarousel";
@@ -94,6 +94,8 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
   const [foodText, setFoodText] = useState("");
   // Photos (Pasti da foto): the kept ones, those removed and those added here, all saved with "Salva"
   const keptPhotos = useMealPhotos().data?.get(id) ?? [];
+  // "Conserva le foto dei pasti" off: a photo added here only serves the recognition and is never saved
+  const keepPhotos = useMealPhotoKeep(canRecognize).data?.keep ?? true;
   const [removedPhotos, setRemovedPhotos] = useState<string[]>([]);
   const [addedPhotos, setAddedPhotos] = useState<Array<{ key: string; preview: string; mediaType: "image/jpeg"; data: string }>>([]);
   // A photo just added: its foods can be recognized and added to the meal, or it is kept as a photo only
@@ -192,9 +194,10 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
       },
       {
         onSuccess: () => {
-          if (removedPhotos.length === 0 && addedPhotos.length === 0) return navigate(detailHref);
+          const toAdd = keepPhotos ? addedPhotos : [];
+          if (removedPhotos.length === 0 && toAdd.length === 0) return navigate(detailHref);
           savePhotos.mutate(
-            { mealId: meal.id, remove: removedPhotos, add: addedPhotos.map(({ mediaType, data }) => ({ mediaType, data })) },
+            { mealId: meal.id, remove: removedPhotos, add: toAdd.map(({ mediaType, data }) => ({ mediaType, data })) },
             { onSuccess: () => navigate(detailHref) },
           );
         },
@@ -239,6 +242,8 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
             const room = Math.max(0, 30 - list.length);
             return [...list, ...recognized.items.slice(0, room).map((item, i) => draftFromRecognized(item, Date.now() + i))];
           });
+          // Not kept: once its foods are in the meal the photo has done its job
+          if (!keepPhotos) setAddedPhotos((list) => list.filter((p) => p.key !== photo.key));
           setAskPhoto(null);
           setPhotoNote("");
         },
@@ -292,6 +297,7 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
               event.target.value = "";
             }}
           />
+          {!keepPhotos && <p className="muted photos-not-kept">{t.photos.notKept}</p>}
           {photoError && <p className="error-text">{t.newMeal.unreadablePhoto}</p>}
           {askPhoto && hasItems && (
             <div className="form-card new-photo-card">
@@ -303,9 +309,15 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
                   <SparklesIcon size={18} />
                   {recognizePhoto.isPending ? t.newMeal.analyzing : t.photos.recognize}
                 </button>
-                <button type="button" className="button-secondary" disabled={recognizePhoto.isPending} onClick={() => setAskPhoto(null)}>
-                  {t.photos.photoOnly}
-                </button>
+                {keepPhotos ? (
+                  <button type="button" className="button-secondary" disabled={recognizePhoto.isPending} onClick={() => setAskPhoto(null)}>
+                    {t.photos.photoOnly}
+                  </button>
+                ) : (
+                  <button type="button" className="button-secondary" disabled={recognizePhoto.isPending} onClick={() => askPhoto && removePhoto(askPhoto)}>
+                    {t.photos.discard}
+                  </button>
+                )}
               </div>
               {recognizePhoto.isError && <p className="error-text">{errorText(recognizePhoto.error)}</p>}
             </div>

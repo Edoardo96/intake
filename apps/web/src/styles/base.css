@@ -9169,3 +9169,33 @@ div.connection-row {
 .home-layout-move:disabled {
   opacity: 0.3;
 }
+
+/* Pasti da foto › "Conserva le foto dei pasti": the kept photos and their deletion, confirmed in the row */
+.meal-photos-clear {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.meal-photos-clear > .muted {
+  flex: 1 1 180px;
+  font-size: 13px;
+}
+
+.meal-photos-clear-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.button-danger-small {
+  border-color: var(--color-danger-border);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.photos-not-kept {
+  margin: 6px 0 0;
+  font-size: 13px;
+}

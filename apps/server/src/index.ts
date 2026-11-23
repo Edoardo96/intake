@@ -94,6 +94,7 @@ const app = await buildApp({
   api,
   mealsApi: api,
   mealPhotos: services.mealPhotos,
+  mealPhotoSettings: services.mealPhotoSettings,
   recognitionModel: services.recognitionModel,
   recognizer: config.ANTHROPIC_API_KEY
     ? new MealRecognizer({
