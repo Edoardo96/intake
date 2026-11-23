@@ -370,7 +370,7 @@ Piano ⋯ menu: 280 px wide (never wider than the screen minus 16 px per side), 
 
 Under the macros of a fixed meal in Piano, an "ALTERNATIVE" label and one soft green row per interchangeable dish: name, "495 kcal · P 33 g" (or "senza valori"), "Usa questo" and ×. Below, the text link "+ Aggiungi alternativa" opens "Annulla / Dai preferiti / A mano" with one line on where it applies; "Dai preferiti" lists favorites with foods, each with "Aggiungi", and "A mano" opens the dish editor. The AI proposal of "Alternativa" gets a "Tieni come alternativa" button. The side column of Piano adds a collapsible "Piatti intercambiabili" card: each group as rows with the dish, its other names ("Anche: …"), "Collega anche…" (an inline field and "Collega") and ×, then "Elimina gruppo".
 
-In the Timeline planned card and in the expanded next meal of Oggi, "Cosa hai mangiato?" shows chips for the planned dish (tag "Previsto") and each alternative with its kcal; the chosen chip has an accent border, a soft fill and a ✓ before its name. The foods and "Mangiato come previsto" follow the chosen dish.
+In the Timeline planned card and in the expanded next meal of Oggi, a small outline button "Alternative (2)" opens "Cosa hai mangiato?" (with "Chiudi", which goes back to the planned dish): chips for the planned dish (tag "Previsto") and each alternative with its kcal; the chosen chip has an accent border, a soft fill and a ✓ before its name. The foods and "Mangiato come previsto" follow the chosen dish.
 
 ## Alternativa per oggi (21 Nov)
 

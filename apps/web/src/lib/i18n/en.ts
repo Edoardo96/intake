@@ -1471,6 +1471,8 @@ export const en: Strings = {
     aliasAdd: "Link",
     aliases: (names: string) => `Also: ${names}`,
     removeGroup: "Delete group",
+    showAlternatives: (n: number) => `Alternatives (${n})`,
+    hideAlternatives: "Close",
     eaten: "What did you eat?",
     planned: "Planned",
     chosenOf: (dish: string) => `You ate ${dish}`,

@@ -9338,6 +9338,24 @@ div.connection-row {
   font-size: 13px;
 }
 
+.dish-choice-toggle {
+  align-self: flex-start;
+  margin: 4px 0 8px;
+}
+
+.dish-choice-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dish-choice-close {
+  min-height: 32px;
+  padding: 0;
+  font-size: 13px;
+}
+
 
 /* Pasti da foto › "Conserva le foto dei pasti": the kept photos and their deletion, confirmed in the row */
 .meal-photos-clear {

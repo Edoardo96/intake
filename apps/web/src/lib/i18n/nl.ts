@@ -1474,6 +1474,8 @@ export const nl: Strings = {
     aliasAdd: "Koppelen",
     aliases: (names: string) => `Ook: ${names}`,
     removeGroup: "Groep verwijderen",
+    showAlternatives: (n: number) => `Alternatieven (${n})`,
+    hideAlternatives: "Sluiten",
     eaten: "Wat heb je gegeten?",
     planned: "Gepland",
     chosenOf: (dish: string) => `Je at ${dish}`,
