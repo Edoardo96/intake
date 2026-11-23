@@ -12,7 +12,7 @@ a dish **is** a Nutrition saved meal, so the same dishes can be logged by talkin
 | Category | SQLite `dish_meta.category`, by saved meal id (`db/dishStore.ts`) |
 | Recipe | SQLite `dish_meta.recipe` (JSON: recipe, date, `ai` or `manual`, the foods it was written for) |
 | The person's own categories | settings key `dish_categories` (at most 12) |
-| The model of the AI recipes | settings key `recipe_model` (Impostazioni › Funzioni › Modello per le ricette: Haiku by default, Sonnet or Opus) |
+| The model of the AI recipes | settings key `recipe_model` (Impostazioni › Funzioni › Modello IA per le ricette: Haiku by default, Sonnet or Opus) |
 
 Dishes have no photo: a photo belongs to one logged meal, not to a dish made again on other days.
 
