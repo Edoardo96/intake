@@ -9655,6 +9655,10 @@ div.connection-row {
 .dish-recipe-row > a,
 .dish-recipe-row > button {
   flex: none;
+  gap: 6px;
+  min-width: 88px;
+  padding: 0 16px;
+  white-space: nowrap;
   text-decoration: none;
 }
 
@@ -9691,8 +9695,6 @@ div.connection-row {
 }
 
 .dish-delete {
-/* Pasti da foto › "Conserva le foto dei pasti": the kept photos and their deletion, confirmed in the row */
-.meal-photos-clear {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -9764,6 +9766,7 @@ div.connection-row {
 }
 
 .recipe-steps li {
+  list-style: none;
   display: flex;
   gap: 12px;
   font-size: 14px;
@@ -9824,6 +9827,17 @@ div.connection-row {
 
 .dish-form .field input {
   min-width: 0;
+}
+
+/* Pasti da foto › "Conserva le foto dei pasti": the kept photos and their deletion, confirmed in the row */
+.meal-photos-clear {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
 .meal-photos-clear > .muted {
   flex: 1 1 180px;
   font-size: 13px;

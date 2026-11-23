@@ -4,6 +4,8 @@ import {
   dishWriteSchema,
   DISH_CUSTOM_CATEGORIES_MAX,
   recipeSchema,
+  RECIPE_MODELS,
+  type RecipeModelResponse,
   type DishesResponse,
   type DishWrite,
   type RecipeResponse,
@@ -85,6 +87,19 @@ export const dishRoutes: FastifyPluginAsync<DishRoutesOptions> = async (app, { a
     if (!(await api.deleteSavedMeal(id))) return reply.code(404).send({ error: "Dish not found" });
     store.delete(id);
     return { ok: true };
+  });
+
+  // Impostazioni › Funzioni › Modello per le ricette (part Pasti da foto, like the recipe itself)
+  app.get("/dishes/recipe/model", async (_request, reply) => {
+    if (!recipes) return reply.code(503).send({ error: "recognition_not_configured" });
+    return { model: store.recipeModel(), models: [...RECIPE_MODELS] } satisfies RecipeModelResponse;
+  });
+
+  app.put("/dishes/recipe/model", async (request, reply) => {
+    if (!recipes) return reply.code(503).send({ error: "recognition_not_configured" });
+    const model = (request.body as { model?: unknown } | null)?.model;
+    if (typeof model !== "string" || !store.setRecipeModel(model)) return reply.code(400).send({ error: "invalid_model" });
+    return { model: store.recipeModel(), models: [...RECIPE_MODELS] } satisfies RecipeModelResponse;
   });
 
   // The person's own categories ("+ Nuova" in the editor)

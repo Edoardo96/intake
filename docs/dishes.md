@@ -12,6 +12,7 @@ a dish **is** a Nutrition saved meal, so the same dishes can be logged by talkin
 | Category | SQLite `dish_meta.category`, by saved meal id (`db/dishStore.ts`) |
 | Recipe | SQLite `dish_meta.recipe` (JSON: recipe, date, `ai` or `manual`, the foods it was written for) |
 | The person's own categories | settings key `dish_categories` (at most 12) |
+| The model of the AI recipes | settings key `recipe_model` (Impostazioni › Funzioni › Modello per le ricette: Haiku by default, Sonnet or Opus) |
 
 Dishes have no photo: a photo belongs to one logged meal, not to a dish made again on other days.
 
@@ -37,7 +38,7 @@ A dish without a category is listed under "Senza categoria".
   the dish is saved food by food (`items`); a food without values, or a total typed by hand, "Cerca nel database" or
   "Ricalcola con l'IA", saves the dish with its totals and the foods as its description. Changing only an amount scales
   that food's values, as in the plan editor.
-- **Ricetta** (`/piano/piatti/:id/ricetta`): asked once with "Chiedi all'IA" (part Pasti da foto, the plan model, with
+- **Ricetta** (`/piano/piatti/:id/ricetta`): asked once with "Chiedi all'IA" (part Pasti da foto, the recipe model, with
   an optional wish) and kept with the dish, so reading it again is free. Time, servings, difficulty, "Ti serve", the
   numbered steps and a tip; "Rigenera" asks a new one, "Modifica" corrects it by hand (then it says "Modificata da te"),
   "Elimina la ricetta" removes it. Without the AI the person can write it. When the dish's foods change after the
@@ -63,4 +64,5 @@ language. One small structured-output request; the token usage is logged.
 | `DELETE /api/dishes/:id` | `delete_saved_meal` and the local category and recipe |
 | `PUT /api/dishes/categories` | `{ custom: [names] }` |
 | `GET` / `PUT` / `DELETE /api/dishes/:id/recipe` | the kept recipe (`{ recipe, stale }`), a recipe written or corrected by hand, its deletion |
+| `GET` / `PUT /api/dishes/recipe/model` | the recipe model, part Pasti da foto |
 | `POST /api/dishes/:id/recipe/generate` | `{ note? }`, part Pasti da foto (404 `feature_disabled` while it is off, 503 without the key) |

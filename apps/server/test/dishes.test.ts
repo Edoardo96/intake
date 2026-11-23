@@ -108,6 +108,16 @@ describe("dishes", () => {
     expect((await server.inject({ method: "POST", url: `/api/dishes/${ID}/recipe/generate`, headers, payload: {} })).statusCode).toBe(402);
   });
 
+  it("keeps the recipe model, Haiku until changed", async () => {
+    const { store, app } = setup({ writeRecipe: vi.fn() });
+    const server = await app;
+    const headers = { cookie: (await signIn(server)).cookie };
+    expect((await server.inject({ method: "GET", url: "/api/dishes/recipe/model", headers })).json().model).toBe("claude-haiku-5-5");
+    expect((await server.inject({ method: "PUT", url: "/api/dishes/recipe/model", headers, payload: { model: "gpt" } })).statusCode).toBe(400);
+    expect((await server.inject({ method: "PUT", url: "/api/dishes/recipe/model", headers, payload: { model: "claude-sonnet-5-5" } })).json().model).toBe("claude-sonnet-5-5");
+    expect(store.recipeModel()).toBe("claude-sonnet-5-5");
+  });
+
   it("answers 503 for the AI recipe without the API key", async () => {
     const { app } = setup();
     const server = await app;
