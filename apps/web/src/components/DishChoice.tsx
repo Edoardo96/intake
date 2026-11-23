@@ -28,13 +28,37 @@ export function useDishChoice(entry: PlannedEntry) {
 
 export type DishChoiceState = ReturnType<typeof useDishChoice>;
 
-/** The chips of the choice; nothing when the planned dish has no interchangeable dishes. */
+/**
+ * The choice, closed until "Alternative (N)" is tapped; nothing when the planned dish has no interchangeable dishes.
+ * Closing it goes back to the planned dish.
+ */
 export function DishChoice({ entry, choice }: { entry: PlannedEntry; choice: DishChoiceState }) {
+  const [open, setOpen] = useState(false);
   if (choice.alternatives.length === 0) return null;
+  if (!open) {
+    return (
+      <button type="button" className="button-small button-outline dish-choice-toggle" aria-expanded={false} onClick={() => setOpen(true)}>
+        {t.dishes.showAlternatives(choice.alternatives.length)}
+      </button>
+    );
+  }
   const chips = [{ key: "planned", label: entry.foods, tag: t.dishes.planned, value: null as number | null }, ...choice.alternatives.map((alt, i) => ({ key: `${alt.groupId}-${alt.dishIndex}`, label: alt.dish.name, tag: null, value: i }))];
   return (
     <div className="dish-choice" role="group" aria-label={t.dishes.eaten}>
-      <span className="dish-choice-title">{t.dishes.eaten}</span>
+      <div className="dish-choice-head">
+        <span className="dish-choice-title">{t.dishes.eaten}</span>
+        <button
+          type="button"
+          className="text-button dish-choice-close"
+          aria-expanded={true}
+          onClick={() => {
+            choice.choose(null);
+            setOpen(false);
+          }}
+        >
+          {t.dishes.hideAlternatives}
+        </button>
+      </div>
       <div className="dish-choice-chips">
         {chips.map((chip) => {
           const kcal = chip.value === null ? (entry.macros?.kcal ?? null) : (dishMacros(choice.alternatives[chip.value]!.dish)?.kcal ?? null);

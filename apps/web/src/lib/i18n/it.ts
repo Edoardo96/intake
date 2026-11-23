@@ -1509,6 +1509,8 @@ export const it = {
     aliasAdd: "Collega",
     aliases: (names: string) => `Anche: ${names}`,
     removeGroup: "Elimina gruppo",
+    showAlternatives: (n: number) => `Alternative (${n})`,
+    hideAlternatives: "Chiudi",
     eaten: "Cosa hai mangiato?",
     planned: "Previsto",
     chosenOf: (dish: string) => `Hai mangiato ${dish}`,
