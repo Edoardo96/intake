@@ -513,22 +513,32 @@ export function AlternativeMeal({
   onUse,
   onKeep,
   busy,
+  startOpen,
+  onCancel,
 }: {
   planId: number;
   day: Weekday;
   index: number;
   meal: PlannedMeal;
   onUse: (dish: PlannedMeal) => void;
-  /** "Tieni come alternativa": the proposal becomes an interchangeable dish of the meal's dish (docs/dish-groups.md). */
+  /** "Aggiungi come alternativa": the proposal becomes an interchangeable dish of the meal's dish (docs/dish-groups.md). */
   onKeep?: (dish: FixedPlannedMeal, done: () => void) => void;
   busy?: boolean;
+  /** Opened at once ("+ Aggiungi alternativa" › "Con l'IA"); closing it calls `onCancel`. */
+  startOpen?: boolean;
+  onCancel?: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen ?? false);
+  const close = () => {
+    setOpen(false);
+    onCancel?.();
+  };
   const [wish, setWish] = useState("");
   const generate = useAlternativeMeal();
   const current = isFixedMeal(meal) ? meal.macros : undefined;
 
   if (!open) {
+    if (startOpen) return null;
     return (
       <button type="button" className="plan-meal-action" disabled={busy} aria-label={t.plan.alternativeOf(meal.title)} onClick={() => { setOpen(true); setWish(""); generate.reset(); }}>
         <SparklesIcon size={14} />
@@ -560,7 +570,7 @@ export function AlternativeMeal({
             </p>
           )}
           <div className="plan-replace-actions">
-            <button type="button" className="button-secondary-small" onClick={() => setOpen(false)}>
+            <button type="button" className="button-secondary-small" onClick={close}>
               {t.plan.altCancel}
             </button>
             <button type="submit" className="button-primary-inline button-ai">
@@ -587,21 +597,27 @@ export function AlternativeMeal({
           {macros && <p className="plan-meal-macros">{`${formatKcal(macros.kcal)} kcal · ${t.plan.macroLine(formatKcal(macros.protein), formatKcal(macros.carbs), formatKcal(macros.fat), formatKcal(macros.fiber ?? 0))}`}</p>}
           {current && <p className="muted plan-edit-hint">{t.plan.altNow(formatKcal(current.kcal), formatKcal(current.protein))}</p>}
           <div className="plan-replace-actions">
-            <button type="button" className="button-secondary-small" onClick={() => setOpen(false)}>
+            <button type="button" className="button-secondary-small" onClick={close}>
               {t.plan.altCancel}
             </button>
             <button type="button" className="button-secondary-small" disabled={generate.isPending} onClick={run}>
               <SparklesIcon size={14} />
               {t.plan.altAnother}
             </button>
-            {onKeep && (
-              <button type="button" className="button-secondary-small" disabled={busy} onClick={() => onKeep(fixed, () => setOpen(false))}>
-                {t.dishes.keep}
+            {onKeep ? (
+              <>
+                <button type="button" className="button-secondary-small" disabled={busy} onClick={() => { onUse(candidate!); setOpen(false); }}>
+                  {t.dishes.useInstead}
+                </button>
+                <button type="button" className="button-primary-inline plan-alt-keep" disabled={busy} onClick={() => onKeep(fixed, close)}>
+                  {t.dishes.keep}
+                </button>
+              </>
+            ) : (
+              <button type="button" className="button-primary-inline" disabled={busy} onClick={() => { onUse(candidate!); setOpen(false); }}>
+                {t.plan.altUse}
               </button>
             )}
-            <button type="button" className="button-primary-inline" disabled={busy} onClick={() => { onUse(candidate!); setOpen(false); }}>
-              {t.plan.altUse}
-            </button>
           </div>
         </div>
       )}
