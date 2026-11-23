@@ -9170,6 +9170,175 @@ div.connection-row {
   opacity: 0.3;
 }
 
+/* Piatti intercambiabili: the other dishes of a meal's group (Piano), the groups card and the choice in the Timeline */
+.dish-alts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.dish-alt-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dish-alt,
+.plan-meal li.dish-alt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: var(--color-accent-soft);
+  color: var(--color-text);
+}
+
+.plan-meal li.dish-alt::before {
+  content: none;
+}
+
+.dish-alt-text {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.dish-alt-text .muted {
+  font-size: 12px;
+}
+
+.dish-alt .button-secondary-small,
+.dish-alt .text-button {
+  flex: none;
+}
+
+.dish-alt-add {
+  align-self: flex-start;
+}
+
+.dish-alt-choose {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dish-alt-choose .plan-replace-actions {
+  flex-wrap: wrap;
+}
+
+.dish-groups .dish-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+}
+
+.dish-groups .dish-group + .dish-group {
+  border-top: 1px solid var(--color-border);
+  margin-top: 10px;
+}
+
+.dish-group-remove {
+  align-self: flex-start;
+}
+
+.dish-alias {
+  flex: 1 1 100%;
+  display: flex;
+  gap: 8px;
+}
+
+.dish-alias input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.dish-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 0 8px;
+}
+
+.dish-choice-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--color-text-muted);
+}
+
+.dish-choice-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dish-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dish-chip-name {
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.dish-chip-meta {
+  display: flex;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.dish-chip-tag {
+  font-weight: 800;
+}
+
+/* The chosen dish: accent border and a check mark, not color alone */
+.dish-chip[aria-pressed="true"] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.dish-chip[aria-pressed="true"] .dish-chip-name::before {
+  content: "✓ ";
+  color: var(--color-accent-strong);
+}
+
+.dish-groups .dish-alt-list {
+  padding: 0;
+}
+
+.dish-alias-link {
+  align-self: flex-start;
+  min-height: 32px;
+  padding: 0;
+  font-size: 13px;
+}
+
+
 /* Pasti da foto › "Conserva le foto dei pasti": the kept photos and their deletion, confirmed in the row */
 .meal-photos-clear {
   display: flex;

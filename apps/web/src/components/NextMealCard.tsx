@@ -5,6 +5,7 @@ import { useLogPlanned, useSkipPlanned } from "../api/queries";
 import { formatKcal } from "../lib/format";
 import { t } from "../lib/strings";
 import { DayAlternative } from "./DayAlternative";
+import { DishChoice, useDishChoice } from "./DishChoice";
 
 const minutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
 
@@ -92,20 +93,12 @@ export function NextMealCard({ view, onAdd }: Props) {
             {!expanded && next.foods && <span className="next-meal-summary">{next.foods}</span>}
           </button>
           <div id={detailsId} className="next-meal-details" hidden={!expanded}>
-            <ul className="next-meal-lines">
-              {(next.lines.length > 0 ? next.lines : [next.foods]).map((line, i) => (
-                <li key={i}>{line}</li>
-              ))}
-            </ul>
-            <button
-              type="button"
-              className="button-primary next-meal-primary"
-              disabled={!next.macros || logPlanned.isPending}
-              onClick={() => logPlanned.mutate({ date: view.date, planId: next.planId, index: next.index })}
-            >
-              {t.timeline.eatenAsPlanned}
-            </button>
-            {!next.macros && <p className="planned-hint">{t.timeline.noMacros}</p>}
+            <NextMealDish
+              key={`${next.planId}-${next.index}`}
+              entry={next}
+              busy={logPlanned.isPending}
+              onLog={(alternative) => logPlanned.mutate({ date: view.date, planId: next.planId, index: next.index, ...(alternative ? { alternative } : {}) })}
+            />
             {logPlanned.isError && <p className="error-text">{t.timeline.logFailed}</p>}
             <div className="next-meal-actions">
               <button type="button" className="button-secondary-small" onClick={onAdd}>
@@ -133,5 +126,24 @@ export function NextMealCard({ view, onAdd }: Props) {
         <p className="muted">{t.nextMeal.none}</p>
       )}
     </section>
+  );
+}
+
+/** The foods of the next meal, the choice among its interchangeable dishes and "Mangiato come previsto". */
+function NextMealDish({ entry, busy, onLog }: { entry: PlannedEntry; busy: boolean; onLog: (alternative?: { groupId: number; dishIndex: number }) => void }) {
+  const choice = useDishChoice(entry);
+  return (
+    <>
+      <DishChoice entry={entry} choice={choice} />
+      <ul className="next-meal-lines">
+        {choice.lines.map((line, i) => (
+          <li key={i}>{line}</li>
+        ))}
+      </ul>
+      <button type="button" className="button-primary next-meal-primary" disabled={!choice.canLog || busy} onClick={() => onLog(choice.alternative)}>
+        {t.timeline.eatenAsPlanned}
+      </button>
+      {!choice.canLog && <p className="planned-hint">{t.timeline.noMacros}</p>}
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import { WEEKDAYS, foodLine, isFixedMeal, type MealPlan, type PlannedDay, type PlannedFood, type PlannedMeal, type StoredPlan, type Weekday } from "@intake/shared";
+import { WEEKDAYS, foodLine, isFixedMeal, type FixedPlannedMeal, type MealPlan, type PlannedDay, type PlannedFood, type PlannedMeal, type StoredPlan, type Weekday } from "@intake/shared";
 import { useEffect, useState, type ReactNode } from "react";
 import { useAlternativeMeal, useConfirmSplitFoods, useConfirmSplitWeek, useEstimateMacros, useFeatures, useSplitFoodsProposal, useSplitWeekProposal } from "../api/queries";
 import { formatKcal } from "../lib/format";
@@ -73,12 +73,14 @@ export interface PlanDayMealsProps {
   warnings?: (index: number) => string[];
   /** Extra content under a meal, e.g. Sostituisci. */
   extra?: (meal: PlannedMeal, index: number) => ReactNode;
+  /** Piatti intercambiabili of a fixed meal, between the dish and `extra`. */
+  dishes?: (meal: FixedPlannedMeal, index: number) => ReactNode;
   /** A meal being replaced is dimmed. */
   busyIndex?: number | null;
 }
 
 /** The meals of one plan day: time (editable), name, kcal, dish, foods and macros. Used by Piano and the AI review. */
-export function PlanDayMeals({ day, onTime, timeBusy, warnings, extra, busyIndex }: PlanDayMealsProps) {
+export function PlanDayMeals({ day, onTime, timeBusy, warnings, extra, dishes, busyIndex }: PlanDayMealsProps) {
   return (
     <div className="plan-meals">
       {day.meals.map((meal, i) => {
@@ -122,6 +124,7 @@ export function PlanDayMeals({ day, onTime, timeBusy, warnings, extra, busyIndex
                 <span aria-hidden="true">⚠</span> {text}
               </p>
             ))}
+            {dishes?.(meal, i)}
             {extra?.(meal, i)}
           </article>
         );
@@ -279,8 +282,25 @@ const number = (value: string) => Number(value.trim().replace(",", "."));
  * "Modifica": the dish of one meal edited by hand: its text, its foods (name, amount, unit) and the main nutrients.
  * The nutrients are not recalculated from the foods; leaving them all empty keeps what the meal had.
  */
-export function EditMeal({ meal, onSave, busy, failed, onSplit }: { meal: PlannedMeal; onSave: (edit: DishEdit, done: () => void) => void; busy?: boolean; failed?: boolean; onSplit?: () => void }) {
-  const fixed = isFixedMeal(meal) ? meal : null;
+export function EditMeal({
+  meal,
+  onSave,
+  busy,
+  failed,
+  onSplit,
+  startOpen,
+  onCancel,
+}: {
+  meal: PlannedMeal;
+  onSave: (edit: DishEdit, done: () => void) => void;
+  busy?: boolean;
+  failed?: boolean;
+  onSplit?: () => void;
+  /** Opened at once, for a new dish ("+ Aggiungi alternativa" › "A mano"); closing it calls `onCancel`. */
+  startOpen?: boolean;
+  onCancel?: () => void;
+}) {
+  const fixed = isFixedMeal(meal) && meal.foods.length > 0 ? meal : null;
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState("");
   const [foods, setFoods] = useState<Array<FoodRow>>([]);
@@ -304,7 +324,17 @@ export function EditMeal({ meal, onSave, busy, failed, onSplit }: { meal: Planne
     setOpen(true);
   }
 
+  useEffect(() => {
+    if (startOpen) start();
+  }, []);
+
+  const close = () => {
+    setOpen(false);
+    onCancel?.();
+  };
+
   if (!open) {
+    if (startOpen) return null;
     return (
       <button type="button" className="plan-meal-action" disabled={busy} aria-label={t.plan.editOf(meal.title)} onClick={start}>
         <EditIcon />
@@ -359,7 +389,7 @@ export function EditMeal({ meal, onSave, busy, failed, onSplit }: { meal: Planne
       edit = { ...edit, macros: values };
     }
     setProblem(null);
-    onSave(edit, () => setOpen(false));
+    onSave(edit, close);
   }
 
   const macroLabels: Record<(typeof MACRO_FIELDS)[number], string> = { kcal: `${t.calories.label} (kcal)`, protein: `${t.macros.protein} (g)`, carbs: `${t.macros.carbs} (g)`, fat: `${t.macros.fat} (g)`, fiber: `${t.macros.fiber} (g)` };
@@ -443,7 +473,7 @@ export function EditMeal({ meal, onSave, busy, failed, onSplit }: { meal: Planne
         </p>
       )}
       <div className="plan-replace-actions">
-        <button type="button" className="button-secondary-small" onClick={() => setOpen(false)}>
+        <button type="button" className="button-secondary-small" onClick={close}>
           {t.plan.editCancel}
         </button>
         <button type="submit" className="button-primary-inline" disabled={busy}>
@@ -475,7 +505,24 @@ function SearchIcon() {
  * "Alternativa": another dish for a meal of the stored plan, in its slot and within the constraints (Claude API, paid,
  * marked with the sparkles). It is shown next to the current dish and only replaces it when "Usa questo" is tapped.
  */
-export function AlternativeMeal({ planId, day, index, meal, onUse, busy }: { planId: number; day: Weekday; index: number; meal: PlannedMeal; onUse: (dish: PlannedMeal) => void; busy?: boolean }) {
+export function AlternativeMeal({
+  planId,
+  day,
+  index,
+  meal,
+  onUse,
+  onKeep,
+  busy,
+}: {
+  planId: number;
+  day: Weekday;
+  index: number;
+  meal: PlannedMeal;
+  onUse: (dish: PlannedMeal) => void;
+  /** "Tieni come alternativa": the proposal becomes an interchangeable dish of the meal's dish (docs/dish-groups.md). */
+  onKeep?: (dish: FixedPlannedMeal, done: () => void) => void;
+  busy?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [wish, setWish] = useState("");
   const generate = useAlternativeMeal();
@@ -547,6 +594,11 @@ export function AlternativeMeal({ planId, day, index, meal, onUse, busy }: { pla
               <SparklesIcon size={14} />
               {t.plan.altAnother}
             </button>
+            {onKeep && (
+              <button type="button" className="button-secondary-small" disabled={busy} onClick={() => onKeep(fixed, () => setOpen(false))}>
+                {t.dishes.keep}
+              </button>
+            )}
             <button type="button" className="button-primary-inline" disabled={busy} onClick={() => { onUse(candidate!); setOpen(false); }}>
               {t.plan.altUse}
             </button>

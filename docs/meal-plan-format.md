@@ -11,7 +11,7 @@ Examples: [`examples/claude-fitness-plan.example.json`](../examples/claude-fitne
 
 ## Claude Fitness format
 
-The fields Intake reads; anything else (`targets`, `goal`, `macros_info`, `shopping_list`, `day_macros`, `alternative_macros`…) is ignored.
+The fields Intake reads; anything else (`targets`, `goal`, `macros_info`, `shopping_list`, `day_macros`…) is ignored. A meal's `alternative[]` (with `alternative_macros` when it has every main nutrient) becomes an interchangeable dish of the meal's dish ([dish-groups.md](dish-groups.md)).
 
 | Field | Notes |
 |---|---|
