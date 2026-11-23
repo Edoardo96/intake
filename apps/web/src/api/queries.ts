@@ -55,6 +55,7 @@ import type {
   PlanGenerationView,
   PlanPreferences,
   MealPhotosResponse,
+  MealPhotoKeepResponse,
   MealPhotoUpload,
   Language,
   LanguageResponse,
@@ -109,6 +110,33 @@ export function useSetRecognitionModel() {
   return useMutation({
     mutationFn: (model: string) => apiFetch<RecognitionModelResponse>("/api/meals/recognize/model", { method: "PUT", json: { model } }),
     onSuccess: (data) => queryClient.setQueryData(["recognition-model"], data),
+  });
+}
+
+const photoKeepKey = ["meal-photo-keep"] as const;
+
+/** "Conserva le foto dei pasti" (Pasti da foto) and how many photos are kept; asked only while the part is on. */
+export function useMealPhotoKeep(enabled: boolean) {
+  return useQuery({ queryKey: photoKeepKey, queryFn: () => apiFetch<MealPhotoKeepResponse>("/api/meals/photos/keep"), enabled, staleTime: 60_000 });
+}
+
+export function useSetMealPhotoKeep() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (keep: boolean) => apiFetch<MealPhotoKeepResponse>("/api/meals/photos/keep", { method: "PUT", json: { keep } }),
+    onSuccess: (data) => queryClient.setQueryData(photoKeepKey, data),
+  });
+}
+
+/** "Elimina le foto salvate": every kept photo is removed from the server; the meals stay as they are. */
+export function useClearMealPhotos() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiFetch<MealPhotoKeepResponse & { deleted: number }>("/api/meals/photos/clear", { method: "POST" }),
+    onSuccess: (data) => {
+      queryClient.setQueryData(photoKeepKey, { keep: data.keep, count: data.count });
+      return queryClient.invalidateQueries({ queryKey: ["meal-photos"] });
+    },
   });
 }
 

@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { MealPhotoStore } from "../src/db/mealPhotoStore.js";
+import { MealPhotoSettingsStore } from "../src/db/mealPhotoSettingsStore.js";
 import { buildApp } from "../src/app.js";
 import type { MealRoutesOptions } from "../src/routes/meals.js";
 import { MealRecognizer, RecognitionError } from "../src/services/mealRecognition.js";
@@ -291,6 +292,31 @@ describe("recognize and create routes", () => {
     expect((await app.inject({ method: "DELETE", url: `/api/meals/${id}/photos/${added[0]}`, headers })).json()).toEqual({ ok: true });
     expect((await app.inject({ method: "DELETE", url: `/api/meals/${id}/photos/${added[0]}`, headers })).statusCode).toBe(404);
     expect(photos.photos(id)).toEqual(added.slice(1));
+  });
+
+  it("stores no photo while 'Conserva le foto dei pasti' is off, and deletes the kept ones on request", async () => {
+    const id = "3f2b9c1e-3333-4222-8333-944455556666";
+    const photos = new MealPhotoStore(join(mkdtempSync(join(tmpdir(), "intake-photos-")), "meal-photos"));
+    const settings = new MealPhotoSettingsStore(openDatabase(":memory:"));
+    const app = await buildApp({ auth: authOptions(), mealsApi: api, mealPhotos: photos, mealPhotoSettings: settings });
+    const headers = { cookie: (await signIn(app)).cookie };
+    photos.add(id, jpegOf(1));
+    expect((await app.inject({ method: "GET", url: "/api/meals/photos/keep", headers })).json()).toEqual({ keep: true, count: 1 });
+
+    expect((await app.inject({ method: "PUT", url: "/api/meals/photos/keep", headers, payload: { keep: "no" } })).statusCode).toBe(400);
+    expect((await app.inject({ method: "PUT", url: "/api/meals/photos/keep", headers, payload: { keep: false } })).json()).toEqual({ keep: false, count: 1 });
+    const newId = "3f2b9c1e-4444-4222-8333-944455556666";
+    api.logMeal.mockResolvedValueOnce({ id: newId });
+    const meal = { date: "2026-11-19", time: "13:05", type: "lunch", description: "Pasta", idempotencyKey: "photo-11112222", totals: { kcal: 300, protein: 10, carbs: 50, fat: 5 } };
+    const logged = await app.inject({ method: "POST", url: "/api/meals", headers, payload: { ...meal, photos: [upload(jpegOf(2))] } });
+    expect(logged.json()).toEqual({ mealId: newId, photosSaved: 0, favoriteSaved: false });
+    expect(photos.photos(newId)).toEqual([]);
+    const added = await app.inject({ method: "POST", url: `/api/meals/${id}/photos`, headers, payload: upload(jpegOf(3)) });
+    expect([added.statusCode, added.json()]).toEqual([409, { error: "photos_not_kept" }]);
+
+    expect((await app.inject({ method: "POST", url: "/api/meals/photos/clear", headers })).json()).toEqual({ keep: false, count: 0, deleted: 1 });
+    expect(photos.list()).toEqual({});
+    expect(new MealPhotoSettingsStore(settings["db"]).keep()).toBe(false);
   });
 });
 

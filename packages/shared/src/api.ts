@@ -886,6 +886,12 @@ export interface MealPhotosResponse {
   photos: Record<string, string[]>;
 }
 
+/** GET / PUT /api/meals/photos/keep: "Conserva le foto dei pasti" and how many photos are kept now. */
+export interface MealPhotoKeepResponse {
+  keep: boolean;
+  count: number;
+}
+
 /** Cards of Oggi that can be moved or hidden (Profilo › Personalizza home), in the default order. */
 export const HOME_CARDS = ["nextMeal", "calories", "macros", "water", "training", "plan", "activity", "insight"] as const;
 export type HomeCardId = (typeof HOME_CARDS)[number];
