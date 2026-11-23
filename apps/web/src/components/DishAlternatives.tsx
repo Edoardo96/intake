@@ -1,12 +1,12 @@
-import { alternativesFor, dishCategories, dishKey, dishKeys, dishMacros, dishOfMeal, mealFoodsText, searchDishes, type Dish, type DishSummary, type DishGroup, type FixedPlannedMeal, type PlannedMacros } from "@intake/shared";
+import { alternativesFor, dishCategories, dishKey, dishKeys, dishMacros, dishOfMeal, mealFoodsText, searchDishes, type Dish, type DishSummary, type DishGroup, type FixedPlannedMeal, type PlannedMacros, type Weekday, isFixedMeal } from "@intake/shared";
 import { useEffect, useState } from "react";
 import { useChangeDishGroups, useDishes, useDishGroups } from "../api/queries";
 import { categoryLabel, dishFromSaved } from "../lib/dishCategory";
 import { Link } from "wouter";
 import { formatKcal } from "../lib/format";
 import { t } from "../lib/strings";
-import { EditMeal, type DishEdit } from "./PlanDay";
-import { CloseIcon } from "./icons";
+import { AlternativeMeal, EditMeal, type DishEdit } from "./PlanDay";
+import { CloseIcon, SparklesIcon } from "./icons";
 import { Scrim } from "./Scrim";
 
 /** The category of the dish of the list with this name (or description), to start the picker on it. */
@@ -45,13 +45,24 @@ function DishLine({ dish }: { dish: Dish }) {
 /**
  * Piatti intercambiabili under a fixed meal of Piano: the other dishes of its group, each with "Usa questo" (it takes the
  * place of the planned dish) and ×, and "+ Aggiungi alternativa" from a favorite or by hand. The AI one comes from
- * "Alternativa" (AlternativeMeal › "Tieni come alternativa"). Rules in docs/dish-groups.md.
+ * third choice of "+ Aggiungi alternativa" (✦ Con l'IA, while the AI is available). Rules in docs/dish-groups.md.
  */
-export function DishAlternatives({ meal, onUse, busy }: { meal: FixedPlannedMeal; onUse: (dish: Dish) => void; busy?: boolean }) {
+export function DishAlternatives({
+  meal,
+  onUse,
+  busy,
+  ai,
+}: {
+  meal: FixedPlannedMeal;
+  onUse: (dish: Dish) => void;
+  busy?: boolean;
+  /** "✦ Con l'IA": the plan meal the AI proposes for; absent while the AI is not available. */
+  ai?: { planId: number; day: Weekday; index: number };
+}) {
   const groups = useDishGroups();
   const change = useChangeDishGroups();
   const dishes = useDishes();
-  const [adding, setAdding] = useState<null | "menu" | "favorites" | "hand">(null);
+  const [adding, setAdding] = useState<null | "menu" | "favorites" | "hand" | "ai">(null);
   const name = mealFoodsText(meal);
   const alternatives = alternativesFor(groups.data ?? [], name);
   const group = alternatives[0] ? groups.data?.find((g) => g.id === alternatives[0]!.groupId) : undefined;
@@ -89,19 +100,54 @@ export function DishAlternatives({ meal, onUse, busy }: { meal: FixedPlannedMeal
       )}
       {adding === "menu" && (
         <div className="dish-alt-choose">
+          <strong className="dish-add-title">{t.dishes.addTitle}</strong>
           <span className="muted plan-edit-hint">{t.dishes.hint}</span>
-          <div className="plan-replace-actions">
-            <button type="button" className="button-secondary-small" onClick={() => setAdding(null)}>
-              {t.dishes.cancel}
+          <button type="button" className="dish-add-option" onClick={() => setAdding("favorites")}>
+            <span>
+              <strong>{t.dishes.fromDishes}</strong>
+              <span className="muted">{t.dishes.fromDishesHint}</span>
+            </span>
+            <span aria-hidden="true">›</span>
+          </button>
+          <button type="button" className="dish-add-option" onClick={() => setAdding("hand")}>
+            <span>
+              <strong>{t.dishes.byHand}</strong>
+              <span className="muted">{t.dishes.byHandHint}</span>
+            </span>
+            <span aria-hidden="true">›</span>
+          </button>
+          {ai && (
+            <button type="button" className="dish-add-option" data-ai onClick={() => setAdding("ai")}>
+              <span>
+                <strong className="ai-label">
+                  <SparklesIcon size={14} />
+                  {t.dishes.withAi}
+                </strong>
+                <span>{t.dishes.withAiHint}</span>
+              </span>
+              <span aria-hidden="true">›</span>
             </button>
-            <button type="button" className="button-secondary-small" onClick={() => setAdding("favorites")}>
-              {t.dishes.fromDishes}
-            </button>
-            <button type="button" className="button-secondary-small" onClick={() => setAdding("hand")}>
-              {t.dishes.byHand}
-            </button>
-          </div>
+          )}
+          <button type="button" className="text-button dish-add-cancel" onClick={() => setAdding(null)}>
+            {t.dishes.cancel}
+          </button>
         </div>
+      )}
+      {adding === "ai" && ai && (
+        <AlternativeMeal
+          planId={ai.planId}
+          day={ai.day}
+          index={ai.index}
+          meal={meal}
+          startOpen
+          busy={busy || change.isPending}
+          onCancel={() => setAdding(null)}
+          onKeep={(dish, done) => link(dishOfMeal(dish), done)}
+          onUse={(dish) => {
+            if (isFixedMeal(dish)) onUse(dishOfMeal(dish));
+            setAdding(null);
+          }}
+        />
       )}
       {adding === "favorites" && (
         <DishPickerSheet meal={name} category={categoryOf(dishes.data?.dishes, name)} onPick={(dish) => link(dish)} onClose={() => setAdding(null)} busy={change.isPending} failed={change.isError} />
@@ -116,7 +162,7 @@ export function DishAlternatives({ meal, onUse, busy }: { meal: FixedPlannedMeal
           onSave={(edit, done) => link(dishOfEdit(meal, edit), done)}
         />
       )}
-      {change.isError && adding === null && (
+      {change.isError && (adding === null || adding === "ai") && (
         <p className="error-text" role="alert">
           {t.dishes.failed}
         </p>

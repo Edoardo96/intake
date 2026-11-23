@@ -9832,6 +9832,60 @@ div.connection-row {
   min-width: 0;
 }
 
+/* "+ Aggiungi alternativa": three ways; the AI one is marked with the sparkles, as every AI action */
+.dish-alt-choose:has(.dish-add-option) {
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-dashed);
+}
+
+.dish-add-title {
+  font-size: 14px;
+}
+
+.dish-add-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dish-add-option > span:first-child {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.dish-add-option > span:first-child > span {
+  font-size: 12px;
+}
+
+.dish-add-cancel {
+  align-self: flex-start;
+}
+
+/* With "Aggiungi come alternativa" first and full width, the other three share the row below */
+.plan-alt-card .plan-alt-keep {
+  flex: 1 1 100%;
+  order: -1;
+}
+
+.plan-alt-card .plan-replace-actions:has(.plan-alt-keep) > .button-secondary-small {
+  flex: 1 1 0;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
 /* Pasti da foto › "Conserva le foto dei pasti": the kept photos and their deletion, confirmed in the row */
 .meal-photos-clear {
   display: flex;
