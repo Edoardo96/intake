@@ -72,6 +72,7 @@ const system = (language: Language) =>
     "Give every food a quantity (grams or millilitres for anything weighed, a count unit such as pz for eggs or fruit) and estimate the nutrients of each meal from standard food composition tables (CREA, USDA).",
     "Follow the constraints strictly: never use an allergen or intolerance, avoid disliked foods, respect the diet, the variety limits, the cooking time and the free meals (free: true, no foods, all nutrients zero).",
     "Spread the calories sensibly across the slots (snacks lighter than lunch and dinner) and repeat ingredients across the week to keep shopping simple, without repeating whole dishes beyond the limits.",
+    "When a meal is made of separate dishes eaten one after the other (a first course and a dessert, a main course and fruit), give each food its course; leave the course empty when the meal is one dish.",
     "Do not give medical advice; this is a food plan for a healthy adult.",
     `Write every dish, food and note in ${LANGUAGE_NAMES[language]}.`,
   ].join(" ");

@@ -1,4 +1,4 @@
-import { WEEKDAYS, addCourse, courseAddSchema, courseRemoveSchema, removeCourse, dishLinkSchema, importPlan, mealPlanSchema, plannedFoodSchema, editMeal, mealEditSchema, mealMoveSchema, mealTimeChangeSchema, setMealTime, swapMeals, type PlanUploadError, type PlansResponse } from "@intake/shared";
+import { WEEKDAYS, mealSplitSchema, splitMeal, addCourse, courseAddSchema, courseRemoveSchema, removeCourse, dishLinkSchema, importPlan, mealPlanSchema, plannedFoodSchema, editMeal, mealEditSchema, mealMoveSchema, mealTimeChangeSchema, setMealTime, swapMeals, type PlanUploadError, type PlansResponse } from "@intake/shared";
 import type { FastifyPluginAsync, preHandlerHookHandler } from "fastify";
 import { z } from "zod";
 import type { PlanStore } from "../db/planStore.js";
@@ -136,6 +136,22 @@ export const planRoutes: FastifyPluginAsync<PlanRoutesOptions> = async (app, { p
     let plan;
     try {
       plan = addCourse(stored.plan, body.data);
+    } catch {
+      return reply.code(400).send({ error: "invalid_meal" });
+    }
+    plans.update(stored.id, plan);
+    return { ...stored, plan };
+  });
+
+  // "Dividi in portate": the course of each food of a meal
+  app.post<{ Params: { id: string } }>("/plans/:id/split", async (request, reply) => {
+    const stored = plans.get(Number(request.params.id));
+    if (!stored) return reply.code(404).send({ error: "Plan not found" });
+    const body = mealSplitSchema.safeParse(request.body);
+    if (!body.success) return reply.code(400).send({ error: "invalid_meal" });
+    let plan;
+    try {
+      plan = splitMeal(stored.plan, body.data);
     } catch {
       return reply.code(400).send({ error: "invalid_meal" });
     }

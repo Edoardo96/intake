@@ -10073,6 +10073,42 @@ div.connection-row {
   min-width: 0;
 }
 
+/* "Dividi in portate" (docs/courses.md): one row per food with the chips of the chosen courses */
+.course-split-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.course-split-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+.course-split-list li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.course-split-food {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.course-split-chip {
+  min-height: 34px;
+  padding: 0 12px;
+}
+.course-split-note {
+  margin: 0;
+  font-size: 13px;
+}
+.plan-meal .course-split-list li::before {
+  content: none;
+}
+
 
 /* Pasti da foto › "Conserva le foto dei pasti": the kept photos and their deletion, confirmed in the row */
 .meal-photos-clear {
