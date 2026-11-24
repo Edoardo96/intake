@@ -1,4 +1,4 @@
-import { WEEKDAYS, alternativesFor, dishKey, isFixedMeal, mealFoodsText, type DishGroup, type MealPlan, type Weekday } from "@intake/shared";
+import { WEEKDAYS, alternativesFor, coursesOf, courseText, dishKey, isFixedMeal, looseDishKey, mealFoodsText, type DishGroup, type MealPlan, type Weekday } from "@intake/shared";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useChangeDishGroups, useChangeRecipe, useDeleteDish, useDishes, useDishGroups, useEditPlanMeal, useFeatures, usePlans } from "../api/queries";
@@ -70,9 +70,16 @@ export function DishPage({ id }: { id: string }) {
   const group: DishGroup | undefined = alternatives[0] ? groups.data?.find((g) => g.id === alternatives[0]!.groupId) : undefined;
   const fiber = meal.items.length > 0 ? meal.items.reduce((sum, item) => sum + (item.nutrients.fiber ?? 0), 0) : null;
   const plan = plans.data?.active ?? null;
-  const keys = [dishKey(meal.name), dishKey(meal.description)].filter(Boolean);
+  // The same dish with other grams on another day is the same dish; each course of a meal is a dish of its own
+  const keys = [looseDishKey(meal.name), looseDishKey(meal.description)].filter(Boolean);
   const inPlan = plan
-    ? WEEKDAYS.flatMap((w, i) => plan.plan.days[w].meals.flatMap((m) => (isFixedMeal(m) && keys.includes(dishKey(mealFoodsText(m))) ? [`${t.weekdaysLong[i]} ${m.title.toLowerCase()}`] : [])))
+    ? WEEKDAYS.flatMap((w, i) =>
+        plan.plan.days[w].meals.flatMap((m) =>
+          isFixedMeal(m) && (keys.includes(looseDishKey(mealFoodsText(m))) || (m.courses && coursesOf(m).some((c) => keys.includes(looseDishKey(courseText(c))) || keys.includes(looseDishKey(c.foods.map((f) => f.name).join(" + "))))) || keys.includes(looseDishKey(m.foods.map((f) => f.name).join(" + "))))
+            ? [`${t.weekdaysLong[i]} ${m.title.toLowerCase()}`]
+            : [],
+        ),
+      )
     : [];
 
   function putInPlan(day: Weekday, index: number, label: string) {

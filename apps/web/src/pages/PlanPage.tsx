@@ -1,7 +1,15 @@
 import {
   WEEKDAYS,
+  alternativesFor,
+  courseMacros,
+  courseText,
   dayTotals,
   isFixedMeal,
+  mealFoodsText,
+  planDishName,
+  planDishWrite,
+  type FixedPlannedMeal,
+  type PlannedMeal,
   planAverages,  weekdayOf,
   type PlanUploadError,
   type PlannedDay,
@@ -9,7 +17,7 @@ import {
 } from "@intake/shared";
 import { useRef, useState } from "react";
 import { useLocation, useSearch } from "wouter";
-import { PlanUploadFailed, useChangeCourses, useChangePlanMeals, useDay, useFeatures, usePlan, usePlans, useEditPlanMeal, useSetPlanTime, useStartPlan, useSwapPlanMeal, useUploadPlan } from "../api/queries";
+import { PlanUploadFailed, useChangeCourses, useChangePlanMeals, useDishGroups, useSaveDish, useSavePlanDishes, useDay, useFeatures, usePlan, usePlans, useEditPlanMeal, useSetPlanTime, useStartPlan, useSwapPlanMeal, useUploadPlan } from "../api/queries";
 import { EditMeal, MoveMeal, PlanDayMeals, PlanDaySummary, SameTimeSwitch, SplitFoods, SplitWeek } from "../components/PlanDay";
 import { CloseIcon, PlanIcon, SparklesIcon } from "../components/icons";
 import { formatKcal, formatMediumDate, formatShortDate } from "../lib/format";
@@ -19,7 +27,8 @@ import { Scrim } from "../components/Scrim";
 import { NeedsCard } from "../components/NeedsCard";
 import { DishesTab } from "../components/DishesTab";
 import { AddCourse, SplitCourses, courseLabel } from "../components/Courses";
-import { AddPlanMeal, RemoveMeal, RemovedMeals } from "../components/PlanMeals";
+import { AddPlanMeal, RemoveMeal } from "../components/PlanMeals";
+import { MealChips, MealMenuButton, MealMenuSheet, useSavedDishFinder, type MenuItem } from "../components/MealMenu";
 import { DishAlternatives, DishGroupsCard, dishAsEdit } from "../components/DishAlternatives";
 import { PLAN_TAB_PARAM, planTabFromSearch, preferredPlanTab, type PlanTab } from "../lib/planTab";
 
@@ -67,6 +76,14 @@ export function PlanPage() {
   const startNow = useStartPlan();
   const [splitting, setSplitting] = useState<{ day: Weekday; index: number } | null>(null);
   const [splitWeekOpen, setSplitWeekOpen] = useState(false);
+  // The ⋯ of a meal or a course, and the one panel open under it (docs/design/DESIGN.md, "Menu del pasto")
+  const [menuFor, setMenuFor] = useState<{ index: number; course?: number } | null>(null);
+  const [panel, setPanel] = useState<{ day: Weekday; index: number; course?: number; kind: PanelKind; n: number } | null>(null);
+  const groups = useDishGroups();
+  const findSaved = useSavedDishFinder();
+  const saveDish = useSaveDish();
+  const saveAll = useSavePlanDishes();
+  const alternativesCount = (name: string) => alternativesFor(groups.data ?? [], name).length;
   const [sameTime, setSameTime] = useState(true);
 
   const todayWeekday = data ? weekdayOf(data.today) : "monday";
@@ -111,6 +128,73 @@ export function PlanPage() {
   // A meal of the week whose foods lack their values: the menu offers the whole-week split only then
   const weekNeedsSplit = shown ? WEEKDAYS.some((d) => shown.plan.days[d].meals.some((m) => isFixedMeal(m) && !!m.macros && m.foods.some((f) => !f.nutrients))) : false;
   const dayIndex = WEEKDAYS.indexOf(weekday);
+
+  const openPanel = (index: number, kind: PanelKind, course?: number) => setPanel({ day: weekday, index, ...(course !== undefined ? { course } : {}), kind, n: Date.now() });
+
+  function menuSubtitle(meal: PlannedMeal, course?: number): string {
+    if (!isFixedMeal(meal)) return t.plan.freeBadge;
+    const c = course !== undefined ? meal.courses?.[course] : undefined;
+    const text = c ? courseText(c) : mealFoodsText(meal);
+    const kcal = c ? courseMacros(c)?.kcal : meal.macros?.kcal;
+    return kcal !== undefined ? `${text} · ${formatKcal(kcal)} kcal` : text;
+  }
+
+  /** "Salva nei tuoi piatti", or "Apri nei tuoi piatti" when the dish is already there (by its name without amounts). */
+  function dishItem(meal: FixedPlannedMeal, index: number, course?: number): MenuItem {
+    const c = course !== undefined ? meal.courses?.[course] : undefined;
+    const saved = findSaved(planDishName(c ?? meal));
+    if (saved) return { icon: "★", label: t.mealMenu.open_, onClick: () => navigate(`/piano/piatti/${saved.id}`) };
+    const write = planDishWrite(meal, c);
+    return {
+      icon: "☆",
+      label: t.mealMenu.save,
+      ...(write ? {} : { hint: t.mealMenu.noValues, disabled: true }),
+      onClick: () => {
+        if (!write) return;
+        const { key: _key, ...dish } = write;
+        saveDish.mutate({ dish }, { onError: () => openPanel(index, "saveFailed", course) });
+      },
+    };
+  }
+
+  function menuSections(meal: PlannedMeal, index: number, course?: number): Array<{ label: string; items: MenuItem[] }> {
+    if (!shown) return [];
+    const fixed = isFixedMeal(meal) ? meal : null;
+    if (fixed && course !== undefined) {
+      const c = fixed.courses?.[course];
+      if (!c) return [];
+      const n = alternativesCount(courseText(c));
+      return [
+        { label: t.mealMenu.dish, items: [
+          { icon: "✎", label: t.plan.edit, onClick: () => openPanel(index, "edit", course) },
+          { icon: "⇄", label: t.mealMenu.alternatives(n), onClick: () => openPanel(index, "alts", course) },
+          dishItem(fixed, index, course),
+        ] },
+        { label: t.mealMenu.course, items: [
+          { icon: "−", label: t.courses.remove, danger: true, disabled: courses.isPending, onClick: () => courses.mutate({ id: shown.id, remove: { day: weekday, index, course } }) },
+        ] },
+      ];
+    }
+    const dishItems: MenuItem[] = !fixed
+      ? [{ icon: "✎", label: t.plan.edit, onClick: () => openPanel(index, "edit") }]
+      : fixed.courses
+        ? []
+        : [
+            { icon: "✎", label: t.plan.edit, onClick: () => openPanel(index, "edit") },
+            { icon: "⇄", label: t.mealMenu.alternatives(alternativesCount(mealFoodsText(fixed))), onClick: () => openPanel(index, "alts") },
+            dishItem(fixed, index),
+          ];
+    const mealItems: MenuItem[] = [
+      ...(fixed ? [{ icon: "+", label: t.courses.add.replace(/^\+\s*/, ""), onClick: () => openPanel(index, "course") }] : []),
+      ...(fixed && fixed.foods.length >= 2 ? [{ icon: "☰", label: t.courses.split, onClick: () => openPanel(index, "split") }] : []),
+      { icon: "⇅", label: t.mealMenu.move, onClick: () => openPanel(index, "move") },
+      { icon: "−", label: t.planMeals.remove, danger: true, onClick: () => openPanel(index, "remove") },
+    ];
+    return [
+      { label: t.mealMenu.dish, items: dishItems },
+      { label: t.mealMenu.meal, items: mealItems },
+    ];
+  }
   const activeVersion = data?.versions.find((v) => v.status === "active");
 
   return (
@@ -157,6 +241,19 @@ export function PlanPage() {
                     <span className="muted">{t.planGen.menuHint}</span>
                   </button>
                 )}
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="menu-item menu-item-rich"
+                  disabled={!shown || saveAll.isPending}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    if (shown) saveAll.mutate(shown.id);
+                  }}
+                >
+                  <strong>{t.mealMenu.saveAll}</strong>
+                  <span className="muted">{t.mealMenu.saveAllHint}</span>
+                </button>
                 <button type="button" role="menuitem" className="menu-item menu-item-rich" disabled={!shown} onClick={() => navigate("/piano/spesa")}>
                   <strong>{t.shopping.menu}</strong>
                   <span className="muted">{t.shopping.menuHint}</span>
@@ -305,99 +402,98 @@ export function PlanPage() {
                   <h2>{t.weekdaysLong[dayIndex]}</h2>
                   <span className="muted">{dayNote(day)}</span>
                 </div>
+                {saveAll.isSuccess && (
+                  <p className="plan-notice" role="status">
+                    {saveAll.data.saving === 0 ? t.mealMenu.allThere : t.mealMenu.started(saveAll.data.saving)}
+                  </p>
+                )}
+                {saveAll.isError && (
+                  <p className="form-error" role="alert">
+                    {t.mealMenu.saveFailed}
+                  </p>
+                )}
                 <PlanDayMeals
                   day={day}
                   timeBusy={setTime.isPending}
                   onTime={(index, time) => setTime.mutate({ id: shown.id, day: weekday, index, time, allDays: sameTime })}
-                  extra={(meal, index) => (
-                    <div className="plan-meal-actions">
-                      {/* A meal with courses is edited course by course */}
-                      {!("courses" in meal && meal.courses) && (
-                        <EditMeal
-                          meal={meal}
-                          busy={edit.isPending}
-                          failed={edit.isError}
-                          onSave={(dish, done) => edit.mutate({ id: shown.id, day: weekday, index, ...dish }, { onSuccess: done })}
-                          onSplit={() => setSplitting({ day: weekday, index })}
-                        />
-                      )}
-                      {splitting?.day === weekday && splitting.index === index && (
-                        <SplitFoods plan={shown} day={weekday} index={index} onDone={() => setSplitting(null)} onClose={() => setSplitting(null)} />
-                      )}
-                      {isFixedMeal(meal) && (
-                        <SplitCourses
-                          key={`${shown.id}-${weekday}-${index}-${meal.courses?.length ?? 1}`}
-                          meal={meal}
-                          busy={courses.isPending}
-                          failed={courses.isError}
-                          onSave={(labels, done) => courses.mutate({ id: shown.id, split: { day: weekday, index, labels } }, { onSuccess: done })}
-                        />
-                      )}
-                      <RemoveMeal
-                        key={`rm-${shown.id}-${weekday}-${index}`}
-                        meal={meal}
-                        dayName={t.weekdaysLong[dayIndex]!}
-                        inEffect={inEffect}
-                        busy={planMeals.isPending}
-                        failed={planMeals.isError}
-                        onRemove={(allDays, done) => planMeals.mutate({ id: shown.id, remove: { day: weekday, index, allDays } }, { onSuccess: done })}
-                      />
-                      <MoveMeal plan={shown.plan} day={weekday} index={index} busy={swap.isPending} failed={swap.isError} onMove={(toDay) => swap.mutate({ id: shown.id, day: weekday, index, toDay })} />
-                    </div>
-                  )}
-                  dishes={(meal, index) => (
-                    <>
-                      {!meal.courses && (
-                        <DishAlternatives
-                          meal={meal}
-                          busy={edit.isPending}
-                          onUse={(dish) => edit.mutate({ id: shown.id, day: weekday, index, ...dishAsEdit(dish) })}
-                          {...(canGenerate ? { ai: { planId: shown.id, day: weekday, index } } : {})}
-                        />
-                      )}
-                      <AddCourse
-                        meal={meal}
-                        busy={courses.isPending}
-                        failed={courses.isError}
-                        onAdd={(add, done) => courses.mutate({ id: shown.id, add: { day: weekday, index, ...add } }, { onSuccess: done })}
-                      />
-                    </>
-                  )}
+                  menu={(meal, index) => <MealMenuButton label={t.mealMenu.open(meal.title)} onClick={() => setMenuFor({ index })} />}
+                  courseMenu={(meal, index, k, c) => <MealMenuButton label={t.mealMenu.open(courseLabel(c.name))} onClick={() => setMenuFor({ index, course: k })} />}
+                  dishes={(meal, index) =>
+                    meal.courses ? null : (
+                      <MealChips alternatives={alternativesCount(mealFoodsText(meal))} saved={Boolean(findSaved(planDishName(meal)))} onAlternatives={() => openPanel(index, "alts")} />
+                    )
+                  }
                   course={(meal, index, k, c) => {
                     const asMeal = { title: meal.title, ...(c.description ? { description: c.description } : {}), foods: c.foods, ...(c.macros ? { macros: c.macros } : {}) };
+                    const here = panel && panel.day === weekday && panel.index === index && panel.course === k ? panel : null;
                     return (
                       <>
-                        <DishAlternatives meal={asMeal} busy={edit.isPending} onUse={(dish) => edit.mutate({ id: shown.id, day: weekday, index, course: k, ...dishAsEdit(dish) })} />
-                        <div className="plan-meal-actions plan-course-actions">
-                          <EditMeal
-                            meal={asMeal}
-                            busy={edit.isPending}
-                            failed={edit.isError}
-                            onSave={(dish, done) => edit.mutate({ id: shown.id, day: weekday, index, course: k, ...dish }, { onSuccess: done })}
-                          />
-                          <button
-                            type="button"
-                            className="plan-meal-action"
-                            disabled={courses.isPending}
-                            aria-label={t.courses.removeOf(courseLabel(c.name))}
-                            onClick={() => courses.mutate({ id: shown.id, remove: { day: weekday, index, course: k } })}
-                          >
-                            {t.courses.remove}
-                          </button>
-                        </div>
+                        <MealChips alternatives={alternativesCount(mealFoodsText(asMeal))} saved={Boolean(findSaved(planDishName(c)))} onAlternatives={() => openPanel(index, "alts", k)} />
+                        {here?.kind === "alts" && (
+                          <PanelBox title={t.mealMenu.alternativesTitle} onClose={() => setPanel(null)}>
+                            <DishAlternatives meal={asMeal} busy={edit.isPending} onUse={(dish) => edit.mutate({ id: shown.id, day: weekday, index, course: k, ...dishAsEdit(dish) })} />
+                          </PanelBox>
+                        )}
+                        {here?.kind === "edit" && (
+                          <EditMeal key={here.n} meal={asMeal} startOpen onCancel={() => setPanel(null)} busy={edit.isPending} failed={edit.isError} onSave={(dish, done) => edit.mutate({ id: shown.id, day: weekday, index, course: k, ...dish }, { onSuccess: () => { done(); setPanel(null); } })} />
+                        )}
+                        {here?.kind === "saveFailed" && <p className="form-error" role="alert">{t.mealMenu.saveFailed}</p>}
                       </>
                     );
                   }}
+                  extra={(meal, index) => {
+                    const here = panel && panel.day === weekday && panel.index === index && panel.course === undefined ? panel : null;
+                    if (!here) return null;
+                    const fixed = isFixedMeal(meal) ? meal : null;
+                    return (
+                      <div className="plan-meal-panel" key={here.n}>
+                        {here.kind === "edit" && (
+                          <EditMeal
+                            meal={meal}
+                            startOpen
+                            onCancel={() => setPanel(null)}
+                            busy={edit.isPending}
+                            failed={edit.isError}
+                            onSave={(dish, done) => edit.mutate({ id: shown.id, day: weekday, index, ...dish }, { onSuccess: () => { done(); setPanel(null); } })}
+                            onSplit={() => setSplitting({ day: weekday, index })}
+                          />
+                        )}
+                        {splitting?.day === weekday && splitting.index === index && (
+                          <SplitFoods plan={shown} day={weekday} index={index} onDone={() => setSplitting(null)} onClose={() => setSplitting(null)} />
+                        )}
+                        {here.kind === "alts" && fixed && (
+                          <PanelBox title={t.mealMenu.alternativesTitle} onClose={() => setPanel(null)}>
+                            <DishAlternatives
+                              meal={fixed}
+                              busy={edit.isPending}
+                              onUse={(dish) => edit.mutate({ id: shown.id, day: weekday, index, ...dishAsEdit(dish) })}
+                              {...(canGenerate ? { ai: { planId: shown.id, day: weekday, index } } : {})}
+                            />
+                          </PanelBox>
+                        )}
+                        {here.kind === "course" && fixed && (
+                          <AddCourse meal={fixed} startOpen busy={courses.isPending} failed={courses.isError} onAdd={(add, done) => courses.mutate({ id: shown.id, add: { day: weekday, index, ...add } }, { onSuccess: () => { done(); setPanel(null); } })} />
+                        )}
+                        {here.kind === "split" && fixed && (
+                          <SplitCourses meal={fixed} startOpen busy={courses.isPending} failed={courses.isError} onSave={(labels, done) => courses.mutate({ id: shown.id, split: { day: weekday, index, labels } }, { onSuccess: () => { done(); setPanel(null); } })} />
+                        )}
+                        {here.kind === "move" && <MoveMeal plan={shown.plan} day={weekday} index={index} startOpen busy={swap.isPending} failed={swap.isError} onMove={(toDay) => { swap.mutate({ id: shown.id, day: weekday, index, toDay }); setPanel(null); }} />}
+                        {here.kind === "remove" && (
+                          <RemoveMeal meal={meal} startOpen dayName={t.weekdaysLong[dayIndex]!} inEffect={inEffect} busy={planMeals.isPending} failed={planMeals.isError} onRemove={(allDays, done) => planMeals.mutate({ id: shown.id, remove: { day: weekday, index, allDays } }, { onSuccess: () => { done(); setPanel(null); } })} />
+                        )}
+                        {here.kind === "saveFailed" && <p className="form-error" role="alert">{t.mealMenu.saveFailed}</p>}
+                      </div>
+                    );
+                  }}
                 />
-                <RemovedMeals
-                  plan={shown.plan}
-                  day={weekday}
-                  dayName={t.weekdaysLong[dayIndex]!}
-                  inEffect={inEffect}
-                  busy={planMeals.isPending}
-                  failed={planMeals.isError}
-                  onRestore={(removed, allDays) => planMeals.mutate({ id: shown.id, restore: { day: weekday, removed, allDays } })}
-                />
+                {menuFor && day.meals[menuFor.index] && (
+                  <MealMenuSheet
+                    title={t.mealMenu.title(menuFor.course === undefined ? day.meals[menuFor.index]!.title : courseLabel((day.meals[menuFor.index] as FixedPlannedMeal).courses?.[menuFor.course]?.name ?? ""), t.weekdaysLong[dayIndex]!)}
+                    subtitle={menuSubtitle(day.meals[menuFor.index]!, menuFor.course)}
+                    sections={menuSections(day.meals[menuFor.index]!, menuFor.index, menuFor.course)}
+                    onClose={() => setMenuFor(null)}
+                  />
+                )}
                 <AddPlanMeal
                   key={`add-${shown.id}-${weekday}`}
                   dayName={t.weekdaysLong[dayIndex]!}
@@ -458,6 +554,23 @@ export function PlanPage() {
           </div>
         </Scrim>
       )}
+    </div>
+  );
+}
+
+type PanelKind = "edit" | "alts" | "course" | "split" | "move" | "remove" | "saveFailed";
+
+/** A panel opened from the meal menu, with its title and "Chiudi". */
+function PanelBox({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div className="plan-panel-box">
+      <div className="plan-panel-head">
+        <span className="plan-edit-title">{title}</span>
+        <button type="button" className="text-button" onClick={onClose}>
+          {t.mealMenu.close}
+        </button>
+      </div>
+      {children}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { alternativesFor, dishCategories, dishKey, dishKeys, dishMacros, dishOfMeal, mealFoodsText, searchDishes, type Dish, type DishSummary, type DishGroup, type FixedPlannedMeal, type PlannedMacros, type Weekday, isFixedMeal } from "@intake/shared";
+import { alternativesFor, dishCategories, dishKey, dishKeys, dishMacros, dishOfMeal, mealFoodsText, searchDishes, type Dish, type DishSummary, type DishGroup, type FixedPlannedMeal, type PlannedMacros, type Weekday, isFixedMeal, looseDishKey } from "@intake/shared";
 import { useEffect, useState } from "react";
 import { useChangeDishGroups, useDishes, useDishGroups } from "../api/queries";
 import { categoryLabel, dishFromSaved } from "../lib/dishCategory";
@@ -208,8 +208,8 @@ export function DishPickerSheet({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
   // Not the dish itself: by id, or by name for a dish of the plan
-  const own = dishKey(meal);
-  const all = (dishes.data?.dishes ?? []).filter((d) => !exclude.includes(d.id) && dishKey(d.name) !== own && dishKey(d.description) !== own);
+  const own = looseDishKey(meal);
+  const all = (dishes.data?.dishes ?? []).filter((d) => !exclude.includes(d.id) && looseDishKey(d.name) !== own && looseDishKey(d.description) !== own);
   const categories = dishCategories(dishes.data?.customCategories ?? []).filter((c) => all.some((d) => d.category === c));
   const shown = searchDishes(all, query).filter((d) => filter === null || d.category === filter);
   const linked = new Set(alternativesFor(groups.data ?? [], meal).map((alt) => dishKey(alt.dish.name)));

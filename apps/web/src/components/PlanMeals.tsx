@@ -1,13 +1,12 @@
-import { MEAL_TYPES, type Dish, type MealPlan, type PlannedMeal, type Weekday } from "@intake/shared";
+import { MEAL_TYPES, type Dish, type PlannedMeal } from "@intake/shared";
 import { useState } from "react";
-import { mealFoodsText } from "@intake/shared";
 import { t } from "../lib/strings";
 import { DishPickerSheet, dishAsEdit } from "./DishAlternatives";
 import { EditMeal, type DishEdit } from "./PlanDay";
 
 /**
- * "Togli pasto", "Pasti tolti" with "Rimetti", and "+ Aggiungi pasto" in Piano. Each asks whether the change is for this
- * day only or for every day. Rules in docs/plan-meals.md.
+ * "Togli pasto" and "+ Aggiungi pasto" in Piano. Each asks whether the change is for this day only or for every day.
+ * Rules in docs/plan-meals.md.
  */
 
 /** The two answers "Solo mercoledì" / "Tutti i giorni", with "Annulla". */
@@ -29,9 +28,10 @@ function DayChoice({ dayName, busy, onChoose, onCancel, all = true }: { dayName:
   );
 }
 
-export function RemoveMeal({ meal, dayName, inEffect, busy, failed, onRemove }: { meal: PlannedMeal; dayName: string; inEffect: boolean; busy?: boolean; failed?: boolean; onRemove: (allDays: boolean, done: () => void) => void }) {
-  const [open, setOpen] = useState(false);
+export function RemoveMeal({ meal, dayName, inEffect, busy, failed, onRemove, startOpen }: { meal: PlannedMeal; dayName: string; inEffect: boolean; busy?: boolean; failed?: boolean; onRemove: (allDays: boolean, done: () => void) => void; startOpen?: boolean }) {
+  const [open, setOpen] = useState(Boolean(startOpen));
   if (!open) {
+    if (startOpen) return null;
     return (
       <button type="button" className="plan-meal-action" onClick={() => setOpen(true)}>
         {t.planMeals.remove}
@@ -46,45 +46,6 @@ export function RemoveMeal({ meal, dayName, inEffect, busy, failed, onRemove }: 
       {failed && <p className="form-error" role="alert">{t.planMeals.failed}</p>}
       <DayChoice dayName={dayName} busy={busy} onCancel={() => setOpen(false)} onChoose={(allDays) => onRemove(allDays, () => setOpen(false))} />
     </div>
-  );
-}
-
-const sameMeal = (a: PlannedMeal, b: PlannedMeal) => a.title.trim().toLowerCase() === b.title.trim().toLowerCase() && a.time === b.time;
-
-export function RemovedMeals({ plan, day, dayName, inEffect, busy, failed, onRestore }: { plan: MealPlan; day: Weekday; dayName: string; inEffect: boolean; busy?: boolean; failed?: boolean; onRestore: (removed: number, allDays: boolean) => void }) {
-  const [asking, setAsking] = useState<number | null>(null);
-  const removed = plan.days[day].removed ?? [];
-  if (removed.length === 0) return null;
-  return (
-    <section className="plan-removed" aria-label={t.planMeals.removedTitle}>
-      <h3 className="plan-edit-title">{t.planMeals.removedTitle}</h3>
-      {failed && <p className="form-error" role="alert">{t.planMeals.failed}</p>}
-      <ul className="plan-removed-list">
-        {removed.map((meal, i) => {
-          // "Tutti i giorni" only when the same meal was taken out of another day too
-          const elsewhere = Object.entries(plan.days).some(([w, d]) => w !== day && (d.removed ?? []).some((other) => sameMeal(other, meal)));
-          return (
-            <li key={i} className="plan-removed-row">
-              <div className="plan-removed-text">
-                <strong>
-                  {meal.title}
-                  {meal.time ? ` · ${meal.time}` : ""}
-                </strong>
-                <span className="muted">{"foods" in meal ? mealFoodsText(meal) : (meal.description ?? "")}</span>
-              </div>
-              {asking === i ? (
-                <DayChoice dayName={dayName} busy={busy} onCancel={() => setAsking(null)} onChoose={(allDays) => { onRestore(i, allDays); setAsking(null); }} />
-              ) : (
-                <button type="button" className="button-secondary-small" disabled={busy} aria-label={t.planMeals.restoreOf(meal.title)} onClick={() => (elsewhere ? setAsking(i) : onRestore(i, false))}>
-                  {t.planMeals.restore}
-                </button>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-      {inEffect && <p className="muted plan-meals-note">{t.planMeals.newVersion}</p>}
-    </section>
   );
 }
 

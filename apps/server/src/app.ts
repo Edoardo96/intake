@@ -12,7 +12,7 @@ import type { PlanStore } from "./db/planStore.js";
 import { dayRoutes, type DayRoutesOptions } from "./routes/days.js";
 import { mealRoutes, type MealRoutesOptions } from "./routes/meals.js";
 import { insightRoutes, type InsightRoutesOptions } from "./routes/insight.js";
-import { planRoutes } from "./routes/plans.js";
+import { planRoutes, type PlanRoutesOptions } from "./routes/plans.js";
 import { dishGroupRoutes } from "./routes/dishGroups.js";
 import { dishRoutes, type DishRoutesOptions } from "./routes/dishes.js";
 import type { DishGroupStore } from "./db/dishGroupStore.js";
@@ -65,6 +65,8 @@ export interface AppOptions {
   /** Photos of meals logged from a photo; optional. */
   mealPhotos?: MealRoutesOptions["photos"];
   /** Courses of logged meals (docs/courses.md). */
+  /** "Salva tutti i piatti del piano" (docs/plan-dishes.md). */
+  planDishes?: PlanRoutesOptions["dishSaver"];
   mealCourses?: MealRoutesOptions["courses"];
   /** "Conserva le foto dei pasti" (Impostazioni › Pasti da foto). */
   mealPhotoSettings?: MealRoutesOptions["photoSettings"];
@@ -229,7 +231,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     if (options.api) {
       await app.register(dayRoutes, { prefix: "/api", api: options.api, plans: options.plans, dishGroups: options.dishGroups, requireOwner });
       if (options.plans) {
-        await app.register(planRoutes, { prefix: "/api", plans: options.plans, api: options.api, dishGroups: options.dishGroups, requireOwner });
+        await app.register(planRoutes, { prefix: "/api", plans: options.plans, api: options.api, dishGroups: options.dishGroups, ...(options.planDishes ? { dishSaver: options.planDishes } : {}), requireOwner });
         if (options.dishGroups) {
           await app.register(dishGroupRoutes, { prefix: "/api", groups: options.dishGroups, requireOwner });
         }

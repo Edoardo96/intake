@@ -5,7 +5,6 @@ import type {
   CourseRemove,
   MealSplit,
   MealRemove,
-  MealRestore,
   MealAdd,
   DishGroupsResponse,
   DishesResponse,
@@ -906,12 +905,26 @@ export function useEditPlanMeal() {
   });
 }
 
-/** "Togli pasto", "Rimetti" and "+ Aggiungi pasto" in Piano (docs/plan-meals.md); a plan in effect gets a new version from today. */
+/** "Salva tutti i piatti del piano": starts saving the plan's dishes not yet in Piatti; the list refreshes when done. */
+export function useSavePlanDishes() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => apiFetch<{ saving: number }>(`/api/plans/${id}/dishes/save`, { method: "POST" }),
+    onSuccess: ({ saving }) => {
+      // One dish every 2 seconds on the server: refresh the dishes while they arrive and once at the end
+      const refresh = () => void queryClient.invalidateQueries({ queryKey: dishesKey });
+      for (let at = 10_000; at < saving * 2_000; at += 10_000) setTimeout(refresh, at);
+      setTimeout(refresh, saving * 2_000 + 1_500);
+    },
+  });
+}
+
+/** "Togli pasto" and "+ Aggiungi pasto" in Piano (docs/plan-meals.md); a plan in effect gets a new version from today. */
 export function useChangePlanMeals() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (change: ({ remove: MealRemove } | { restore: MealRestore } | { add: MealAdd }) & { id: number }) => {
-      const [kind, body] = "remove" in change ? ["remove", change.remove] : "restore" in change ? ["restore", change.restore] : ["add", change.add];
+    mutationFn: (change: ({ remove: MealRemove } | { add: MealAdd }) & { id: number }) => {
+      const [kind, body] = "remove" in change ? ["remove", change.remove] : ["add", change.add];
       return apiFetch<StoredPlan>(`/api/plans/${change.id}/meals/${kind}`, { method: "POST", json: body });
     },
     onSuccess: () => {
