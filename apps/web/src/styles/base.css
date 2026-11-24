@@ -9886,6 +9886,193 @@ div.connection-row {
   white-space: nowrap;
 }
 
+.dish-log-hint {
+  margin: -4px 0 0;
+  font-size: 13px;
+}
+
+/* ================= Courses of a planned meal (docs/courses.md) ================= */
+.plan-course {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+
+.plan-course-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.plan-course-name {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: var(--color-text-muted);
+}
+
+.plan-course-kcal {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.plan-course .plan-meal-dish {
+  margin: 0;
+  font-weight: 800;
+}
+
+.plan-course ul {
+  margin: 0;
+}
+
+.plan-course-actions {
+  margin-top: 2px;
+}
+
+.course-add {
+  min-height: 44px;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-dashed);
+  background: transparent;
+  color: var(--color-accent-strong);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.course-panel {
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-dashed);
+}
+
+.course-name-input {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-input);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 16px;
+}
+
+.course-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0 8px;
+}
+
+.course-choice-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+
+.course-choice-row[data-eaten] {
+  background: var(--color-accent-soft);
+}
+
+.course-check {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 1px 0 0;
+  accent-color: var(--color-accent);
+}
+
+.course-choice-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.course-choice-text {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.course-choice-row:not([data-eaten]) .course-choice-text {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+/* Nuovo pasto / Modifica pasto with courses (docs/courses.md) */
+.meal-course-group + .meal-course-group {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+.meal-course-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.meal-course-head .plan-course-name {
+  flex: 1;
+}
+
+.meal-course-text {
+  display: block;
+  margin: 2px 0 4px;
+  font-size: 13px;
+}
+
+.compose-empty {
+  align-self: center;
+  margin-top: 4px;
+}
+
+.course-sheet .dish-add-option {
+  background: var(--color-surface);
+}
+
+.course-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.course-inline textarea {
+  min-height: 72px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-input);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 16px;
+  resize: vertical;
+}
+
+.course-inline > button {
+  align-self: flex-end;
+}
+
+.course-manual-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+.course-manual-grid .field input,
+.course-manual .field input {
+  min-width: 0;
+}
+
 /* Pasti da foto › "Conserva le foto dei pasti": the kept photos and their deletion, confirmed in the row */
 .meal-photos-clear {
   display: flex;

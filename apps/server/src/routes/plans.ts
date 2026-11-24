@@ -1,4 +1,4 @@
-import { WEEKDAYS, dishLinkSchema, importPlan, mealPlanSchema, plannedFoodSchema, editMeal, mealEditSchema, mealMoveSchema, mealTimeChangeSchema, setMealTime, swapMeals, type PlanUploadError, type PlansResponse } from "@intake/shared";
+import { WEEKDAYS, addCourse, courseAddSchema, courseRemoveSchema, removeCourse, dishLinkSchema, importPlan, mealPlanSchema, plannedFoodSchema, editMeal, mealEditSchema, mealMoveSchema, mealTimeChangeSchema, setMealTime, swapMeals, type PlanUploadError, type PlansResponse } from "@intake/shared";
 import type { FastifyPluginAsync, preHandlerHookHandler } from "fastify";
 import { z } from "zod";
 import type { PlanStore } from "../db/planStore.js";
@@ -89,6 +89,37 @@ export const planRoutes: FastifyPluginAsync<PlanRoutesOptions> = async (app, { p
     let plan;
     try {
       plan = editMeal(stored.plan, body.data);
+    } catch {
+      return reply.code(400).send({ error: "invalid_meal" });
+    }
+    plans.update(stored.id, plan);
+    return { ...stored, plan };
+  });
+
+  // "+ Aggiungi portata" and the × of a course (docs/courses.md)
+  app.post<{ Params: { id: string } }>("/plans/:id/course", async (request, reply) => {
+    const stored = plans.get(Number(request.params.id));
+    if (!stored) return reply.code(404).send({ error: "Plan not found" });
+    const body = courseAddSchema.safeParse(request.body);
+    if (!body.success) return reply.code(400).send({ error: "invalid_meal" });
+    let plan;
+    try {
+      plan = addCourse(stored.plan, body.data);
+    } catch {
+      return reply.code(400).send({ error: "invalid_meal" });
+    }
+    plans.update(stored.id, plan);
+    return { ...stored, plan };
+  });
+
+  app.post<{ Params: { id: string } }>("/plans/:id/course/remove", async (request, reply) => {
+    const stored = plans.get(Number(request.params.id));
+    if (!stored) return reply.code(404).send({ error: "Plan not found" });
+    const body = courseRemoveSchema.safeParse(request.body);
+    if (!body.success) return reply.code(400).send({ error: "invalid_meal" });
+    let plan;
+    try {
+      plan = removeCourse(stored.plan, body.data);
     } catch {
       return reply.code(400).send({ error: "invalid_meal" });
     }

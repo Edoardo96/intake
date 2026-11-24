@@ -123,6 +123,11 @@ const MIGRATIONS: string[] = [
      recipe TEXT,
      updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
    )`,
+  // Courses of a logged meal (docs/courses.md): which consecutive foods of the Nutrition meal make each course
+  `CREATE TABLE meal_courses (
+     meal_id TEXT PRIMARY KEY,
+     courses TEXT NOT NULL
+   )`,
 ];
 
 /** Opens (and migrates) the SQLite database. Pass ":memory:" for tests. */

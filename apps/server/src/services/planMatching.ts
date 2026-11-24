@@ -1,4 +1,4 @@
-import {
+import { courseMacros, courseText,
   foodLine,
   isFixedMeal,
   mealFoodsText,
@@ -113,6 +113,9 @@ export function plannedEntries(
       lines: isFixedMeal(planned) ? planned.foods.map(foodLine) : [],
       status: !isFixedMeal(planned) ? "free" : skipped.has(index) ? "skipped" : passed ? "todo" : "planned",
       macros: isFixedMeal(planned) ? (planned.macros ?? null) : null,
+      ...(isFixedMeal(planned) && planned.courses
+        ? { courses: planned.courses.map((c) => ({ name: c.name, foods: courseText(c), lines: c.foods.map(foodLine), macros: courseMacros(c) })) }
+        : {}),
     });
   });
   return entries.sort((a, b) => a.time.localeCompare(b.time) || a.index - b.index);

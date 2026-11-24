@@ -15,8 +15,12 @@ export interface DayRoutesOptions {
   requireOwner: preHandlerHookHandler;
 }
 
+const alternativeBody = z.object({ groupId: z.number().int().positive(), dishIndex: z.number().int().min(0) });
 const logPlannedBody = z
-  .object({ alternative: z.object({ groupId: z.number().int().positive(), dishIndex: z.number().int().min(0) }).optional() })
+  .object({
+    alternative: alternativeBody.optional(),
+    courses: z.array(z.object({ eaten: z.boolean(), alternative: alternativeBody.optional() })).min(1).max(6).optional(),
+  })
   .optional();
 
 const addWaterBody = z.object({
@@ -49,12 +53,13 @@ export const dayRoutes: FastifyPluginAsync<DayRoutesOptions> = async (app, { api
       const body = logPlannedBody.safeParse(request.body ?? undefined);
       if (!body.success) return reply.code(400).send({ error: "Invalid planned meal" });
       const alternative = body.data?.alternative;
+      const courses = body.data?.courses;
       const clock = await api.clock();
       try {
         const result = await logPlannedMeal(
           api,
           plans,
-          { date, planId, index, today: clock.localDate, now: clock.localTime, ...(alternative ? { alternative } : {}) },
+          { date, planId, index, today: clock.localDate, now: clock.localTime, ...(alternative ? { alternative } : {}), ...(courses ? { courses } : {}) },
           dishGroups,
         );
         return reply.code(201).send(result);

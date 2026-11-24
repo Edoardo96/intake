@@ -4,6 +4,8 @@ import { Link, useLocation } from "wouter";
 import { ApiError, newIdempotencyKey } from "../api/client";
 import { useCreateMeal, useDay, useFeatures, useRecognizeMeal, useSavedMeals } from "../api/queries";
 import { CloseIcon, SparklesIcon } from "../components/icons";
+import { MealCourseSheet, type CourseSource } from "../components/MealCourseSheet";
+import { courseLabel } from "../lib/courseLabel";
 import { PhotoCarousel } from "../components/PhotoCarousel";
 import { formatGrams, formatKcal, formatOneDecimal } from "../lib/format";
 import { readAlternativeDraft } from "../lib/dayAlternativeDraft";
@@ -31,6 +33,8 @@ interface Draft {
   unit: string;
   visible: boolean;
   perUnit: PerUnit;
+  /** Index of its course (docs/courses.md); 0 while the meal is one dish. */
+  course?: number;
 }
 
 const isMass = (unit: string) => /^(g|ml)$/i.test(unit);
@@ -179,6 +183,10 @@ export function NewMealPage({ initialMode, savedId, fromAlternative = false }: {
   const [items, setItems] = useState<Draft[]>([]);
   const [time, setTime] = useState<string | null>(null);
   const [type, setType] = useState<NutritionMealType | null>(null);
+  // Courses (docs/courses.md): their names and what each one is; one unnamed course while the meal is one dish
+  const [courses, setCourses] = useState<Array<{ name: string; text: string }>>([{ name: "", text: "" }]);
+  const [addingCourse, setAddingCourse] = useState(false);
+  const recognizeCourse = useRecognizeMeal();
 
   const clock = day.data?.clock;
   const nowTime = clock ? clock.localTime.slice(0, 5) : null;
@@ -272,7 +280,9 @@ export function NewMealPage({ initialMode, savedId, fromAlternative = false }: {
         onSuccess: (meal) => {
           setItems((list) => {
             const next = list.reduce((max, item) => Math.max(max, item.key), -1) + 1;
-            return [...list, ...meal.items.map((item, i) => fromRecognized(item, next + i))];
+            // A food the photo missed belongs to the last course
+            const course = list.reduce((max, item) => Math.max(max, item.course ?? 0), 0);
+            return [...list, ...meal.items.map((item, i) => ({ ...fromRecognized(item, next + i), course }))];
           });
           setExtra("");
           setAdding(false);
@@ -281,27 +291,70 @@ export function NewMealPage({ initialMode, savedId, fromAlternative = false }: {
     );
   }
 
-  function changeAmount(index: number, direction: 1 | -1) {
+  function changeAmount(key: number, direction: 1 | -1) {
     setItems((list) =>
-      list.map((item, i) => {
-        if (i !== index) return item;
+      list.map((item) => {
+        if (item.key !== key) return item;
         return { ...item, amount: Math.max(minFor(item), round(item.amount + direction * stepFor(item, direction < 0), 2)) };
       }),
     );
   }
 
+  /** Adds a course with its foods; the dish already on the screen becomes the first course the first time. */
+  function appendCourse(course: CourseSource, text: string, foods: Draft[]) {
+    const first = courses.length === 1 && courses[0]!.name === "" ? { ...courses[0]!, name: course.firstName ?? t.courses.defaultName, text: courses[0]!.text || result?.description || "" } : null;
+    const list = first ? [first] : courses;
+    const index = list.length;
+    setCourses([...list, { name: course.name, text }]);
+    setItems((current) => {
+      const next = current.reduce((max, item) => Math.max(max, item.key), -1) + 1;
+      return [...current, ...foods.map((food, i) => ({ ...food, key: next + i, course: index }))];
+    });
+    setAddingCourse(false);
+  }
+
+  async function coursePhoto(file: File, course: CourseSource) {
+    try {
+      const photo = await photoForRecognition(file);
+      const image = { mediaType: photo.mediaType, data: photo.data };
+      recognizeCourse.mutate(
+        { images: [image] },
+        {
+          onSuccess: (meal) => {
+            setPhotos((list) => (list.length >= MEAL_PHOTOS_MAX ? list : [...list, { key: `p${Date.now()}`, preview: photo.previewUrl, mediaType: photo.mediaType, data: photo.data }]));
+            appendCourse(course, meal.description, meal.items.map(fromRecognized));
+          },
+        },
+      );
+    } catch {
+      setPhotoError(true);
+    }
+  }
+
+  function removeCourse(index: number) {
+    setItems((list) => list.filter((item) => (item.course ?? 0) !== index));
+  }
+
+  // Courses that still have foods, in order; one (or none) means the meal is one dish
+  const groups = courses.map((course, index) => ({ ...course, index, items: items.filter((item) => (item.course ?? 0) === index) })).filter((group) => group.items.length > 0);
+  const multi = groups.length > 1;
+
   const name = favoriteName ?? result?.description.slice(0, 100) ?? "";
 
   function log() {
     if (!clock || !result || items.length === 0) return;
-    const inputs = allOrNone(items.map((item) => ({ name: item.name, quantity: round(item.amount, 2), unit: item.unit, nutrients: nutrientsOf(item) })));
+    // The foods in the order of their courses, so each course is a run of consecutive foods
+    const ordered = groups.flatMap((group) => group.items);
+    const inputs = allOrNone(ordered.map((item) => ({ name: item.name, quantity: round(item.amount, 2), unit: item.unit, nutrients: nutrientsOf(item) })));
+    const description = multi ? groups.map((g) => g.text || g.items.map((i) => i.name).join(", ")).join(" + ").slice(0, 2000) : result.description || ordered.map((i) => i.name).join(", ");
     create.mutate(
       {
         date: clock.localDate,
         time: mealTime,
         type: mealType,
-        description: result.description,
+        description,
         items: inputs,
+        ...(multi ? { courses: groups.map((g) => ({ name: g.name || t.courses.defaultName, count: g.items.length })) } : {}),
         idempotencyKey,
         ...(photos.length > 0 ? { photos: photos.map(({ mediaType, data }) => ({ mediaType, data })) } : {}),
         ...(favorite && name.trim() ? { favoriteName: name.trim() } : {}),
@@ -407,6 +460,20 @@ export function NewMealPage({ initialMode, savedId, fromAlternative = false }: {
 
         {photoError && <p className="notice" data-kind="error">{t.newMeal.unreadablePhoto}</p>}
         {recognize.isError && <p className="notice" data-kind="error">{errorText(recognize.error)}</p>}
+        {/* A meal of several courses can also start empty: every course is then added with "+ Aggiungi portata" */}
+        {!recognize.isPending && (
+          <button
+            type="button"
+            className="text-button text-button-strong compose-empty"
+            onClick={() => {
+              setResult({ description: "", items: [] });
+              setItems([]);
+              setAddingCourse(true);
+            }}
+          >
+            {t.courses.composeEmpty}
+          </button>
+        )}
       </div>
     );
   }
@@ -472,7 +539,19 @@ export function NewMealPage({ initialMode, savedId, fromAlternative = false }: {
 
       <span className="sheet-section">{prefilled ? t.newMeal.foodsSaved : t.newMeal.foods}</span>
       <div className="form-card">
-        {items.map((item, index) => (
+        {(multi ? groups : [{ name: "", text: "", index: -1, items }]).map((group) => (
+          <div key={group.index} className="meal-course-group">
+            {multi && (
+              <div className="meal-course-head">
+                <span className="plan-course-name">{courseLabel(group.name).toUpperCase()}</span>
+                <span className="plan-course-kcal">{formatKcal(group.items.reduce((sum, item) => sum + nutrientsOf(item).kcal, 0))} kcal</span>
+                <button type="button" className="item-remove" aria-label={t.courses.removeCourse(courseLabel(group.name))} onClick={() => removeCourse(group.index)}>
+                  <CloseIcon size={16} strokeWidth={2.2} />
+                </button>
+              </div>
+            )}
+            {multi && group.text && <span className="muted meal-course-text">{group.text}</span>}
+        {group.items.map((item) => (
           <div key={item.key} className="item-edit">
             <div className="item-edit-row recognized-row">
               <span className="recognized-name">
@@ -481,20 +560,22 @@ export function NewMealPage({ initialMode, savedId, fromAlternative = false }: {
                 <span className="muted">{formatKcal(nutrientsOf(item).kcal)} kcal</span>
               </span>
               <span className="stepper">
-                <button type="button" aria-label={t.newMeal.less(item.name)} disabled={item.amount <= minFor(item)} onClick={() => changeAmount(index, -1)}>
+                <button type="button" aria-label={t.newMeal.less(item.name)} disabled={item.amount <= minFor(item)} onClick={() => changeAmount(item.key, -1)}>
                   −
                 </button>
                 <span className="stat-value" aria-live="polite">
                   {formatAmount(item)}
                 </span>
-                <button type="button" aria-label={t.newMeal.more(item.name)} onClick={() => changeAmount(index, 1)}>
+                <button type="button" aria-label={t.newMeal.more(item.name)} onClick={() => changeAmount(item.key, 1)}>
                   +
                 </button>
               </span>
-              <button type="button" className="item-remove" aria-label={t.newMeal.remove(item.name)} onClick={() => setItems((list) => list.filter((_, i) => i !== index))}>
+              <button type="button" className="item-remove" aria-label={t.newMeal.remove(item.name)} onClick={() => setItems((list) => list.filter((other) => other.key !== item.key))}>
                 <CloseIcon size={18} strokeWidth={2.2} />
               </button>
             </div>
+          </div>
+        ))}
           </div>
         ))}
         {items.length === 0 && <p className="muted recognized-empty">{t.newMeal.noFoods}</p>}
@@ -529,6 +610,33 @@ export function NewMealPage({ initialMode, savedId, fromAlternative = false }: {
         ) : null}
         {recognizeExtra.isError && <p className="error-text">{errorText(recognizeExtra.error)}</p>}
       </div>
+      <button type="button" className="course-add" onClick={() => setAddingCourse(true)}>
+        {t.courses.add}
+      </button>
+      {addingCourse && (
+        <MealCourseSheet
+          askFirst={items.length > 0 && !multi}
+          ai={recognition}
+          busy={recognizeCourse.isPending}
+          error={photoError ? t.newMeal.unreadablePhoto : recognizeCourse.isError ? errorText(recognizeCourse.error) : null}
+          onClose={() => setAddingCourse(false)}
+          onPhoto={(file, course) => void coursePhoto(file, course)}
+          onText={(text, course) => recognizeCourse.mutate({ text }, { onSuccess: (meal) => appendCourse(course, meal.description, meal.items.map(fromRecognized)) })}
+          onDish={(dish, course) => appendCourse(course, dish.name, fromSavedMeal(dish))}
+          onManual={(food, course) =>
+            appendCourse(course, food.name, [
+              {
+                key: 0,
+                name: food.name,
+                amount: food.amount,
+                unit: food.unit === "g" ? "g" : t.newMeal.portion,
+                visible: true,
+                perUnit: { kcal: food.kcal / food.amount, protein: food.protein / food.amount, carbs: food.carbs / food.amount, fat: food.fat / food.amount, fiber: null, sugar: null, addedSugar: null },
+              },
+            ])
+          }
+        />
+      )}
 
       <span className="sheet-section">{t.newMeal.values}</span>
       <div className="value-tiles">

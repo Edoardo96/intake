@@ -1,10 +1,12 @@
-import { MEAL_PHOTOS_MAX, MEAL_TYPES, NUTRITION_MEAL_TYPES, type Meal, type MealItemInput, type Nutrients, type NutritionMealType, type RecognizedItem } from "@intake/shared";
+import { MEAL_PHOTOS_MAX, MEAL_TYPES, NUTRITION_MEAL_TYPES, splitIntoCourses, type Meal, type MealItemInput, type Nutrients, type NutritionMealType, type RecognizedItem } from "@intake/shared";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { mealPhotoUrl, useDay, useFeatures, useMealPhotoKeep, useMealPhotos, useRecognizeMeal, useSaveMealPhotos, useUpdateMeal } from "../api/queries";
+import { mealPhotoUrl, useDay, useFeatures, useMealCourses, useMealPhotoKeep, useMealPhotos, useRecognizeMeal, useSaveMealPhotos, useUpdateMeal } from "../api/queries";
 import { ConfirmDeleteSheet } from "../components/ConfirmDeleteSheet";
 import { CloseIcon, SparklesIcon } from "../components/icons";
 import { PhotoCarousel } from "../components/PhotoCarousel";
+import { MealCourseSheet, type CourseSource } from "../components/MealCourseSheet";
+import { courseLabel } from "../lib/courseLabel";
 import { photoForRecognition } from "../lib/image";
 import { formatGrams, formatKcal } from "../lib/format";
 import { t } from "../lib/strings";
@@ -22,6 +24,8 @@ interface ItemDraft {
   baseQuantity: number | null;
   /** Values typed for a newly added food. */
   manual: { kcal: string; protein: string; carbs: string; fat: string } | null;
+  /** Index of its course (docs/courses.md); 0 while the meal is one dish. */
+  course?: number;
 }
 
 const parseNumber = (text: string): number | null => {
@@ -80,6 +84,12 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
   const meal = day.data?.meals.find((m) => m.id === id);
   const [, navigate] = useLocation();
   const update = useUpdateMeal();
+  // Courses (docs/courses.md): read with the meal, edited here, sent again with "Salva"
+  const storedCourses = useMealCourses(id);
+  const [courseNames, setCourseNames] = useState<string[]>([""]);
+  const [hadCourses, setHadCourses] = useState(false);
+  const [addingCourse, setAddingCourse] = useState(false);
+  const recognizeCourse = useRecognizeMeal();
 
   const [type, setType] = useState<NutritionMealType>("snack");
   const [time, setTime] = useState("12:00");
@@ -107,14 +117,19 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
   const photoInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!meal || loadedId === meal.id) return;
+    if (!meal || loadedId === meal.id || storedCourses.isPending) return;
     // Keep Nutrition's own type (e.g. afternoon_snack) instead of flattening it to "snack" on save
     setType((NUTRITION_MEAL_TYPES as readonly string[]).includes(meal.type) ? (meal.type as NutritionMealType) : "snack");
     setTime(meal.time);
-    setItems(draftsFrom(meal));
+    const split = splitIntoCourses(draftsFrom(meal), storedCourses.data);
+    if (split) {
+      setCourseNames(split.map((c) => c.name));
+      setItems(split.flatMap((c, course) => c.items.map((item) => ({ ...item, course }))));
+      setHadCourses(true);
+    } else setItems(draftsFrom(meal));
     setTotals({ kcal: decimal(meal.nutrients.kcal), protein: decimal(meal.nutrients.protein), carbs: decimal(meal.nutrients.carbs), fat: decimal(meal.nutrients.fat) });
     setLoadedId(meal.id);
-  }, [meal, loadedId]);
+  }, [meal, loadedId, storedCourses.isPending, storedCourses.data]);
 
   const hasItems = (meal?.items.length ?? 0) > 0 || items.length > 0;
   const computed = useMemo(() => {
@@ -139,6 +154,36 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
 
   const itemsChanged = JSON.stringify(items.map((i) => [i.name, i.quantity])) !== JSON.stringify(draftsFrom(meal).map((i) => [i.name, i.quantity]));
   const validItems = items.filter((item) => item.name.trim() !== "");
+  const groups = courseNames
+    .map((name, index) => ({ name, index, items: items.map((item, at) => ({ item, at })).filter(({ item }) => (item.course ?? 0) === index) }))
+    .filter((group) => group.items.length > 0);
+  const multi = groups.length > 1;
+
+  /** A course added with "+ Aggiungi portata": its rows go after the others; the meal's first dish gets a name too. */
+  function appendCourse(course: CourseSource, rows: ItemDraft[]) {
+    const names = courseNames.length === 1 && !multi ? [course.firstName ?? courseNames[0] ?? t.courses.defaultName] : courseNames;
+    const index = names.length;
+    setCourseNames([...names, course.name]);
+    setItems((list) => [...list, ...rows.slice(0, Math.max(0, 30 - list.length)).map((row, i) => ({ ...row, key: Date.now() + i, course: index }))]);
+    setAddingCourse(false);
+  }
+
+  async function coursePhoto(file: File, course: CourseSource) {
+    try {
+      const photo = await photoForRecognition(file);
+      recognizeCourse.mutate(
+        { images: [{ mediaType: photo.mediaType, data: photo.data }] },
+        {
+          onSuccess: (recognized) => {
+            if (shownPhotos.length < MEAL_PHOTOS_MAX) setAddedPhotos((list) => [...list, { key: `new-${Date.now()}`, preview: photo.previewUrl, mediaType: photo.mediaType, data: photo.data }]);
+            appendCourse(course, recognized.items.map((item, i) => draftFromRecognized(item, i)));
+          },
+        },
+      );
+    } catch {
+      setPhotoError(true);
+    }
+  }
 
   /** A new row whose values are typed by hand (without Pasti da foto, or chosen with "Inserisci a mano"). */
   function addManualFood() {
@@ -171,7 +216,10 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
 
   function save() {
     if (!meal) return;
-    const itemInputs: MealItemInput[] = validItems.map((item) => ({
+    // The rows in the order of their courses, so each course is a run of consecutive foods
+    const ordered = multi ? groups.flatMap((g) => g.items.map(({ item }) => item)).filter((item) => item.name.trim() !== "") : validItems;
+    const courseCounts = multi ? groups.map((g) => ({ name: g.name || t.courses.defaultName, count: g.items.filter(({ item }) => item.name.trim() !== "").length })).filter((c) => c.count > 0) : [];
+    const itemInputs: MealItemInput[] = ordered.map((item) => ({
       name: item.name.trim(),
       quantity: parseNumber(item.quantity),
       unit: item.unit,
@@ -186,7 +234,7 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
       {
         id: meal.id,
         request: hasItems
-          ? { date, time, type, description, items: itemInputs }
+          ? { date, time, type, description, items: itemInputs, ...(courseCounts.length > 1 ? { courses: courseCounts } : hadCourses ? { courses: null } : {}) }
           : {
               date, time, type, description,
               totals: { kcal: parseNumber(totals.kcal) ?? 0, protein: parseNumber(totals.protein) ?? 0, carbs: parseNumber(totals.carbs) ?? 0, fat: parseNumber(totals.fat) ?? 0 },
@@ -344,7 +392,17 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
         <>
           <span className="sheet-section">{t.edit.foods}</span>
           <div className="form-card">
-            {items.map((item, index) => (
+            {(multi ? groups : [{ name: "", index: -1, items: items.map((item, at) => ({ item, at })) }]).map((group) => (
+              <div key={group.index} className="meal-course-group">
+                {multi && (
+                  <div className="meal-course-head">
+                    <span className="plan-course-name">{courseLabel(group.name).toUpperCase()}</span>
+                    <button type="button" className="item-remove" aria-label={t.courses.removeCourse(courseLabel(group.name))} onClick={() => setItems((list) => list.filter((it) => (it.course ?? 0) !== group.index))}>
+                      <CloseIcon size={16} strokeWidth={2.2} />
+                    </button>
+                  </div>
+                )}
+            {group.items.map(({ item, at: index }) => (
               <div key={item.key} className="item-edit">
                 <div className="item-edit-row">
                   <input
@@ -383,6 +441,8 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
                     ))}
                   </div>
                 )}
+              </div>
+            ))}
               </div>
             ))}
             {adding ? (
@@ -427,7 +487,32 @@ export function EditMealPage({ date, id }: { date: string; id: string }) {
               </button>
             )}
           </div>
+          <button type="button" className="course-add" disabled={items.length >= 30} onClick={() => setAddingCourse(true)}>
+            {t.courses.add}
+          </button>
         </>
+      )}
+      {addingCourse && (
+        <MealCourseSheet
+          askFirst={!multi && items.length > 0}
+          ai={canRecognize}
+          busy={recognizeCourse.isPending}
+          error={photoError ? t.newMeal.unreadablePhoto : recognizeCourse.isError ? errorText(recognizeCourse.error) : null}
+          onClose={() => setAddingCourse(false)}
+          onPhoto={(file, course) => void coursePhoto(file, course)}
+          onText={(text, course) => recognizeCourse.mutate({ text }, { onSuccess: (recognized) => appendCourse(course, recognized.items.map((item, i) => draftFromRecognized(item, i))) })}
+          onDish={(dish, course) =>
+            appendCourse(
+              course,
+              dish.items.length > 0
+                ? dish.items.map((item, key) => ({ key, name: item.name, quantity: item.quantity !== null ? decimal(item.quantity) : "", unit: item.unit, base: item.nutrients, baseQuantity: item.quantity, manual: null }))
+                : [{ key: 0, name: dish.name, quantity: "", unit: null, base: emptyNutrients(dish.kcal ?? 0, dish.protein ?? 0, dish.carbs ?? 0, dish.fat ?? 0), baseQuantity: null, manual: null }],
+            )
+          }
+          onManual={(food, course) =>
+            appendCourse(course, [{ key: 0, name: food.name, quantity: decimal(food.amount), unit: food.unit === "g" ? "g" : null, base: emptyNutrients(food.kcal, food.protein, food.carbs, food.fat), baseQuantity: food.amount, manual: null }])
+          }
+        />
       )}
 
       <span className="sheet-section">{t.edit.values}</span>
