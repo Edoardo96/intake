@@ -9886,6 +9886,11 @@ div.connection-row {
   white-space: nowrap;
 }
 
+.dish-log-hint {
+  margin: -4px 0 0;
+  font-size: 13px;
+}
+
 
 /* Pasti da foto › "Conserva le foto dei pasti": the kept photos and their deletion, confirmed in the row */
 .meal-photos-clear {

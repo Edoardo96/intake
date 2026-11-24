@@ -10,16 +10,21 @@ import { t } from "../lib/strings";
  * Piano › Piatti: the person's dishes (Nutrition saved meals) with a search over names and foods, category chips with how
  * many dishes each has, and the dishes grouped by category. Rules in docs/dishes.md.
  */
-export function DishesTab() {
+export function DishesTab({ forLogging = false }: { forLogging?: boolean } = {}) {
   const dishes = useDishes();
   const groups = useDishGroups();
   const [query, setQuery] = useState("");
+  // "+" › I tuoi piatti: starts on the dishes of the meal of this hour, when there are any
+  const nowType = mealTypeNow();
   const [category, setCategory] = useState<string | null>(null);
+  const [onlyNow, setOnlyNow] = useState(forLogging);
   const s = t.dishBook;
   const all = dishes.data?.dishes ?? [];
   const categories = dishCategories(dishes.data?.customCategories ?? []);
   const count = (c: string | null) => all.filter((d) => d.category === c).length;
-  const found = searchDishes(all, query).filter((d) => category === null || d.category === category);
+  const nowCount = all.filter((d) => d.mealType === nowType).length;
+  const filterNow = forLogging && onlyNow && nowCount > 0;
+  const found = searchDishes(all, query).filter((d) => (category === null || d.category === category) && (!filterNow || d.mealType === nowType));
   const sections = [...categories, null]
     .map((c) => ({ category: c, dishes: found.filter((d) => d.category === c).sort((a, b) => a.name.localeCompare(b.name)) }))
     .filter((section) => section.dishes.length > 0);
@@ -34,14 +39,21 @@ export function DishesTab() {
           </svg>
           <input type="search" value={query} placeholder={s.search} aria-label={s.search} onChange={(e) => setQuery(e.target.value)} />
         </label>
-        <Link href="/piano/piatti/nuovo" className="button-primary-inline dishes-new" aria-label={s.newDish}>
-          {s.newDishShort}
-        </Link>
+        {!forLogging && (
+          <Link href="/piano/piatti/nuovo" className="button-primary-inline dishes-new" aria-label={s.newDish}>
+            {s.newDishShort}
+          </Link>
+        )}
       </div>
 
       {all.length > 0 && (
         <div className="dish-chips" role="group" aria-label={s.categoriesLabel}>
-          <button type="button" className="dish-filter" aria-pressed={category === null} onClick={() => setCategory(null)}>
+          {forLogging && nowCount > 0 && (
+            <button type="button" className="dish-filter" aria-pressed={filterNow} onClick={() => setOnlyNow(!onlyNow)}>
+              {s.nowFilter(t.mealTypes[nowType] ?? nowType)} {nowCount}
+            </button>
+          )}
+          <button type="button" className="dish-filter" aria-pressed={category === null && !filterNow} onClick={() => { setCategory(null); setOnlyNow(false); }}>
             {s.all} {all.length}
           </button>
           {categories
@@ -71,7 +83,7 @@ export function DishesTab() {
           </span>
           <div className="sheet-list">
             {section.dishes.map((dish) => (
-              <DishRow key={dish.id} dish={dish} alternatives={alternativesCount(groups.data, dish)} />
+              <DishRow key={dish.id} dish={dish} alternatives={alternativesCount(groups.data, dish)} href={forLogging ? `/pasto/nuovo/preferito/${dish.id}` : `/piano/piatti/${dish.id}`} />
             ))}
           </div>
         </section>
@@ -80,9 +92,9 @@ export function DishesTab() {
   );
 }
 
-function DishRow({ dish, alternatives }: { dish: DishSummary; alternatives: number }) {
+function DishRow({ dish, alternatives, href }: { dish: DishSummary; alternatives: number; href: string }) {
   return (
-    <Link href={`/piano/piatti/${dish.id}`} className="sheet-row dish-row">
+    <Link href={href} className="sheet-row dish-row">
       <span className="sheet-row-text">
         <strong>{dish.name}</strong>
         <span className="muted">{foodsLine(dish)}</span>
@@ -94,4 +106,13 @@ function DishRow({ dish, alternatives }: { dish: DishSummary; alternatives: numb
       </span>
     </Link>
   );
+}
+
+/** The Nutrition meal type of this hour of the device, as the confirmation screen guesses it. */
+function mealTypeNow(): string {
+  const hour = new Date().getHours();
+  if (hour < 11) return "breakfast";
+  if (hour < 16) return "lunch";
+  if (hour < 19) return "snack";
+  return "dinner";
 }

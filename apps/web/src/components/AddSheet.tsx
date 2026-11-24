@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
-import { useAddWater, useDay, useFeature, useFeatures, useLogPlanned, useDeleteSavedMeal, useRecentMeals, useRepeatMeal, useSavedMeals } from "../api/queries";
+import { useAddWater, useDay, useFeature, useFeatures, useLogPlanned, useRecentMeals, useRepeatMeal, useSavedMeals } from "../api/queries";
 import { formatKcal, formatShortDate } from "../lib/format";
 import { t } from "../lib/strings";
 import { CloseIcon, SparklesIcon } from "./icons";
@@ -34,8 +34,6 @@ interface Props {
 
 const WATER_AMOUNTS = [200, 250];
 
-/** Favorites listed when the row opens, before "Mostra altri". */
-const SAVED_SHOWN = 5;
 
 /** ▾ / ▴ at the end of a row that opens a list. */
 function ChevronIcon({ open }: { open: boolean }) {
@@ -62,12 +60,6 @@ export function AddSheet({ onClose }: Props) {
   const recent = useRecentMeals(showRecent);
   const repeat = useRepeatMeal();
   const saved = useSavedMeals();
-  const deleteSaved = useDeleteSavedMeal();
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
-  const [showSaved, setShowSaved] = useState(false);
-  const [showAllSaved, setShowAllSaved] = useState(false);
-  const shownSaved = showAllSaved ? (saved.data ?? []) : (saved.data ?? []).slice(0, SAVED_SHOWN);
-  const hiddenSaved = (saved.data?.length ?? 0) - shownSaved.length;
   const firstButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -175,77 +167,17 @@ export function AddSheet({ onClose }: Props) {
         <span className="sheet-section">{t.addSheet.otherFood}</span>
         <div className="sheet-list">
           {saved.data && saved.data.length > 0 ? (
-            <>
-              {/* Favorites are one row that opens, like "Ripeti un pasto recente", so a long list doesn't fill the sheet */}
-              <button type="button" className="sheet-row" aria-expanded={showSaved} onClick={() => setShowSaved((v) => !v)}>
-                <RowIcon path={ROW_ICONS.saved} />
-                <span className="sheet-row-text">
-                  <strong>{t.addSheet.saved}</strong>
-                  <span className="muted">{t.addSheet.savedCount(saved.data.length)}</span>
-                </span>
-                <ChevronIcon open={showSaved} />
-              </button>
-              {showSaved && (
-                <div className="recent-list">
-                {shownSaved.map((meal) =>
-                  confirmDelete === meal.id ? (
-                    // Deleting is confirmed in place: the favorite goes from Nutrition, logged meals keep their values
-                    <div key={meal.id} className="sheet-row saved-confirm" data-static role="group" aria-label={t.addSheet.deleteSavedConfirm(meal.name)}>
-                      <span className="sheet-row-text">
-                        <strong>{t.addSheet.deleteSavedConfirm(meal.name)}</strong>
-                        <span className="muted">{t.addSheet.deleteSavedNote}</span>
-                      </span>
-                      <span className="saved-confirm-actions">
-                        <button type="button" className="button-secondary-small" onClick={() => setConfirmDelete(null)}>
-                          {t.addSheet.deleteSavedNo}
-                        </button>
-                        <button
-                          type="button"
-                          className="button-secondary-small"
-                          data-kind="danger"
-                          disabled={deleteSaved.isPending}
-                          onClick={() => deleteSaved.mutate(meal, { onSuccess: () => setConfirmDelete(null) })}
-                        >
-                          {t.addSheet.deleteSavedYes}
-                        </button>
-                      </span>
-                    </div>
-                  ) : (
-                    <div key={meal.id} className="sheet-row saved-row" data-static>
-                      {/* Opens the confirmation screen with its foods, to correct amounts, type and time before logging */}
-                      <Link href={`/pasto/nuovo/preferito/${meal.id}`} className="sheet-row" onClick={onClose}>
-                        <span className="sheet-row-text">
-                          <strong>
-                            {meal.name}
-                            {meal.kcal !== null && ` · ${formatKcal(meal.kcal)} kcal`}
-                          </strong>
-                          {meal.description && <span className="muted">{meal.description}</span>}
-                        </span>
-                        <span className="sheet-row-action">{t.addSheet.open}</span>
-                      </Link>
-                      <button
-                        type="button"
-                        className="icon-button saved-delete"
-                        aria-label={t.addSheet.deleteSaved(meal.name)}
-                        onClick={() => {
-                          deleteSaved.reset();
-                          setConfirmDelete(meal.id);
-                        }}
-                      >
-                        <CloseIcon size={18} />
-                      </button>
-                    </div>
-                  ),
-                )}
-                  {hiddenSaved > 0 && (
-                    <button type="button" className="text-button saved-more" onClick={() => setShowAllSaved(true)}>
-                      {t.addSheet.savedMore(hiddenSaved)}
-                    </button>
-                  )}
-                  {deleteSaved.isError && <p className="error-text">{t.addSheet.deleteSavedFailed}</p>}
-                </div>
-              )}
-            </>
+            // "I tuoi piatti" opens its own screen with a search and the categories, like Piano › Piatti
+            <Link href="/pasto/nuovo/piatti" className="sheet-row" onClick={onClose}>
+              <RowIcon path={ROW_ICONS.saved} />
+              <span className="sheet-row-text">
+                <strong>{t.addSheet.saved}</strong>
+                <span className="muted">{t.addSheet.savedCount(saved.data.length)}</span>
+              </span>
+              <span className="sheet-row-action" aria-hidden="true">
+                ›
+              </span>
+            </Link>
           ) : (
             <div className="sheet-row">
               <RowIcon path={ROW_ICONS.saved} />
