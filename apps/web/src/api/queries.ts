@@ -4,6 +4,9 @@ import type {
   CourseAdd,
   CourseRemove,
   MealSplit,
+  MealRemove,
+  MealRestore,
+  MealAdd,
   DishGroupsResponse,
   DishesResponse,
   DishWrite,
@@ -896,6 +899,21 @@ export function useEditPlanMeal() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, ...edit }: MealEdit & { id: number }) => apiFetch<StoredPlan>(`/api/plans/${id}/meal`, { method: "PATCH", json: edit }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["plans"] });
+      return invalidateDays(queryClient);
+    },
+  });
+}
+
+/** "Togli pasto", "Rimetti" and "+ Aggiungi pasto" in Piano (docs/plan-meals.md); a plan in effect gets a new version from today. */
+export function useChangePlanMeals() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (change: ({ remove: MealRemove } | { restore: MealRestore } | { add: MealAdd }) & { id: number }) => {
+      const [kind, body] = "remove" in change ? ["remove", change.remove] : "restore" in change ? ["restore", change.restore] : ["add", change.add];
+      return apiFetch<StoredPlan>(`/api/plans/${change.id}/meals/${kind}`, { method: "POST", json: body });
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["plans"] });
       return invalidateDays(queryClient);

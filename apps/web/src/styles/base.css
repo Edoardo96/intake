@@ -10109,6 +10109,79 @@ div.connection-row {
   content: none;
 }
 
+/* "Togli pasto", "Pasti tolti" and "+ Aggiungi pasto" in Piano (docs/plan-meals.md) */
+.plan-meals-panel {
+  margin-top: 8px;
+}
+.plan-meals-note {
+  margin: 0;
+  font-size: 13px;
+}
+.plan-meals-choice {
+  flex-wrap: wrap;
+}
+.plan-meals-time {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 160px;
+}
+.plan-removed {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px dashed var(--color-border);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.plan-removed h3 {
+  margin: 0;
+}
+.plan-removed-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.plan-removed-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+.plan-removed-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 200px;
+}
+.plan-removed-text .muted {
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+.plan-day > .course-add,
+.plan-day > .plan-meals-panel {
+  margin-top: 16px;
+}
+.plan-meals-time input {
+  font: inherit;
+  font-size: 15px;
+  min-height: 44px;
+  padding: 0 12px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.plan-day > .course-add {
+  width: 100%;
+}
+
 /* Pasti da foto › "Conserva le foto dei pasti": the kept photos and their deletion, confirmed in the row */
 .meal-photos-clear {
   display: flex;
