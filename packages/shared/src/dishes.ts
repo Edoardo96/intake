@@ -20,7 +20,12 @@ export const dishCategorySchema = z.string().trim().min(1).max(40);
 export interface DishSummary extends SavedMeal {
   category: string | null;
   hasRecipe: boolean;
+  /** Other names of the dish: plan dishes merged into it ("Unisci", docs/plan-dishes.md). */
+  aliases: string[];
 }
+
+/** POST /api/dishes/:id/aliases and /aliases/remove: one other name of the dish. */
+export const dishAliasSchema = z.strictObject({ name: z.string().trim().min(1).max(100) });
 
 /** GET /api/dishes */
 export interface DishesResponse {

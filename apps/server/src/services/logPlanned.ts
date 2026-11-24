@@ -73,8 +73,11 @@ export function macrosToFields(macros: PlannedMacros): MealWriteFields {
     fat_g: macros.fat,
     fiber_g: macros.fiber,
   };
-  if (macros.sugar !== undefined) fields.sugar_g = macros.sugar;
-  if (macros.addedSugar !== undefined) fields.added_sugar_g = macros.addedSugar;
+  // Nutrition refuses sugar without added sugar: both or neither
+  if (macros.sugar !== undefined && macros.addedSugar !== undefined) {
+    fields.sugar_g = macros.sugar;
+    fields.added_sugar_g = macros.addedSugar;
+  }
   if (macros.saturatedFat !== undefined) fields.saturated_fat_g = macros.saturatedFat;
   if (macros.sodiumMg !== undefined) fields.sodium_mg = macros.sodiumMg;
   if (macros.caffeineMg !== undefined) fields.caffeine_mg = macros.caffeineMg;

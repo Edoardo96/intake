@@ -187,13 +187,14 @@ export const planRoutes: FastifyPluginAsync<PlanRoutesOptions> = async (app, { p
     if (!dishSaver) return reply.code(503).send({ error: "not_configured" });
     const stored = plans.get(Number(request.params.id));
     if (!stored) return reply.code(404).send({ error: "Plan not found" });
-    return { saving: await dishSaver.saveAll(stored.plan) };
+    return await dishSaver.saveAll(stored.plan);
   });
   app.get<{ Params: { id: string } }>("/plans/:id/dishes/missing", async (request, reply) => {
     if (!dishSaver) return reply.code(503).send({ error: "not_configured" });
     const stored = plans.get(Number(request.params.id));
     if (!stored) return reply.code(404).send({ error: "Plan not found" });
-    return { missing: (await dishSaver.missing(stored.plan)).length, saving: dishSaver.pending };
+    const { todo, similar } = await dishSaver.missing(stored.plan);
+    return { missing: todo.length, similar: similar.length, saving: dishSaver.pending };
   });
 
   // "Dividi in portate": the course of each food of a meal

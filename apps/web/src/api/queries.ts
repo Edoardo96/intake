@@ -909,7 +909,7 @@ export function useEditPlanMeal() {
 export function useSavePlanDishes() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => apiFetch<{ saving: number }>(`/api/plans/${id}/dishes/save`, { method: "POST" }),
+    mutationFn: (id: number) => apiFetch<{ saving: number; similar: number }>(`/api/plans/${id}/dishes/save`, { method: "POST" }),
     onSuccess: ({ saving }) => {
       // One dish every 2 seconds on the server: refresh the dishes while they arrive and once at the end
       const refresh = () => void queryClient.invalidateQueries({ queryKey: dishesKey });
@@ -1084,6 +1084,19 @@ const dishesKey = ["dishes"] as const;
 /** Piatti: the Nutrition saved meals with their category and whether a recipe is kept. */
 export function useDishes() {
   return useQuery({ queryKey: dishesKey, queryFn: () => apiFetch<DishesResponse>("/api/dishes"), staleTime: 60_000 });
+}
+
+/** "Unisci" (docs/plan-dishes.md): another name of a dish, or one taken away; dishes and interchangeable dishes reload. */
+export function useDishAlias() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, name, remove }: { id: string; name: string; remove?: boolean }) =>
+      apiFetch<{ aliases: string[] }>(`/api/dishes/${id}/aliases${remove ? "/remove" : ""}`, { method: "POST", json: { name } }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["dish-groups"] });
+      return queryClient.invalidateQueries({ queryKey: dishesKey });
+    },
+  });
 }
 
 /** "Salva piatto": a new dish, or changes to one (`id`); the lists of dishes and favorites reload. */

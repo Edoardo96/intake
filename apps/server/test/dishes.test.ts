@@ -65,7 +65,7 @@ describe("dishes", () => {
 
     const dish = { name: "Insalata di farro", category: "Estate", foods: [{ name: "Farro", quantity: 80, unit: "g" }], totals: { kcal: 300, protein: 10, carbs: 50, fat: 5, fiber: 6 } };
     expect((await server.inject({ method: "POST", url: "/api/dishes", headers, payload: { ...dish, totals: undefined } })).statusCode).toBe(400);
-    expect((await server.inject({ method: "POST", url: "/api/dishes", headers, payload: { ...dish, name: "pasta con TONNO" } })).json()).toEqual({ error: "name_taken" });
+    expect((await server.inject({ method: "POST", url: "/api/dishes", headers, payload: { ...dish, name: "pasta con TONNO" } })).json()).toMatchObject({ error: "name_taken" });
     const created = await server.inject({ method: "POST", url: "/api/dishes", headers, payload: dish });
     expect(created.statusCode).toBe(201);
     expect(store.category(created.json().id)).toBe("Estate");
@@ -123,5 +123,31 @@ describe("dishes", () => {
     const server = await app;
     const headers = { cookie: (await signIn(server)).cookie };
     expect((await server.inject({ method: "POST", url: `/api/dishes/${ID}/recipe/generate`, headers, payload: {} })).statusCode).toBe(503);
+  });
+});
+
+describe("dish aliases (Unisci)", () => {
+  it("keeps another name of a dish and adds it to its group of interchangeable dishes", async () => {
+    const { openDatabase } = await import("../src/db/database.js");
+    const { DishStore } = await import("../src/db/dishStore.js");
+    const { DishGroupStore } = await import("../src/db/dishGroupStore.js");
+    const db = openDatabase(":memory:");
+    const store = new DishStore(db);
+    const groups = new DishGroupStore(db);
+    const ID = "0a9b8c7d-6e5f-4a3b-8c1d-000000000001";
+    const dish = (name: string) => ({ name, aliases: [], foods: [{ name }], macros: null });
+    groups.link({ dish: dish("Pasta con tonno"), alternative: dish("Pasta al salmone") });
+    expect(store.setAliases(ID, ["Pasta tonno e pomodoro", "pasta TONNO e pomodoro", "Riso"])).toEqual(["Pasta tonno e pomodoro", "Riso"]);
+    expect(store.all().get(ID)?.aliases).toEqual(["Pasta tonno e pomodoro", "Riso"]);
+    const { alternativesFor } = await import("@intake/shared");
+    // Through the route: the group's dish gets the merged name, so the plan finds the alternatives under it
+    const { buildApp } = await import("../src/app.js");
+    const { authOptions, signIn } = await import("./helpers.js");
+    const api = { savedMeals: async () => [{ id: ID, name: "Pasta con tonno", description: "", mealType: null, kcal: 500, protein: 20, carbs: 60, fat: 15, items: [] }], createSavedMeal: async () => ({ id: null }), updateSavedMeal: async () => {}, deleteSavedMeal: async () => true };
+    const app = await buildApp({ auth: authOptions(), dishes: { api: api as never, store, groups } });
+    const { cookie } = await signIn(app);
+    const res = await app.inject({ method: "POST", url: `/api/dishes/${ID}/aliases`, headers: { cookie }, payload: { name: "Insalata di pasta al tonno" } });
+    expect(res.json().aliases).toContain("Insalata di pasta al tonno");
+    expect(alternativesFor(groups.list(), "Insalata di pasta al tonno").map((a) => a.dish.name)).toEqual(["Pasta al salmone"]);
   });
 });

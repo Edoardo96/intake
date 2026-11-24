@@ -10319,6 +10319,71 @@ div.connection-row {
   font-weight: 700;
 }
 
+/* "Somiglia a un piatto che hai già" (docs/plan-dishes.md) */
+.similar-hint {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+.similar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.similar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-divider);
+}
+.similar-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.similar-text .muted {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.similar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 14px;
+}
+.dish-aliases {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dish-aliases ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dish-aliases li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.similar-row .button-primary-inline {
+  flex: none;
+  width: auto;
+  padding: 0 20px;
+}
+
 
 /* Pasti da foto › "Conserva le foto dei pasti": the kept photos and their deletion, confirmed in the row */
 .meal-photos-clear {

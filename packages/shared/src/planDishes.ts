@@ -40,7 +40,7 @@ function totalsOf(macros: PlannedMacros): NonNullable<DishWrite["totals"]> {
     carbs: round1(macros.carbs),
     fat: round1(macros.fat),
     fiber: round1(macros.fiber),
-    ...(macros.sugar !== undefined ? { sugar: round1(macros.sugar) } : {}),
+    ...(macros.sugar !== undefined && macros.addedSugar !== undefined ? { sugar: round1(macros.sugar), addedSugar: Math.min(round1(macros.addedSugar), round1(macros.sugar)) } : {}),
   };
 }
 
@@ -67,7 +67,8 @@ export function planDishWrite(meal: FixedPlannedMeal, course?: Course): PlanDish
     name: f.name.slice(0, 80),
     ...(f.quantity !== undefined ? { quantity: f.quantity } : {}),
     ...(f.unit ? { unit: f.unit.slice(0, 12) } : {}),
-    ...(withValues && f.nutrients ? { nutrients: { kcal: f.nutrients.kcal, protein: f.nutrients.protein, carbs: f.nutrients.carbs, fat: f.nutrients.fat, fiber: f.nutrients.fiber, ...(f.nutrients.sugar !== undefined ? { sugar: f.nutrients.sugar } : {}) } } : {}),
+    // Sugar and added sugar travel together: Nutrition refuses sugar without added sugar
+    ...(withValues && f.nutrients ? { nutrients: { kcal: f.nutrients.kcal, protein: f.nutrients.protein, carbs: f.nutrients.carbs, fat: f.nutrients.fat, fiber: f.nutrients.fiber, ...(f.nutrients.sugar !== undefined && f.nutrients.addedSugar !== undefined ? { sugar: f.nutrients.sugar, addedSugar: f.nutrients.addedSugar } : {}) } } : {}),
   }));
   const mealType: (typeof NUTRITION_MEAL_TYPES)[number] = mealTypeOf(meal);
   return { key, name, category: planDishCategory(meal, course), mealType, foods, ...(macros ? { totals: totalsOf(macros) } : {}) };
@@ -86,4 +87,51 @@ export function planDishes(plan: MealPlan): PlanDish[] {
     }
   }
   return [...found.values()];
+}
+
+const STOP_WORDS = new Set(["di", "del", "della", "dello", "dei", "degli", "delle", "con", "e", "ed", "al", "allo", "alla", "ai", "agli", "alle", "a", "da", "in", "il", "lo", "la", "i", "gli", "le", "un", "uno", "una", "per", "su", "senza", "the", "and", "with", "of", "en", "met", "van", "de", "het"]);
+
+function words(text: string): Set<string> {
+  return new Set(looseDishKey(text).split(" ").filter((w) => w.length > 1 && !STOP_WORDS.has(w)));
+}
+
+function overlap(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let shared = 0;
+  for (const w of a) if (b.has(w)) shared++;
+  return shared / (a.size + b.size - shared);
+}
+
+export interface SimilarDish<T> {
+  dish: T;
+  /** 0–1: how alike the names or the foods are. */
+  score: number;
+}
+
+/** Minimum likeness to ask "Unisci o nuovo?": half the meaningful words, or half the foods, in common. */
+export const SIMILAR_DISH_SCORE = 0.5;
+
+/**
+ * Dishes of Piatti that look like a dish about to be saved: by the words of the names (without amounts and small
+ * words) and by the foods. The same name without amounts is not "similar", it is the dish itself (looseDishKey).
+ * Best first, at most `limit`.
+ */
+export function similarDishes<T extends { name: string; description: string; aliases?: string[]; items: Array<{ name: string }> }>(
+  target: { name: string; foods: Array<{ name: string }> },
+  dishes: T[],
+  limit = 3,
+): Array<SimilarDish<T>> {
+  const name = words(target.name);
+  const foods = new Set(target.foods.map((f) => looseDishKey(f.name)).filter(Boolean));
+  return dishes
+    .map((dish) => {
+      const names = [dish.name, ...(dish.aliases ?? [])].map(words);
+      const nameScore = Math.max(...names.map((n) => overlap(name, n)));
+      const dishFoods = new Set(dish.items.map((i) => looseDishKey(i.name)).filter(Boolean));
+      const foodScore = foods.size >= 2 && dishFoods.size >= 2 ? overlap(foods, dishFoods) : 0;
+      return { dish, score: Math.round(Math.max(nameScore, foodScore) * 100) / 100 };
+    })
+    .filter((s) => s.score >= SIMILAR_DISH_SCORE)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
 }
