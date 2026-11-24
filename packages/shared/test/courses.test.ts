@@ -45,3 +45,68 @@ describe("courses", () => {
     expect(fixed.macros?.kcal).toBe(440);
   });
 });
+
+describe("courses from labels", () => {
+  const cf = (items: unknown[], macros?: unknown) => ({
+    schema_version: 2,
+    updated: "2026-11-23",
+    meal_slots: [{ id: "lunch", label: "Pranzo", time: "13:00" }],
+    days: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"].map((day) => ({ day, meals: { lunch: { description: "Pasta e yogurt", items, ...(macros ? { macros } : {}) } } })),
+  });
+  const totals = { kcal: 640, protein_g: 30, carbs_g: 90, fat_g: 15, fiber_g: 6 };
+
+  it("imports a Claude Fitness meal with items' course as courses, keeping the meal's totals", async () => {
+    const { importPlan } = await import("../src/index.js");
+    const result = importPlan(cf([{ food: "Pasta", quantity: 90, unit: "g", course: "Primo" }, { food: "Pomodoro", quantity: 100, unit: "g", course: "Primo" }, { food: "Yogurt", quantity: 150, unit: "g", course: "Fine pasto" }], totals));
+    if (!result.success) throw new Error(JSON.stringify(result.issues));
+    const meal = result.plan.days.monday.meals[0]!;
+    if (meal.free) throw new Error("free");
+    expect(meal.courses!.map((c) => [c.name, c.foods.length])).toEqual([["Primo", 2], ["Fine pasto", 1]]);
+    expect(meal.macros!.kcal).toBe(640);
+  });
+
+  it("keeps a meal without courses as one dish", async () => {
+    const { importPlan } = await import("../src/index.js");
+    const result = importPlan(cf([{ food: "Pasta", quantity: 90, unit: "g" }, { food: "Yogurt", quantity: 150, unit: "g" }], totals));
+    if (!result.success) throw new Error("invalid");
+    const meal = result.plan.days.monday.meals[0]!;
+    expect("courses" in meal && meal.courses).toBeFalsy();
+  });
+
+  it("splits a planned meal into courses and back into one dish", async () => {
+    const { splitMeal } = await import("../src/index.js");
+    const index = plan.days.wednesday.meals.findIndex((m) => m.title === "Pranzo");
+    const before = plan.days.wednesday.meals[index]!;
+    if (before.free) throw new Error("free");
+    const labels = before.foods.map((_, i) => (i === before.foods.length - 1 ? "Dolce" : "Primo"));
+    const split = splitMeal(plan, { day: "wednesday", index, labels });
+    const meal = split.days.wednesday.meals[index]!;
+    if (meal.free) throw new Error("free");
+    expect(meal.courses!.map((c) => c.name)).toEqual(["Primo", "Dolce"]);
+    expect(meal.foods.map((f) => f.name)).toEqual(before.foods.map((f) => f.name));
+    expect(meal.macros?.kcal).toBe(before.macros?.kcal);
+    const back = splitMeal(split, { day: "wednesday", index, labels: labels.map(() => "Primo") });
+    const one = back.days.wednesday.meals[index]!;
+    expect("courses" in one && one.courses).toBeFalsy();
+  });
+});
+
+describe("AI course names", () => {
+  it("match COURSE_NAMES", async () => {
+    const { COURSE_NAMES, GENERATED_MEAL_JSON_SCHEMA } = await import("../src/index.js");
+    expect(JSON.stringify(GENERATED_MEAL_JSON_SCHEMA)).toContain(COURSE_NAMES.join(", "));
+  });
+});
+
+describe("generated meal with courses", () => {
+  it("becomes a meal of courses with summed values", async () => {
+    const { toPlannedMeal } = await import("../src/index.js");
+    const food = (name: string, kcal: number, course: string) => ({ name, quantity: 100, unit: "g", kcal, protein: 5, carbs: 10, fat: 2, fiber: 1, sugar: 1, addedSugar: 0, course });
+    const meal = toPlannedMeal({ slot: "lunch", free: false, description: "Pasta e yogurt", foods: [food("Pasta", 350, "Primo"), food("Yogurt", 90, "Fine pasto")] }, { title: "Pranzo" });
+    if (meal.free) throw new Error("free");
+    expect(meal.courses!.map((c) => c.name)).toEqual(["Primo", "Fine pasto"]);
+    expect(meal.macros!.kcal).toBe(440);
+    const one = toPlannedMeal({ slot: "lunch", free: false, description: "Pasta", foods: [food("Pasta", 350, ""), food("Olio", 45, "")] }, { title: "Pranzo" });
+    expect("courses" in one && one.courses).toBeFalsy();
+  });
+});

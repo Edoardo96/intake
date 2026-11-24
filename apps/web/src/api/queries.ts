@@ -3,6 +3,7 @@ import type {
   Dish,
   CourseAdd,
   CourseRemove,
+  MealSplit,
   DishGroupsResponse,
   DishesResponse,
   DishWrite,
@@ -906,10 +907,12 @@ export function useEditPlanMeal() {
 export function useChangeCourses() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (change: ({ add: CourseAdd } | { remove: CourseRemove }) & { id: number }) =>
+    mutationFn: (change: ({ add: CourseAdd } | { remove: CourseRemove } | { split: MealSplit }) & { id: number }) =>
       "add" in change
         ? apiFetch<StoredPlan>(`/api/plans/${change.id}/course`, { method: "POST", json: change.add })
-        : apiFetch<StoredPlan>(`/api/plans/${change.id}/course/remove`, { method: "POST", json: change.remove }),
+        : "split" in change
+          ? apiFetch<StoredPlan>(`/api/plans/${change.id}/split`, { method: "POST", json: change.split })
+          : apiFetch<StoredPlan>(`/api/plans/${change.id}/course/remove`, { method: "POST", json: change.remove }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["plans"] });
       return invalidateDays(queryClient);

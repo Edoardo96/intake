@@ -5,7 +5,7 @@
  */
 import { z } from "zod";
 import { MEAL_PLAN_SCHEMA_VERSION, MEAL_TYPES, WEEKDAYS, mealPlanSchema, plannedFoodSchema, type MealPlan, type PlannedFoodNutrients, type PlannedMacros, type PlannedMeal, type Weekday, type Course } from "./mealPlan.js";
-import { COURSE_NAMES, COURSES_MAX, coursesOf, withCourses } from "./courses.js";
+import { COURSE_NAMES, COURSES_MAX, coursesFromLabels, coursesOf, withCourses } from "./courses.js";
 import { isFixedMeal } from "./planUtils.js";
 
 export const PLAN_DIETS = ["omnivore", "vegetarian", "pescatarian", "vegan"] as const;
@@ -149,7 +149,7 @@ export const generatedPlanSchema = z.object({
             slot: z.string(),
             free: z.boolean(),
             description: z.string().max(160),
-            foods: z.array(foodAnswer).max(12),
+            foods: z.array(foodAnswer.extend({ course: z.string().max(30).optional() })).max(12),
           }),
         ),
       }),
@@ -223,7 +223,17 @@ export const GENERATED_PLAN_JSON_SCHEMA = {
                 foods: {
                   type: "array",
                   description: "The foods with their quantity and the nutrients of that quantity; empty for a free meal. The meal's nutrients are the sum of its foods",
-                  items: foodJson,
+                  items: {
+                    ...foodJson,
+                    required: [...foodJson.required, "course"],
+                    properties: {
+                      ...foodJson.properties,
+                      course: {
+                        type: "string",
+                        description: `Only when the meal is made of separate dishes eaten one after the other (a pasta and then a yogurt): the course of this food, one of Antipasto, Primo, Secondo, Contorno, Frutta, Dolce, Fine pasto, Bevanda (always these Italian names). Empty when the meal is one dish`,
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -278,6 +288,8 @@ export function toPlannedMeal(meal: GeneratedMeal | undefined, base: { title: st
       nutrients: { kcal: Math.round(f.kcal * 10) / 10, protein: round1(f.protein), carbs: round1(f.carbs), fat: round1(f.fat), fiber: round1(f.fiber), sugar, addedSugar: Math.min(sugar, round1(f.addedSugar)) },
     };
   });
+  const courses = coursesFromLabels(foods, meal.foods.map((f) => f.course));
+  if (courses) return withCourses(base, courses);
   return {
     ...base,
     description: meal.description || meal.foods.map((f) => f.name).join(", "),
@@ -647,4 +659,32 @@ export function removeCourse(plan: MealPlan, remove: CourseRemove): MealPlan {
   const current = plan.days[remove.day].meals[remove.index];
   if (!current || !isFixedMeal(current) || !current.courses?.[remove.course]) throw new Error("No such course");
   return replaceMeal(plan, remove.day, remove.index, withCourses(current, current.courses.filter((_, i) => i !== remove.course)));
+}
+
+/** "Dividi in portate" on a planned meal: the course of each of its foods, in the order of the meal's foods. */
+export const mealSplitSchema = z
+  .object({
+    day: z.enum(WEEKDAYS),
+    index: z.number().int().min(0).max(9),
+    labels: z.array(z.string().trim().min(1).max(30)).min(1).max(30),
+  })
+  .strict();
+export type MealSplit = z.infer<typeof mealSplitSchema>;
+
+/**
+ * The plan with a fixed meal split into courses (or put back into one dish when every food has the same course). The
+ * foods keep their values; a meal whose foods have none keeps its totals.
+ */
+export function splitMeal(plan: MealPlan, split: MealSplit): MealPlan {
+  const current = plan.days[split.day].meals[split.index];
+  if (!current || !isFixedMeal(current) || current.foods.length !== split.labels.length) throw new Error("No such meal");
+  const courses = coursesFromLabels(current.foods, split.labels);
+  if (!courses) {
+    if (new Set(split.labels.map((l) => l.toLowerCase())).size > COURSES_MAX) throw new Error("Too many courses");
+    // One course: the meal is one dish again, with its totals (the joined course names of its text are dropped too)
+    const { courses: hadCourses, description, ...single } = current;
+    const text = hadCourses ? undefined : description;
+    return replaceMeal(plan, split.day, split.index, { ...single, ...(text ? { description: text } : {}) });
+  }
+  return replaceMeal(plan, split.day, split.index, withCourses(current, courses, current.macros));
 }

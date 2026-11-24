@@ -1,6 +1,6 @@
 import { foodLine, isFixedMeal } from "./planUtils.js";
 import { sumFoodNutrients } from "./planGeneration.js";
-import type { Course, FixedPlannedMeal, MealPlan, PlannedMacros, PlannedMeal } from "./mealPlan.js";
+import type { Course, FixedPlannedMeal, MealPlan, PlannedFood, PlannedMacros, PlannedMeal } from "./mealPlan.js";
 import { WEEKDAYS } from "./mealPlan.js";
 
 /**
@@ -77,13 +77,14 @@ export function sumCourseMacros(courses: Array<Pick<Course, "foods" | "macros">>
  * A fixed meal with these courses: the foods of all courses in order, the description "A + B" and the summed macros.
  * One course left makes it a meal without courses again.
  */
-export function withCourses(meal: Pick<FixedPlannedMeal, "title" | "time" | "type">, courses: Course[]): FixedPlannedMeal {
+export function withCourses(meal: Pick<FixedPlannedMeal, "title" | "time" | "type">, courses: Course[], fallback?: PlannedMacros): FixedPlannedMeal {
   const base = { title: meal.title, ...(meal.time !== undefined ? { time: meal.time } : {}), ...(meal.type !== undefined ? { type: meal.type } : {}) };
   if (courses.length === 1) {
     const [only] = courses;
     return { ...base, ...(only!.description ? { description: only!.description } : {}), foods: only!.foods, ...(only!.macros ? { macros: only!.macros } : {}) };
   }
-  const macros = sumCourseMacros(courses);
+  // A meal split into courses whose foods have no values of their own keeps the totals it had (from a plan file)
+  const macros = sumCourseMacros(courses) ?? fallback ?? null;
   return {
     ...base,
     description: courses.map(courseText).join(" + ").slice(0, 300),
@@ -96,7 +97,32 @@ export function withCourses(meal: Pick<FixedPlannedMeal, "title" | "time" | "typ
 /** A plan whose meals with courses have their foods, description and macros recomputed from them (on upload). */
 export function normalizeCourses(plan: MealPlan): MealPlan {
   const days = Object.fromEntries(
-    WEEKDAYS.map((w) => [w, { ...plan.days[w], meals: plan.days[w].meals.map((m: PlannedMeal) => (isFixedMeal(m) && m.courses ? withCourses(m, m.courses) : m)) }]),
+    WEEKDAYS.map((w) => [w, { ...plan.days[w], meals: plan.days[w].meals.map((m: PlannedMeal) => (isFixedMeal(m) && m.courses ? withCourses(m, m.courses, m.macros) : m)) }]),
   ) as MealPlan["days"];
   return { ...plan, days };
+}
+
+/**
+ * Foods with the name of their course (from a plan file, the AI or "Dividi in portate") grouped into courses, in the
+ * order each name first appears. A food without a name joins the course before it (the first one at the start). Null
+ * when there are fewer than two courses: the meal stays one dish.
+ */
+export function coursesFromLabels(foods: PlannedFood[], labels: Array<string | null | undefined>): Course[] | null {
+  const order: string[] = [];
+  const byName = new Map<string, PlannedFood[]>();
+  let last: string | undefined;
+  const firstNamed = labels.map((l) => l?.trim()).find((l) => l);
+  foods.forEach((food, i) => {
+    const name = labels[i]?.trim().slice(0, 30) || last || firstNamed;
+    if (!name) return;
+    const key = name.toLowerCase();
+    if (!byName.has(key)) {
+      order.push(name);
+      byName.set(key, []);
+    }
+    byName.get(key)!.push(food);
+    last = name;
+  });
+  if (order.length < 2 || order.length > COURSES_MAX) return null;
+  return order.map((name) => ({ name, foods: byName.get(name.toLowerCase())! }));
 }

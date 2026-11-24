@@ -1,4 +1,4 @@
-import { COURSE_NAMES, type CourseAdd, type Dish, type FixedPlannedMeal } from "@intake/shared";
+import { COURSE_NAMES, foodLine, type CourseAdd, type Dish, type FixedPlannedMeal } from "@intake/shared";
 import { useState } from "react";
 import { courseLabel } from "../lib/courseLabel";
 import { t } from "../lib/strings";
@@ -90,4 +90,72 @@ export function AddCourse({ meal, onAdd, busy, failed }: { meal: FixedPlannedMea
 function newFromEdit(meal: FixedPlannedMeal, edit: Parameters<typeof dishOfEdit>[1]) {
   const { description, foods, macros } = dishAsEdit(dishOfEdit(meal, edit));
   return { description, foods, ...(macros ? { macros } : {}) };
+}
+
+/**
+ * "Dividi in portate" on a planned meal: which courses it has, then the course of each food. Every food in one course
+ * makes the meal one dish again. Rules in docs/courses.md.
+ */
+export function SplitCourses({ meal, onSave, busy, failed }: { meal: FixedPlannedMeal; onSave: (labels: string[], done: () => void) => void; busy?: boolean; failed?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const current = meal.courses?.flatMap((c) => c.foods.map(() => c.name)) ?? [];
+  const own = (meal.courses ?? []).map((c) => c.name).filter((name) => !(COURSE_NAMES as readonly string[]).includes(name));
+  const options = [...COURSE_NAMES, ...own];
+  const [chosen, setChosen] = useState<string[]>(() => (meal.courses ? meal.courses.map((c) => c.name) : ["Primo", "Secondo"]));
+  const [labels, setLabels] = useState<string[]>(() => (current.length === meal.foods.length ? current : meal.foods.map(() => "Primo")));
+  if (meal.foods.length < 2) return null;
+  if (!open) {
+    return (
+      <button type="button" className="plan-meal-action" onClick={() => setOpen(true)}>
+        {t.courses.split}
+      </button>
+    );
+  }
+  // The courses in the order they are listed in the chips; a food whose course was deselected goes to the first one
+  const inUse = options.filter((name) => chosen.includes(name));
+  const shown = labels.map((label) => (inUse.includes(label) ? label : (inUse[0] ?? label)));
+  const toggle = (name: string) => setChosen((list) => (list.includes(name) ? (list.length > 1 ? list.filter((n) => n !== name) : list) : list.length < 6 ? [...list, name] : list));
+  const withoutValues = meal.foods.some((f) => !f.nutrients);
+  const single = new Set(shown).size < 2;
+  return (
+    <div className="dish-alt-choose course-panel course-split">
+      <strong className="dish-add-title">{t.courses.split}</strong>
+      <div className="dish-form-group">
+        <span className="plan-edit-title">{t.courses.splitWhich}</span>
+        <div className="dish-chips dish-chips-wrap">
+          {options.map((name) => (
+            <button key={name} type="button" className="dish-filter" aria-pressed={chosen.includes(name)} onClick={() => toggle(name)}>
+              {courseLabel(name)}
+            </button>
+          ))}
+        </div>
+      </div>
+      <span className="plan-edit-title">{t.courses.splitHint}</span>
+      <ul className="course-split-list">
+        {meal.foods.map((food, i) => (
+          <li key={i}>
+            <span className="course-split-food">{foodLine(food)}</span>
+            <div className="dish-chips dish-chips-wrap" role="radiogroup" aria-label={food.name}>
+              {inUse.map((name) => (
+                <button key={name} type="button" role="radio" aria-checked={shown[i] === name} className="dish-filter course-split-chip" onClick={() => setLabels(shown.map((l, j) => (j === i ? name : l)))}>
+                  {courseLabel(name)}
+                </button>
+              ))}
+            </div>
+          </li>
+        ))}
+      </ul>
+      {single && <p className="muted course-split-note">{t.courses.splitOne}</p>}
+      {!single && withoutValues && <p className="muted course-split-note">{t.courses.splitNoValues}</p>}
+      {failed && <p className="form-error" role="alert">{t.courses.splitFailed}</p>}
+      <div className="plan-replace-actions">
+        <button type="button" className="button-secondary-small" onClick={() => setOpen(false)}>
+          {t.plan.editCancel}
+        </button>
+        <button type="button" className="button-primary-inline" disabled={busy} onClick={() => onSave(shown, () => setOpen(false))}>
+          {t.courses.splitSave}
+        </button>
+      </div>
+    </div>
+  );
 }

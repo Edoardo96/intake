@@ -18,7 +18,7 @@ import { t } from "../lib/strings";
 import { Scrim } from "../components/Scrim";
 import { NeedsCard } from "../components/NeedsCard";
 import { DishesTab } from "../components/DishesTab";
-import { AddCourse, courseLabel } from "../components/Courses";
+import { AddCourse, SplitCourses, courseLabel } from "../components/Courses";
 import { DishAlternatives, DishGroupsCard, dishAsEdit } from "../components/DishAlternatives";
 import { PLAN_TAB_PARAM, planTabFromSearch, preferredPlanTab, type PlanTab } from "../lib/planTab";
 
@@ -295,6 +295,15 @@ export function PlanPage() {
                       )}
                       {splitting?.day === weekday && splitting.index === index && (
                         <SplitFoods plan={shown} day={weekday} index={index} onDone={() => setSplitting(null)} onClose={() => setSplitting(null)} />
+                      )}
+                      {isFixedMeal(meal) && (
+                        <SplitCourses
+                          key={`${shown.id}-${weekday}-${index}-${meal.courses?.length ?? 1}`}
+                          meal={meal}
+                          busy={courses.isPending}
+                          failed={courses.isError}
+                          onSave={(labels, done) => courses.mutate({ id: shown.id, split: { day: weekday, index, labels } }, { onSuccess: done })}
+                        />
                       )}
                       <MoveMeal plan={shown.plan} day={weekday} index={index} busy={swap.isPending} failed={swap.isError} onMove={(toDay) => swap.mutate({ id: shown.id, day: weekday, index, toDay })} />
                     </div>

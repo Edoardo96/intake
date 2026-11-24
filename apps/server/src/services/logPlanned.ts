@@ -134,7 +134,9 @@ export async function logPlannedMeal(
       const dish = alternativeOf(courseText(course), choice.alternative);
       return [{ text: dish.name, foods: dish.foods, macros: dishMacros(dish) }];
     });
-    const total = sumCourseMacros(eaten.map((c) => ({ foods: c.foods, ...(c.macros ? { macros: c.macros } : {}) })));
+    // Courses split from a meal with totals only have no values of their own: the whole meal as planned uses its totals
+    const asPlanned = input.courses.every((c) => c.eaten && !c.alternative);
+    const total = sumCourseMacros(eaten.map((c) => ({ foods: c.foods, ...(c.macros ? { macros: c.macros } : {}) }))) ?? (asPlanned ? (meal.macros ?? null) : null);
     if (!total) throw new PlanMealWithoutMacrosError();
     const selection = input.courses.map((c) => (!c.eaten ? "x" : c.alternative ? `${c.alternative.groupId}.${c.alternative.dishIndex}` : "p")).join("_");
     return logFoods(eaten.map((c) => c.text).join(" + "), eaten.flatMap((c) => c.foods), total, `intake-plan-${stored.id}-${input.date}-${input.index}-c-${selection}`);

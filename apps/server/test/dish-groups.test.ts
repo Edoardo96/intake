@@ -1,11 +1,11 @@
 import { readFileSync } from "node:fs";
-import { addCourse, mealPlanSchema, type Dish, type MealPlan } from "@intake/shared";
+import { addCourse, splitMeal, mealPlanSchema, type Dish, type MealPlan } from "@intake/shared";
 import { describe, expect, it, vi } from "vitest";
 import { buildApp } from "../src/app.js";
 import { openDatabase } from "../src/db/database.js";
 import { DishGroupStore } from "../src/db/dishGroupStore.js";
 import { PlanStore } from "../src/db/planStore.js";
-import { logPlannedMeal, PlanMealNotFoundError } from "../src/services/logPlanned.js";
+import { logPlannedMeal, PlanMealNotFoundError, PlanMealWithoutMacrosError } from "../src/services/logPlanned.js";
 import { authOptions, signIn } from "./helpers.js";
 
 const examplePlan: MealPlan = mealPlanSchema.parse(
@@ -143,5 +143,21 @@ describe("logPlannedMeal with courses", () => {
     expect(call.idempotency_key).toBe(`intake-plan-${plan.id}-2026-11-05-${index}-c-${group.id}.1_x`);
     expect(plans.linksOn("2026-11-05")).toEqual([{ planId: plan.id, index, mealId: "c-meal" }]);
     await expect(logPlannedMeal(api, plans, { date: "2026-11-05", planId: plan.id, index, today: "2026-11-06", now: "09:00:00", courses: [{ eaten: false }, { eaten: false }] }, groups)).rejects.toBeInstanceOf(PlanMealNotFoundError);
+  });
+
+  it("logs a meal split from totals only with its totals when every course is eaten as planned", async () => {
+    const db = openDatabase(":memory:");
+    const plans = new PlanStore(db);
+    const index = examplePlan.days.thursday.meals.findIndex((m) => m.title === "Pranzo");
+    const first = examplePlan.days.thursday.meals[index]!;
+    const meal = { title: first.title, time: first.time, foods: [{ name: "Pasta", quantity: 100, unit: "g" }, { name: "Yogurt", quantity: 150, unit: "g" }], macros: { kcal: 520, protein: 25, carbs: 80, fat: 8, fiber: 3 } };
+    const base = mealPlanSchema.parse({ ...examplePlan, days: { ...examplePlan.days, thursday: { ...examplePlan.days.thursday, meals: examplePlan.days.thursday.meals.map((m, i) => (i === index ? meal : m)) } } });
+    const split = splitMeal(base, { day: "thursday", index, labels: ["Primo", "Fine pasto"] });
+    const plan = plans.add({ ...split, validFrom: "2026-11-02" });
+    const logMeal = vi.fn(async (_input: object) => ({ id: "t-meal" }));
+    const api = { logMeal, mealsByDate: vi.fn(async () => ({ timezone: null, meals: [] })) };
+    await logPlannedMeal(api, plans, { date: "2026-11-05", planId: plan.id, index, today: "2026-11-06", now: "09:00:00", courses: [{ eaten: true }, { eaten: true }] });
+    expect((logMeal.mock.calls[0]![0] as Record<string, unknown>).calories).toBe(520);
+    await expect(logPlannedMeal(api, plans, { date: "2026-11-05", planId: plan.id, index, today: "2026-11-06", now: "09:00:00", courses: [{ eaten: true }, { eaten: false }] })).rejects.toBeInstanceOf(PlanMealWithoutMacrosError);
   });
 });

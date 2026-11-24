@@ -95,11 +95,14 @@ export function useCoursesChoice(entry: PlannedEntry) {
     return { course, alternatives, alt, eaten: eaten[i] ?? true, chosen: alt ? chosen[i]! : null, macros, text: alt ? alt.dish.name : course.foods, lines: alt ? alt.dish.foods.map(foodLine) : course.lines };
   });
   const picked = rows.filter((r) => r.eaten);
-  const canLog = picked.length > 0 && picked.every((r) => r.macros);
+  // Courses split from a meal with totals only have no values: the whole meal as planned still logs with its totals
+  const asPlanned = rows.every((r) => r.eaten && !r.alt) && entry.macros !== null && entry.macros !== undefined;
+  const summed = picked.length > 0 && picked.every((r) => r.macros);
+  const canLog = summed || asPlanned;
   return {
     rows,
     canLog,
-    kcal: canLog ? Math.round(picked.reduce((s, r) => s + r.macros!.kcal, 0)) : null,
+    kcal: summed ? Math.round(picked.reduce((s, r) => s + r.macros!.kcal, 0)) : asPlanned ? Math.round(entry.macros!.kcal) : null,
     toggle: (i: number) => setEaten((list) => list.map((v, j) => (j === i ? !v : v))),
     choose: (i: number, value: number | null) => setChosen((list) => list.map((v, j) => (j === i ? value : v))),
     body: { courses: rows.map((r) => ({ eaten: r.eaten, ...(r.alt ? { alternative: { groupId: r.alt.groupId, dishIndex: r.alt.dishIndex } } : {}) })) } satisfies LogChoice,
