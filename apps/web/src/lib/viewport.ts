@@ -19,6 +19,31 @@ import { isStandalone } from "./push";
 const MIN_HEIGHT = 200;
 const MAX_HEIGHT = 4000;
 
+/**
+ * Set once the installed app has measured that its page starts below the status bar. iOS can relaunch the app after a
+ * while in the background with 100lvh and 100svh still equal for a moment, so the first checks miss it and the tab
+ * bar stays below the screen edge; the remembered answer applies at once, and is dropped only when the page reaches
+ * the top of the screen (safe-area-inset-top above 0, as on the foldable iPhone).
+ */
+const BELOW_STATUS_BAR_KEY = "intake-below-status-bar";
+
+function remembered(): boolean {
+  try {
+    return localStorage.getItem(BELOW_STATUS_BAR_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function remember(below: boolean): void {
+  try {
+    if (below) localStorage.setItem(BELOW_STATUS_BAR_KEY, "1");
+    else localStorage.removeItem(BELOW_STATUS_BAR_KEY);
+  } catch {
+    // Storage unavailable: the measurement alone decides
+  }
+}
+
 /** Key of a value stored by the temporary diagnostics panel; no longer used. */
 const OBSOLETE_KEY = "intake-height-mode";
 
@@ -117,7 +142,10 @@ function trackStatusBar(root: HTMLElement): () => void {
     // foldable iPhone 100svh is 82 px short after a rotation, so the check would shrink the shell and leave a black band
     // under it. Landscape keeps 100lvh, which is right there.
     const portrait = window.matchMedia("(orientation: portrait)").matches;
-    const below = portrait && safeTop === 0 && small >= MIN_HEIGHT && large - small >= 1;
+    const measured = safeTop === 0 && small >= MIN_HEIGHT && large - small >= 1;
+    if (portrait && measured) remember(true);
+    else if (portrait && safeTop > 0) remember(false);
+    const below = portrait && safeTop === 0 && (measured || remembered());
     if (below) root.dataset.belowStatusBar = "";
     else delete root.dataset.belowStatusBar;
     // The document never scrolls (only .shell-main does); undo an offset left from before the shell fitted
@@ -128,16 +156,19 @@ function trackStatusBar(root: HTMLElement): () => void {
   const update = () => {
     check();
     timers.splice(0).forEach(clearTimeout);
-    for (const delay of [150, 500, 1200]) timers.push(window.setTimeout(check, delay));
+    // After a long time in the background iOS can settle the sizes only seconds after the app is back
+    for (const delay of [150, 500, 1200, 2500, 5000]) timers.push(window.setTimeout(check, delay));
   };
-  const events = ["resize", "orientationchange", "pageshow"] as const;
+  const events = ["resize", "orientationchange", "pageshow", "focus"] as const;
   for (const name of events) window.addEventListener(name, update);
   document.addEventListener("visibilitychange", update);
-  check();
+  window.visualViewport?.addEventListener("resize", update);
+  update();
   return () => {
     timers.forEach(clearTimeout);
     for (const name of events) window.removeEventListener(name, update);
     document.removeEventListener("visibilitychange", update);
+    window.visualViewport?.removeEventListener("resize", update);
     delete root.dataset.standalone;
     delete root.dataset.belowStatusBar;
   };
