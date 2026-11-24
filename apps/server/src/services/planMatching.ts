@@ -81,6 +81,19 @@ function coverage(stored: StoredPlan, meals: Meal[], links: PlanLink[], date: st
 const isPassed = (context: PlannedContext, time: string) =>
   context.date < context.today || (context.date === context.today && time <= context.now.slice(0, 5));
 
+/** How long before its time a planned meal of today opens with all its options ("Da registrare"). */
+export const OPEN_BEFORE_MINUTES = 60;
+
+const minutesOf = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+
+/**
+ * The Timeline card of a planned meal opens ("todo": Mangiato come previsto, Altro…, alternatives, courses) from an hour
+ * before its time, the same window in which a meal logged elsewhere covers it, so a lunch eaten at 12:30 can be logged
+ * as planned. The plan comparison keeps the exact time (isPassed).
+ */
+const isOpen = (context: PlannedContext, time: string) =>
+  isPassed(context, time) || (context.date === context.today && minutesOf(time) - minutesOf(context.now) <= OPEN_BEFORE_MINUTES);
+
 /**
  * Planned meals for a day that no logged meal covers (see coverage()).
  * Uncovered meals the owner skipped are returned with status "skipped", so they can be restored.
@@ -102,7 +115,7 @@ export function plannedEntries(
   day.meals.forEach((planned, index) => {
     if (covered.has(index)) return;
     const time = times[index]!;
-    const passed = isPassed(context, time);
+    const passed = isOpen(context, time);
     entries.push({
       planId: stored.id,
       index,

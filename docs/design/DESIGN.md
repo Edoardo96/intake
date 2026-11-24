@@ -102,7 +102,7 @@ The avatar screen (route `/profilo`) is titled **Impostazioni**, with the avatar
   solid accent color up to the "now" marker, dashed grey after it.
 - Item states:
   - **Logged** (from Nutrition MCP): solid white card with kcal and macro chips. Tap → meal detail.
-  - **To log / "Da registrare"**: a planned meal whose time has passed and that has no linked logged meal.
+  - **To log / "Da registrare"**: a planned meal of today from an hour before its time (or of a past day) with no linked logged meal, so a meal eaten early can still be logged as planned.
     Light orange card, buttons "Mangiato come previsto", "Altro…" (opens the add sheet) and "Salta".
   - **Planned / "Dal piano"**: an upcoming planned meal. Dashed card with a small "Salta" button.
   - **Skipped / "Saltato"**: grey card, title struck through, "Annulla" button.
