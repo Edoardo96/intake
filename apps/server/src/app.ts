@@ -229,7 +229,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
       await app.register(mealRoutes, { prefix: "/api", api: options.mealsApi, recognizer: options.recognizer, photos: options.mealPhotos, courses: options.mealCourses, photoSettings: options.mealPhotoSettings, recognitionModel: options.recognitionModel, requireOwner });
     }
     if (options.api) {
-      await app.register(dayRoutes, { prefix: "/api", api: options.api, plans: options.plans, dishGroups: options.dishGroups, requireOwner });
+      await app.register(dayRoutes, { prefix: "/api", api: options.api, plans: options.plans, dishGroups: options.dishGroups, ...(options.mealCourses ? { mealCourses: options.mealCourses } : {}), requireOwner });
       if (options.plans) {
         await app.register(planRoutes, { prefix: "/api", plans: options.plans, api: options.api, dishGroups: options.dishGroups, ...(options.planDishes ? { dishSaver: options.planDishes } : {}), requireOwner });
         if (options.dishGroups) {

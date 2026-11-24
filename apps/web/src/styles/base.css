@@ -10384,6 +10384,24 @@ div.connection-row {
   padding: 0 20px;
 }
 
+/* "Altro…" on a course of a planned meal (docs/courses.md) */
+.dish-chip-other {
+  justify-content: center;
+  border-style: dashed;
+  color: var(--color-accent-strong);
+  font-weight: 800;
+}
+.course-other {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.course-other .course-choice-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 /* Pasti da foto › "Conserva le foto dei pasti": the kept photos and their deletion, confirmed in the row */
 .meal-photos-clear {
   display: flex;
