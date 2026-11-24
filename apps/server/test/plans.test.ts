@@ -331,9 +331,10 @@ describe("plan routes", () => {
     expect(plans.linksOn("2026-11-05")).toEqual([{ planId: next.id, index: 1, mealId: "lunch-meal" }]);
     expect(plans.skipsOn("2026-11-05")).toEqual([{ planId: next.id, index: 3 }]);
     expect(plans.linksOn("2026-11-04")).toEqual([{ planId: id, index: 1, mealId: "yesterday" }]);
-    // The new version starts today: putting the meal back changes it in place
-    const back = await app.inject({ method: "POST", url: `/api/plans/${next.id}/meals/restore`, headers, payload: { day: "thursday", removed: 0, allDays: true } });
-    expect(back.json().id).toBe(next.id);
+    // The new version starts today: adding a meal changes it in place
+    const food = { name: "Yogurt", quantity: 150, unit: "g", nutrients: { kcal: 90, protein: 15, carbs: 6, fat: 0, fiber: 0 } };
+    const added = await app.inject({ method: "POST", url: `/api/plans/${next.id}/meals/add`, headers, payload: { day: "thursday", allDays: false, title: "Spuntino", time: "10:30", type: "snack", description: "Yogurt", foods: [food] } });
+    expect(added.json().id).toBe(next.id);
     expect(plans.linksOn("2026-11-05")).toEqual([{ planId: next.id, index: 2, mealId: "lunch-meal" }]);
     expect((await app.inject({ method: "POST", url: `/api/plans/${id}/meals/remove`, headers, payload: { day: "thursday", index: 1, allDays: false } })).statusCode).toBe(409);
   });

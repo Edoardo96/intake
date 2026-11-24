@@ -1,11 +1,14 @@
-import { WEEKDAYS, addPlanMeal, mealAddSchema, mealRemoveSchema, mealRestoreSchema, removePlanMeal, restorePlanMeal, type PlanMealsChange, mealSplitSchema, splitMeal, addCourse, courseAddSchema, courseRemoveSchema, removeCourse, dishLinkSchema, importPlan, mealPlanSchema, plannedFoodSchema, editMeal, mealEditSchema, mealMoveSchema, mealTimeChangeSchema, setMealTime, swapMeals, type MealPlan, type PlanUploadError, type PlansResponse } from "@intake/shared";
+import { WEEKDAYS, addPlanMeal, mealAddSchema, mealRemoveSchema, removePlanMeal, type PlanMealsChange, mealSplitSchema, splitMeal, addCourse, courseAddSchema, courseRemoveSchema, removeCourse, dishLinkSchema, importPlan, mealPlanSchema, plannedFoodSchema, editMeal, mealEditSchema, mealMoveSchema, mealTimeChangeSchema, setMealTime, swapMeals, type MealPlan, type PlanUploadError, type PlansResponse } from "@intake/shared";
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest, preHandlerHookHandler } from "fastify";
 import { z } from "zod";
 import type { PlanStore } from "../db/planStore.js";
+import type { PlanDishSaver } from "../services/planDishSaver.js";
 import type { DishGroupStore } from "../db/dishGroupStore.js";
 import type { NutritionApi } from "../mcp/nutritionApi.js";
 
 export interface PlanRoutesOptions {
+  /** "Salva tutti i piatti del piano" (docs/plan-dishes.md); the routes answer 503 without it. */
+  dishSaver?: Pick<PlanDishSaver, "saveAll" | "missing" | "pending">;
   plans: PlanStore;
   api: Pick<NutritionApi, "clock">;
   /** Piatti intercambiabili: the alternatives of an uploaded Claude Fitness plan are linked here. */
@@ -19,7 +22,7 @@ const splitConfirmSchema = z
   .strict();
 
 /** Meal plan versions under /api/plans. */
-export const planRoutes: FastifyPluginAsync<PlanRoutesOptions> = async (app, { plans, api, dishGroups, requireOwner }) => {
+export const planRoutes: FastifyPluginAsync<PlanRoutesOptions> = async (app, { plans, api, dishGroups, dishSaver, requireOwner }) => {
   app.addHook("preHandler", requireOwner);
 
   app.get("/plans", async (): Promise<PlansResponse> => {
@@ -112,7 +115,7 @@ export const planRoutes: FastifyPluginAsync<PlanRoutesOptions> = async (app, { p
     return { ...stored, plan };
   });
 
-  // "Togli pasto", "Rimetti" and "+ Aggiungi pasto" (docs/plan-meals.md). They move the meals of a day, so a version
+  // "Togli pasto" and "+ Aggiungi pasto" (docs/plan-meals.md). They move the meals of a day, so a version
   // already in effect is not changed: the change becomes a new version from today, and today's links and skips follow
   // the meals to their new positions. A version that starts today or later is changed in place.
   const changeMeals = (parse: (body: unknown) => ((plan: MealPlan) => PlanMealsChange) | null) =>
@@ -143,14 +146,24 @@ export const planRoutes: FastifyPluginAsync<PlanRoutesOptions> = async (app, { p
     const input = mealRemoveSchema.safeParse(body);
     return input.success ? (plan) => removePlanMeal(plan, input.data) : null;
   }));
-  app.post<{ Params: { id: string } }>("/plans/:id/meals/restore", changeMeals((body) => {
-    const input = mealRestoreSchema.safeParse(body);
-    return input.success ? (plan) => restorePlanMeal(plan, input.data) : null;
-  }));
   app.post<{ Params: { id: string } }>("/plans/:id/meals/add", changeMeals((body) => {
     const input = mealAddSchema.safeParse(body);
     return input.success ? (plan) => addPlanMeal(plan, input.data) : null;
   }));
+
+  // "Salva tutti i piatti del piano" (Piano ⋯): the plan's dishes not yet in Piatti, saved in the background
+  app.post<{ Params: { id: string } }>("/plans/:id/dishes/save", async (request, reply) => {
+    if (!dishSaver) return reply.code(503).send({ error: "not_configured" });
+    const stored = plans.get(Number(request.params.id));
+    if (!stored) return reply.code(404).send({ error: "Plan not found" });
+    return { saving: await dishSaver.saveAll(stored.plan) };
+  });
+  app.get<{ Params: { id: string } }>("/plans/:id/dishes/missing", async (request, reply) => {
+    if (!dishSaver) return reply.code(503).send({ error: "not_configured" });
+    const stored = plans.get(Number(request.params.id));
+    if (!stored) return reply.code(404).send({ error: "Plan not found" });
+    return { missing: (await dishSaver.missing(stored.plan)).length, saving: dishSaver.pending };
+  });
 
   // "Dividi in portate": the course of each food of a meal
   app.post<{ Params: { id: string } }>("/plans/:id/split", async (request, reply) => {

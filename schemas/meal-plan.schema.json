@@ -445,7 +445,7 @@
               }
             },
             "removed": {
-              "description": "Meals taken out of the day in Piano (\"Togli pasto\"), kept to put them back (\"Rimetti\")",
+              "description": "Legacy, ignored: meals taken out by an earlier Intake; dropped on the next change of the day",
               "maxItems": 10,
               "type": "array",
               "items": {
@@ -1275,7 +1275,7 @@
               }
             },
             "removed": {
-              "description": "Meals taken out of the day in Piano (\"Togli pasto\"), kept to put them back (\"Rimetti\")",
+              "description": "Legacy, ignored: meals taken out by an earlier Intake; dropped on the next change of the day",
               "maxItems": 10,
               "type": "array",
               "items": {
@@ -2105,7 +2105,7 @@
               }
             },
             "removed": {
-              "description": "Meals taken out of the day in Piano (\"Togli pasto\"), kept to put them back (\"Rimetti\")",
+              "description": "Legacy, ignored: meals taken out by an earlier Intake; dropped on the next change of the day",
               "maxItems": 10,
               "type": "array",
               "items": {
@@ -2935,7 +2935,7 @@
               }
             },
             "removed": {
-              "description": "Meals taken out of the day in Piano (\"Togli pasto\"), kept to put them back (\"Rimetti\")",
+              "description": "Legacy, ignored: meals taken out by an earlier Intake; dropped on the next change of the day",
               "maxItems": 10,
               "type": "array",
               "items": {
@@ -3765,7 +3765,7 @@
               }
             },
             "removed": {
-              "description": "Meals taken out of the day in Piano (\"Togli pasto\"), kept to put them back (\"Rimetti\")",
+              "description": "Legacy, ignored: meals taken out by an earlier Intake; dropped on the next change of the day",
               "maxItems": 10,
               "type": "array",
               "items": {
@@ -4595,7 +4595,7 @@
               }
             },
             "removed": {
-              "description": "Meals taken out of the day in Piano (\"Togli pasto\"), kept to put them back (\"Rimetti\")",
+              "description": "Legacy, ignored: meals taken out by an earlier Intake; dropped on the next change of the day",
               "maxItems": 10,
               "type": "array",
               "items": {
@@ -5425,7 +5425,7 @@
               }
             },
             "removed": {
-              "description": "Meals taken out of the day in Piano (\"Togli pasto\"), kept to put them back (\"Rimetti\")",
+              "description": "Legacy, ignored: meals taken out by an earlier Intake; dropped on the next change of the day",
               "maxItems": 10,
               "type": "array",
               "items": {

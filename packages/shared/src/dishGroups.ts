@@ -54,12 +54,37 @@ export function dishKeys(dish: Pick<Dish, "name" | "aliases">): string[] {
   return [dish.name, ...dish.aliases].map(dishKey).filter(Boolean);
 }
 
-/** The group and the position of the dish called `name`, if any. */
+const UNITS = new Set(["g", "gr", "kg", "mg", "ml", "cl", "dl", "l", "pz", "pezzo", "pezzi", "fetta", "fette", "cucchiaio", "cucchiai", "cucchiaino", "cucchiaini", "tazza", "tazze", "tazzina", "vasetto", "vasetti", "porzione", "porzioni", "x"]);
+
+/**
+ * The key of a dish without its amounts: "Pasta 80 g + Pomodoro 100 g" and "Pasta + Pomodoro" are the same dish (a plan
+ * often has one dish with different grams on different days). Numbers, and the unit right after one, are dropped.
+ */
+export function looseDishKey(text: string): string {
+  const words = dishKey(text).split(" ");
+  const kept: string[] = [];
+  for (let i = 0; i < words.length; i++) {
+    if (/^\d+$/.test(words[i]!)) {
+      if (UNITS.has(words[i + 1] ?? "")) i++;
+      continue;
+    }
+    kept.push(words[i]!);
+  }
+  return kept.join(" ");
+}
+
+/** The group and the position of the dish called `name`, if any: by its exact name first, then without amounts. */
 export function findDish(groups: DishGroup[], name: string): { group: DishGroup; index: number } | null {
   const key = dishKey(name);
   if (!key) return null;
   for (const group of groups) {
     const index = group.dishes.findIndex((dish) => dishKeys(dish).includes(key));
+    if (index !== -1) return { group, index };
+  }
+  const loose = looseDishKey(name);
+  if (!loose) return null;
+  for (const group of groups) {
+    const index = group.dishes.findIndex((dish) => [dish.name, ...dish.aliases].some((n) => looseDishKey(n) === loose));
     if (index !== -1) return { group, index };
   }
   return null;

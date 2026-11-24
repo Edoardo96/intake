@@ -14,3 +14,4 @@ export * from "./dishGroups.js";
 export * from "./dishes.js";
 export * from "./courses.js";
 export * from "./planMeals.js";
+export * from "./planDishes.js";

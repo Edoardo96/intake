@@ -10182,6 +10182,143 @@ div.connection-row {
   width: 100%;
 }
 
+/* Meal menu (⋯) in Piano: the card shows the dish, its values and two chips; every action is in the sheet */
+.meal-menu-button {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.plan-course-head {
+  align-items: center;
+}
+.plan-course-head .plan-course-kcal {
+  margin-left: auto;
+}
+.plan-course-head .meal-menu-button {
+  width: 32px;
+  height: 32px;
+}
+.meal-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.meal-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-input);
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+}
+.meal-chip-alt {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+  font-weight: 800;
+  cursor: pointer;
+  min-height: 34px;
+}
+.meal-menu {
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+}
+.meal-menu-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.meal-menu-head .muted {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.meal-menu-section {
+  display: flex;
+  flex-direction: column;
+  margin-top: 12px;
+}
+.meal-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 6px 0;
+  border: none;
+  border-bottom: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.meal-menu-item:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.meal-menu-item[data-danger] {
+  color: var(--color-danger);
+}
+.meal-menu-icon {
+  width: 24px;
+  text-align: center;
+  font-size: 16px;
+}
+.meal-menu-label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.meal-menu-label strong {
+  font-size: 15px;
+}
+.meal-menu-label .muted {
+  font-size: 12px;
+}
+.meal-menu-chevron {
+  color: var(--color-text-muted);
+}
+.plan-meal-panel:empty {
+  display: none;
+}
+.plan-panel-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-dashed);
+}
+.plan-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.plan-notice {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 /* Pasti da foto › "Conserva le foto dei pasti": the kept photos and their deletion, confirmed in the row */
 .meal-photos-clear {
   display: flex;

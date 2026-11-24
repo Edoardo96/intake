@@ -1,15 +1,13 @@
 /**
- * Meals taken out of the plan and put back ("Togli pasto", "Rimetti", "+ Aggiungi pasto" in Piano). A meal taken out
- * is kept in its day's `removed` list, with its time, so "Rimetti" brings back the same dish at the same time. These
- * changes move the other meals of the day, so each one also returns, per day, where each old position went (null when
- * that meal left): the server moves the links and skips of today to the new positions. Rules in docs/plan-meals.md.
+ * Meals taken out of the plan and added ("Togli pasto" and "+ Aggiungi pasto" in Piano). A meal taken out is gone; to
+ * have it again, "+ Aggiungi pasto" adds it. These changes move the other meals of the day, so each one also returns,
+ * per day, where each old position went (null when that meal left): the server moves the links and skips of today to
+ * the new positions. Rules in docs/plan-meals.md.
  */
 import { z } from "zod";
 import { MEAL_TYPES, WEEKDAYS, mealPlanSchema, plannedFoodSchema, type MealPlan, type PlannedMeal, type Weekday } from "./mealPlan.js";
 import { mealTimes } from "./planUtils.js";
 import { mealEditSchema, sumFoodNutrients } from "./planGeneration.js";
-
-export const REMOVED_MEALS_MAX = 10;
 
 /** For each changed day: the new position of each old one (null when the meal is no longer in the day). */
 export type MealIndexMaps = Partial<Record<Weekday, Array<number | null>>>;
@@ -42,7 +40,7 @@ function positionFor(meals: PlannedMeal[], time: string): number {
 export const mealRemoveSchema = z.object({ day: z.enum(WEEKDAYS), index: z.number().int().min(0).max(9), allDays: z.boolean() }).strict();
 export type MealRemove = z.infer<typeof mealRemoveSchema>;
 
-/** "Togli pasto": the meal out of the day (or out of the same slot of every day), kept in `removed`. */
+/** "Togli pasto": the meal out of the day (or out of the same slot of every day). */
 export function removePlanMeal(plan: MealPlan, input: MealRemove): PlanMealsChange {
   const meals = plan.days[input.day].meals;
   const chosen = meals[input.index];
@@ -54,34 +52,10 @@ export function removePlanMeal(plan: MealPlan, input: MealRemove): PlanMealsChan
     const list = plan.days[day].meals;
     const at = day === input.day ? input.index : sameSlot(list, chosen.title, occurrence);
     if (at === -1) continue;
-    const time = mealTimes(list)[at]!;
-    const removed = [...(plan.days[day].removed ?? []), { ...list[at]!, time }].slice(-REMOVED_MEALS_MAX);
-    days[day] = { ...plan.days[day], meals: list.filter((_, i) => i !== at), removed };
+    // The meal is gone: "+ Aggiungi pasto" adds one again (a list kept by older versions is dropped too)
+    const { removed: _legacy, ...rest } = plan.days[day];
+    days[day] = { ...rest, meals: list.filter((_, i) => i !== at) };
     maps[day] = list.map((_, i) => (i === at ? null : i < at ? i : i - 1));
-  }
-  return { plan: mealPlanSchema.parse({ ...plan, days }), maps };
-}
-
-export const mealRestoreSchema = z.object({ day: z.enum(WEEKDAYS), removed: z.number().int().min(0).max(REMOVED_MEALS_MAX - 1), allDays: z.boolean() }).strict();
-export type MealRestore = z.infer<typeof mealRestoreSchema>;
-
-/** "Rimetti": a meal taken out back in its day at its time (with allDays, the same meal taken out of the other days too). */
-export function restorePlanMeal(plan: MealPlan, input: MealRestore): PlanMealsChange {
-  const chosen = plan.days[input.day].removed?.[input.removed];
-  if (!chosen) throw new Error("No such meal");
-  const days = { ...plan.days };
-  const maps: MealIndexMaps = {};
-  for (const day of input.allDays ? WEEKDAYS : [input.day]) {
-    const removed = plan.days[day].removed ?? [];
-    const at = day === input.day ? input.removed : removed.findIndex((meal) => normal(meal.title) === normal(chosen.title) && meal.time === chosen.time);
-    if (at === -1) continue;
-    const meal = removed[at]!;
-    const list = plan.days[day].meals;
-    const position = positionFor(list, meal.time!);
-    const rest = removed.filter((_, i) => i !== at);
-    const { removed: _old, ...dayRest } = plan.days[day];
-    days[day] = { ...dayRest, meals: [...list.slice(0, position), meal, ...list.slice(position)], ...(rest.length > 0 ? { removed: rest } : {}) };
-    maps[day] = list.map((_, i) => (i < position ? i : i + 1));
   }
   return { plan: mealPlanSchema.parse({ ...plan, days }), maps };
 }

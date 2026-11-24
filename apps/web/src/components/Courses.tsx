@@ -33,8 +33,8 @@ function NameChips({ value, onChange, label }: { value: string; onChange: (name:
  * "+ Aggiungi portata" under a planned meal: which course it is (and, for a meal that is still one dish, what the dish
  * already there is), then the dish from "I tuoi piatti" or written by hand. Rules in docs/courses.md.
  */
-export function AddCourse({ meal, onAdd, busy, failed }: { meal: FixedPlannedMeal; onAdd: (course: NewCourse, done: () => void) => void; busy?: boolean; failed?: boolean }) {
-  const [open, setOpen] = useState(false);
+export function AddCourse({ meal, onAdd, busy, failed, startOpen }: { meal: FixedPlannedMeal; onAdd: (course: NewCourse, done: () => void) => void; busy?: boolean; failed?: boolean; startOpen?: boolean }) {
+  const [open, setOpen] = useState(Boolean(startOpen));
   const [name, setName] = useState<string>(meal.courses ? "Secondo" : "Fine pasto");
   const [firstName, setFirstName] = useState<string>("Primo");
   const [source, setSource] = useState<null | "dishes" | "hand">(null);
@@ -47,6 +47,7 @@ export function AddCourse({ meal, onAdd, busy, failed }: { meal: FixedPlannedMea
     onAdd({ name: name.trim() || t.courses.defaultName, ...(meal.courses ? {} : { firstName: firstName.trim() || t.courses.defaultName }), description, foods, ...(macros ? { macros } : {}) }, close);
   };
   if (!open) {
+    if (startOpen) return null;
     return (
       <button type="button" className="course-add" onClick={() => setOpen(true)}>
         {t.courses.add}
@@ -96,8 +97,8 @@ function newFromEdit(meal: FixedPlannedMeal, edit: Parameters<typeof dishOfEdit>
  * "Dividi in portate" on a planned meal: which courses it has, then the course of each food. Every food in one course
  * makes the meal one dish again. Rules in docs/courses.md.
  */
-export function SplitCourses({ meal, onSave, busy, failed }: { meal: FixedPlannedMeal; onSave: (labels: string[], done: () => void) => void; busy?: boolean; failed?: boolean }) {
-  const [open, setOpen] = useState(false);
+export function SplitCourses({ meal, onSave, busy, failed, startOpen }: { meal: FixedPlannedMeal; onSave: (labels: string[], done: () => void) => void; busy?: boolean; failed?: boolean; startOpen?: boolean }) {
+  const [open, setOpen] = useState(Boolean(startOpen));
   const current = meal.courses?.flatMap((c) => c.foods.map(() => c.name)) ?? [];
   const own = (meal.courses ?? []).map((c) => c.name).filter((name) => !(COURSE_NAMES as readonly string[]).includes(name));
   const options = [...COURSE_NAMES, ...own];
@@ -105,6 +106,7 @@ export function SplitCourses({ meal, onSave, busy, failed }: { meal: FixedPlanne
   const [labels, setLabels] = useState<string[]>(() => (current.length === meal.foods.length ? current : meal.foods.map(() => "Primo")));
   if (meal.foods.length < 2) return null;
   if (!open) {
+    if (startOpen) return null;
     return (
       <button type="button" className="plan-meal-action" onClick={() => setOpen(true)}>
         {t.courses.split}

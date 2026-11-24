@@ -77,12 +77,16 @@ export interface PlanDayMealsProps {
   dishes?: (meal: FixedPlannedMeal, index: number) => ReactNode;
   /** Under each course of a meal with courses: its alternatives and actions (docs/courses.md). */
   course?: (meal: FixedPlannedMeal, index: number, courseIndex: number, course: Course) => ReactNode;
+  /** The ⋯ at the end of a meal's header (Piano). */
+  menu?: (meal: PlannedMeal, index: number) => ReactNode;
+  /** The ⋯ at the end of a course's header (Piano). */
+  courseMenu?: (meal: FixedPlannedMeal, index: number, courseIndex: number, course: Course) => ReactNode;
   /** A meal being replaced is dimmed. */
   busyIndex?: number | null;
 }
 
 /** The meals of one plan day: time (editable), name, kcal, dish, foods and macros. Used by Piano and the AI review. */
-export function PlanDayMeals({ day, onTime, timeBusy, warnings, extra, dishes, course, busyIndex }: PlanDayMealsProps) {
+export function PlanDayMeals({ day, onTime, timeBusy, warnings, extra, dishes, course, courseMenu, menu, busyIndex }: PlanDayMealsProps) {
   return (
     <div className="plan-meals">
       {day.meals.map((meal, i) => {
@@ -95,6 +99,7 @@ export function PlanDayMeals({ day, onTime, timeBusy, warnings, extra, dishes, c
                 {time}
                 <h3>{meal.title}</h3>
                 <span className="free-badge">{t.plan.freeBadge}</span>
+                {menu?.(meal, i)}
               </header>
               {meal.description && <p className="plan-meal-dish">{meal.description}</p>}
               {problems.map((text, j) => (
@@ -113,6 +118,7 @@ export function PlanDayMeals({ day, onTime, timeBusy, warnings, extra, dishes, c
               {time}
               <h3>{meal.title}</h3>
               {m && <span className="plan-meal-kcal">{formatKcal(m.kcal)} kcal</span>}
+              {menu?.(meal, i)}
             </header>
             {meal.courses ? (
               <>
@@ -127,6 +133,7 @@ export function PlanDayMeals({ day, onTime, timeBusy, warnings, extra, dishes, c
                       <div className="plan-course-head">
                         <span className="plan-course-name">{courseLabel(c.name).toUpperCase()}</span>
                         {cm && <span className="plan-course-kcal">{formatKcal(cm.kcal)} kcal</span>}
+                        {courseMenu?.(meal, i, k, c)}
                       </div>
                       {c.description && <p className="plan-meal-dish">{c.description}</p>}
                       <ul>
@@ -222,11 +229,12 @@ export function SameTimeSwitch({ checked, onChange }: { checked: boolean; onChan
  * "Sposta": the dish of a meal goes to the same meal of another day and that day's dish takes its place. The days are
  * listed with the dish they would send back, so the swap is clear before it is made.
  */
-export function MoveMeal({ plan, day, index, onMove, busy, failed }: { plan: MealPlan; day: Weekday; index: number; onMove: (toDay: Weekday) => void; busy?: boolean; failed?: boolean }) {
-  const [open, setOpen] = useState(false);
+export function MoveMeal({ plan, day, index, onMove, busy, failed, startOpen }: { plan: MealPlan; day: Weekday; index: number; onMove: (toDay: Weekday) => void; busy?: boolean; failed?: boolean; startOpen?: boolean }) {
+  const [open, setOpen] = useState(Boolean(startOpen));
   const meal = plan.days[day].meals[index];
   if (!meal) return null;
   if (!open) {
+    if (startOpen) return null;
     return (
       <button type="button" className="plan-meal-action" disabled={busy} aria-label={t.plan.moveOf(meal.title)} onClick={() => setOpen(true)}>
         <MoveIcon />
