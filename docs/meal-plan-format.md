@@ -69,7 +69,7 @@ Add a `macros` object to every non-free meal:
 
 - Meals without a time use default slots: breakfast 08:00, lunch 13:00, dinner 20:00, snacks 11:00 before lunch and 16:00 after.
 - A planned meal is hidden once covered: by "Eaten as planned", or by a logged meal of the same type (e.g. logged through Claude) from 1 hour before to 3 hours after the planned time with, when the plan has macros, at least 40% of the planned kcal. Each logged meal covers at most one planned meal, the nearest in time.
-- Uncovered planned meals are "to log" once their time has passed (or on past days), "from the plan" before that, and "free" for free slots. "Skip" marks one as skipped for that day (stored locally, restorable with "Undo").
+- Uncovered planned meals are "to log" from an hour before their time (or on past days), "from the plan" before that (the plan comparison still counts a meal as due only once its time has passed), and "free" for free slots. "Skip" marks one as skipped for that day (stored locally, restorable with "Undo").
 
 
 ### Nutrients per food
