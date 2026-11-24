@@ -8,7 +8,10 @@ import {
   mealFoodsText,
   planDishName,
   planDishWrite,
+  similarDishes,
+  type DishSummary,
   type FixedPlannedMeal,
+  type PlanDish,
   type PlannedMeal,
   planAverages,  weekdayOf,
   type PlanUploadError,
@@ -17,7 +20,7 @@ import {
 } from "@intake/shared";
 import { useRef, useState } from "react";
 import { useLocation, useSearch } from "wouter";
-import { PlanUploadFailed, useChangeCourses, useChangePlanMeals, useDishGroups, useSaveDish, useSavePlanDishes, useDay, useFeatures, usePlan, usePlans, useEditPlanMeal, useSetPlanTime, useStartPlan, useSwapPlanMeal, useUploadPlan } from "../api/queries";
+import { PlanUploadFailed, useChangeCourses, useChangePlanMeals, useDishAlias, useDishGroups, useDishes, useSaveDish, useSavePlanDishes, useDay, useFeatures, usePlan, usePlans, useEditPlanMeal, useSetPlanTime, useStartPlan, useSwapPlanMeal, useUploadPlan } from "../api/queries";
 import { EditMeal, MoveMeal, PlanDayMeals, PlanDaySummary, SameTimeSwitch, SplitFoods } from "../components/PlanDay";
 import { CloseIcon, PlanIcon, SparklesIcon } from "../components/icons";
 import { formatKcal, formatMediumDate, formatShortDate } from "../lib/format";
@@ -28,7 +31,8 @@ import { NeedsCard } from "../components/NeedsCard";
 import { DishesTab } from "../components/DishesTab";
 import { AddCourse, SplitCourses, courseLabel } from "../components/Courses";
 import { AddPlanMeal, RemoveMeal } from "../components/PlanMeals";
-import { MealChips, MealMenuButton, MealMenuSheet, useSavedDishFinder, type MenuItem } from "../components/MealMenu";
+import { MealChips, MealMenuButton, MealMenuSheet, SimilarDishSheet, useSavedDishFinder, type MenuItem } from "../components/MealMenu";
+import { ApiError } from "../api/client";
 import { DishAlternatives, DishGroupsCard, dishAsEdit } from "../components/DishAlternatives";
 import { PLAN_TAB_PARAM, planTabFromSearch, preferredPlanTab, type PlanTab } from "../lib/planTab";
 
@@ -81,6 +85,10 @@ export function PlanPage() {
   const groups = useDishGroups();
   const findSaved = useSavedDishFinder();
   const saveDish = useSaveDish();
+  const dishes = useDishes();
+  const alias = useDishAlias();
+  const [similar, setSimilar] = useState<{ write: PlanDish; candidates: DishSummary[]; index: number; course?: number; error?: string } | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const saveAll = useSavePlanDishes();
   const alternativesCount = (name: string) => alternativesFor(groups.data ?? [], name).length;
   const [sameTime, setSameTime] = useState(true);
@@ -148,10 +156,33 @@ export function PlanPage() {
       ...(write ? {} : { hint: t.mealMenu.noValues, disabled: true }),
       onClick: () => {
         if (!write) return;
-        const { key: _key, ...dish } = write;
-        saveDish.mutate({ dish }, { onError: () => openPanel(index, "saveFailed", course) });
+        // A dish that looks like one already in Piatti: ask "Unisci o nuovo?" first
+        const candidates = similarDishes(write, dishes.data?.dishes ?? []).map((s) => s.dish);
+        if (candidates.length > 0) setSimilar({ write, candidates, index, ...(course !== undefined ? { course } : {}) });
+        else createDish(write, index, course);
       },
     };
+  }
+
+  function createDish(write: PlanDish, index: number, course?: number) {
+    const { key: _key, ...dish } = write;
+    saveDish.mutate(
+      { dish },
+      {
+        onSuccess: () => setSimilar(null),
+        onError: (error) => {
+          // The same name already there (by a slightly different spelling): offer to merge into it
+          const same = (dishes.data?.dishes ?? []).find((d) => d.name.toLowerCase() === write.name.toLowerCase());
+          if (error instanceof ApiError && error.status === 409 && same) {
+            setSimilar({ write, candidates: [same], index, ...(course !== undefined ? { course } : {}), error: t.mealMenu.nameTaken });
+            return;
+          }
+          setSimilar(null);
+          setSaveMessage(saveErrorText(error));
+          openPanel(index, "saveFailed", course);
+        },
+      },
+    );
   }
 
   function menuSections(meal: PlannedMeal, index: number, course?: number): Array<{ label: string; items: MenuItem[] }> {
@@ -380,7 +411,7 @@ export function PlanPage() {
                 </div>
                 {saveAll.isSuccess && (
                   <p className="plan-notice" role="status">
-                    {saveAll.data.saving === 0 ? t.mealMenu.allThere : t.mealMenu.started(saveAll.data.saving)}
+                    {[saveAll.data.saving > 0 ? t.mealMenu.started(saveAll.data.saving) : saveAll.data.similar === 0 ? t.mealMenu.allThere : null, saveAll.data.similar > 0 ? t.mealMenu.similarLeft(saveAll.data.similar) : null].filter(Boolean).join(" ")}
                   </p>
                 )}
                 {saveAll.isError && (
@@ -413,7 +444,7 @@ export function PlanPage() {
                         {here?.kind === "edit" && (
                           <EditMeal key={here.n} meal={asMeal} startOpen onCancel={() => setPanel(null)} busy={edit.isPending} failed={edit.isError} onSave={(dish, done) => edit.mutate({ id: shown.id, day: weekday, index, course: k, ...dish }, { onSuccess: () => { done(); setPanel(null); } })} />
                         )}
-                        {here?.kind === "saveFailed" && <p className="form-error" role="alert">{t.mealMenu.saveFailed}</p>}
+                        {here?.kind === "saveFailed" && <p className="form-error" role="alert">{saveMessage ?? t.mealMenu.saveFailed}</p>}
                       </>
                     );
                   }}
@@ -457,11 +488,22 @@ export function PlanPage() {
                         {here.kind === "remove" && (
                           <RemoveMeal meal={meal} startOpen dayName={t.weekdaysLong[dayIndex]!} inEffect={inEffect} busy={planMeals.isPending} failed={planMeals.isError} onRemove={(allDays, done) => planMeals.mutate({ id: shown.id, remove: { day: weekday, index, allDays } }, { onSuccess: () => { done(); setPanel(null); } })} />
                         )}
-                        {here.kind === "saveFailed" && <p className="form-error" role="alert">{t.mealMenu.saveFailed}</p>}
+                        {here.kind === "saveFailed" && <p className="form-error" role="alert">{saveMessage ?? t.mealMenu.saveFailed}</p>}
                       </div>
                     );
                   }}
                 />
+                {similar && (
+                  <SimilarDishSheet
+                    name={similar.write.name}
+                    candidates={similar.candidates}
+                    busy={saveDish.isPending || alias.isPending}
+                    error={similar.error ?? (alias.isError ? saveErrorText(alias.error) : null)}
+                    onClose={() => setSimilar(null)}
+                    onCreate={() => createDish(similar.write, similar.index, similar.course)}
+                    onMerge={(dish) => alias.mutate({ id: dish.id, name: similar.write.name }, { onSuccess: () => setSimilar(null) })}
+                  />
+                )}
                 {menuFor && day.meals[menuFor.index] && (
                   <MealMenuSheet
                     title={t.mealMenu.title(menuFor.course === undefined ? day.meals[menuFor.index]!.title : courseLabel((day.meals[menuFor.index] as FixedPlannedMeal).courses?.[menuFor.course]?.name ?? ""), t.weekdaysLong[dayIndex]!)}
@@ -549,4 +591,14 @@ function PanelBox({ title, onClose, children }: { title: string; onClose: () => 
       {children}
     </div>
   );
+}
+
+/** What went wrong when saving a dish, in words. */
+function saveErrorText(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status === 409) return t.mealMenu.nameTaken;
+    if (error.status === 429 || error.status === 503) return t.mealMenu.busy;
+    if (error.status === 400) return t.mealMenu.invalid;
+  }
+  return t.mealMenu.saveFailed;
 }

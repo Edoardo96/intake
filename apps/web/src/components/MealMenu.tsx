@@ -1,6 +1,7 @@
 import { looseDishKey, type DishSummary } from "@intake/shared";
 import { useEffect, type ReactNode } from "react";
 import { useDishes } from "../api/queries";
+import { formatKcal } from "../lib/format";
 import { t } from "../lib/strings";
 import { CloseIcon } from "./icons";
 import { Scrim } from "./Scrim";
@@ -103,15 +104,85 @@ export function MealChips({ alternatives, saved, onAlternatives, children }: { a
   );
 }
 
-/** The saved dish (Piano › Piatti) with this name, without amounts: the same dish with other grams is the same dish. */
+/** The saved dish (Piano › Piatti) with this name or a name merged into it, without amounts: the same dish with other grams is the same dish. */
 export function useSavedDishFinder(): (name: string) => DishSummary | null {
   const dishes = useDishes();
   const byKey = new Map<string, DishSummary>();
   for (const dish of dishes.data?.dishes ?? []) {
-    for (const text of [dish.name, dish.description]) {
+    for (const text of [dish.name, dish.description, ...(dish.aliases ?? [])]) {
       const key = looseDishKey(text);
       if (key && !byKey.has(key)) byKey.set(key, dish);
     }
   }
   return (name: string) => byKey.get(looseDishKey(name)) ?? null;
+}
+
+/**
+ * "Somiglia a un piatto che hai già" (docs/plan-dishes.md): before saving a plan dish that looks like dishes already in
+ * Piatti, "Unisci" makes it another name of one of them; "No, crea un piatto nuovo" saves it as it is.
+ */
+export function SimilarDishSheet({
+  name,
+  candidates,
+  busy,
+  error,
+  onMerge,
+  onCreate,
+  onClose,
+}: {
+  name: string;
+  candidates: DishSummary[];
+  busy?: boolean;
+  error?: string | null;
+  onMerge: (dish: DishSummary) => void;
+  onCreate: () => void;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <Scrim onClose={onClose}>
+      <div className="sheet meal-menu" role="dialog" aria-modal="true" aria-label={t.mealMenu.similarTitle} onClick={(event) => event.stopPropagation()}>
+        <div className="sheet-grabber" aria-hidden="true" />
+        <div className="sheet-head">
+          <h2>{t.mealMenu.similarTitle}</h2>
+          <button type="button" className="icon-button" aria-label={t.mealMenu.close} onClick={onClose}>
+            <CloseIcon size={18} strokeWidth={2.5} />
+          </button>
+        </div>
+        <p className="muted similar-hint">{t.mealMenu.similarHint(name)}</p>
+        <ul className="similar-list">
+          {candidates.map((dish) => (
+            <li key={dish.id} className="similar-row">
+              <div className="similar-text">
+                <strong>{dish.name}</strong>
+                <span className="muted">
+                  {[dish.items.map((i) => i.name).join(" · ") || dish.description, dish.kcal !== null ? `${formatKcal(dish.kcal)} kcal` : null].filter(Boolean).join(" · ")}
+                </span>
+              </div>
+              <button type="button" className="button-primary-inline" disabled={busy} aria-label={t.mealMenu.mergeOf(dish.name)} onClick={() => onMerge(dish)}>
+                {t.mealMenu.merge}
+              </button>
+            </li>
+          ))}
+        </ul>
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
+        <div className="similar-actions">
+          <button type="button" className="button-secondary-small" disabled={busy} onClick={onCreate}>
+            {t.mealMenu.createNew}
+          </button>
+          <button type="button" className="text-button" onClick={onClose}>
+            {t.mealMenu.cancel}
+          </button>
+        </div>
+      </div>
+    </Scrim>
+  );
 }

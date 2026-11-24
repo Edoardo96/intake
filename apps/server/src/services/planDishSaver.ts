@@ -1,4 +1,4 @@
-import { looseDishKey, planDishes, type MealPlan } from "@intake/shared";
+import { looseDishKey, planDishes, similarDishes, type MealPlan } from "@intake/shared";
 import type { DishStore } from "../db/dishStore.js";
 import { rateLimitFrom } from "../mcp/connection.js";
 import type { NutritionApi } from "../mcp/nutritionApi.js";
@@ -19,28 +19,36 @@ export class PlanDishSaver {
 
   constructor(
     private readonly api: Pick<NutritionApi, "savedMeals" | "createSavedMeal">,
-    private readonly store: Pick<DishStore, "setCategory">,
+    private readonly store: Pick<DishStore, "setCategory" | "all">,
     private readonly log: { info: (details: object, message: string) => void; warn: (details: object, message: string) => void },
     private readonly sleep: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   ) {}
 
-  /** The dishes of the plan not yet in Piatti (one get_saved_meals, cached 30 s). */
+  /**
+   * The dishes of the plan not yet in Piatti (by name or by a name merged into a dish), split into those that can be
+   * saved at once and those that look like a dish already there: those wait for "Unisci o nuovo?" in the meal menu.
+   * One get_saved_meals, cached 30 s.
+   */
   async missing(plan: MealPlan) {
-    const saved = new Set((await this.api.savedMeals()).map((meal) => looseDishKey(meal.name)));
-    return planDishes(plan).filter((dish) => !saved.has(dish.key));
+    const meta = this.store.all();
+    const saved = (await this.api.savedMeals()).map((meal) => ({ ...meal, aliases: meta.get(meal.id)?.aliases ?? [] }));
+    const there = new Set(saved.flatMap((meal) => [meal.name, ...meal.aliases].map(looseDishKey)));
+    const todo = planDishes(plan).filter((dish) => !there.has(dish.key));
+    const similar = todo.filter((dish) => similarDishes(dish, saved, 1).length > 0);
+    return { todo: todo.filter((dish) => !similar.includes(dish)), similar };
   }
 
-  /** Starts saving the missing dishes; answers how many will be saved. A run already going is not started twice. */
-  async saveAll(plan: MealPlan): Promise<number> {
-    if (this.running) return this.pending;
-    const todo = await this.missing(plan);
-    if (todo.length === 0) return 0;
+  /** Starts saving the missing dishes that look like no other; answers how many will be saved and how many wait. */
+  async saveAll(plan: MealPlan): Promise<{ saving: number; similar: number }> {
+    if (this.running) return { saving: this.pending, similar: 0 };
+    const { todo, similar } = await this.missing(plan);
+    if (todo.length === 0) return { saving: 0, similar: similar.length };
     this.pending = todo.length;
     this.running = this.run(todo).finally(() => {
       this.running = null;
       this.pending = 0;
     });
-    return todo.length;
+    return { saving: todo.length, similar: similar.length };
   }
 
   /** Waits for the current run (tests). */
@@ -48,7 +56,7 @@ export class PlanDishSaver {
     return this.running ?? Promise.resolve();
   }
 
-  private async run(todo: Awaited<ReturnType<PlanDishSaver["missing"]>>): Promise<void> {
+  private async run(todo: Awaited<ReturnType<PlanDishSaver["missing"]>>["todo"]): Promise<void> {
     let created = 0;
     for (const dish of todo) {
       const { key: _key, ...write } = dish;

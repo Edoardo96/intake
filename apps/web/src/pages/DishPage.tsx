@@ -1,7 +1,7 @@
 import { WEEKDAYS, alternativesFor, coursesOf, courseText, dishKey, isFixedMeal, looseDishKey, mealFoodsText, type DishGroup, type MealPlan, type Weekday } from "@intake/shared";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { useChangeDishGroups, useChangeRecipe, useDeleteDish, useDishes, useDishGroups, useEditPlanMeal, useFeatures, usePlans } from "../api/queries";
+import { useChangeDishGroups, useChangeRecipe, useDeleteDish, useDishAlias, useDishes, useDishGroups, useEditPlanMeal, useFeatures, usePlans } from "../api/queries";
 import { DishPickerSheet, dishAsEdit } from "../components/DishAlternatives";
 import { CloseIcon, SparklesIcon } from "../components/icons";
 import { Scrim } from "../components/Scrim";
@@ -38,6 +38,7 @@ export function DishPage({ id }: { id: string }) {
   const [placed, setPlaced] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  const alias = useDishAlias();
   const meal = dishes.data?.dishes.find((d) => d.id === id);
   const header = (
     <header className="edit-header edit-header-back">
@@ -71,7 +72,7 @@ export function DishPage({ id }: { id: string }) {
   const fiber = meal.items.length > 0 ? meal.items.reduce((sum, item) => sum + (item.nutrients.fiber ?? 0), 0) : null;
   const plan = plans.data?.active ?? null;
   // The same dish with other grams on another day is the same dish; each course of a meal is a dish of its own
-  const keys = [looseDishKey(meal.name), looseDishKey(meal.description)].filter(Boolean);
+  const keys = [meal.name, meal.description, ...meal.aliases].map(looseDishKey).filter(Boolean);
   const inPlan = plan
     ? WEEKDAYS.flatMap((w, i) =>
         plan.plan.days[w].meals.flatMap((m) =>
@@ -210,6 +211,21 @@ export function DishPage({ id }: { id: string }) {
           ))}
         </ul>
         {inPlan.length > 0 && <p className="muted dish-in-plan">{s.inPlan(inPlan.join(", "))}</p>}
+        {meal.aliases.length > 0 && (
+          <div className="dish-aliases">
+            <span className="plan-edit-title">{t.mealMenu.alsoAs}</span>
+            <ul>
+              {meal.aliases.map((name) => (
+                <li key={name}>
+                  <span>{name}</span>
+                  <button type="button" className="item-remove" disabled={alias.isPending} aria-label={t.mealMenu.removeAlias(name)} onClick={() => alias.mutate({ id: meal.id, name, remove: true })}>
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
 
       {placed && (

@@ -16,6 +16,19 @@ interface Row {
   saved_meal_id: string;
   category: string | null;
   recipe: string | null;
+  aliases: string | null;
+}
+
+export const DISH_ALIASES_MAX = 20;
+
+function parseAliases(text: string | null | undefined): string[] {
+  if (!text) return [];
+  try {
+    const list = z.array(z.string()).safeParse(JSON.parse(text));
+    return list.success ? list.data : [];
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -25,10 +38,26 @@ interface Row {
 export class DishStore {
   constructor(private readonly db: DatabaseSync) {}
 
-  /** Saved meal id → category and whether a recipe is kept. */
-  all(): Map<string, { category: string | null; hasRecipe: boolean }> {
-    const rows = this.db.prepare("SELECT saved_meal_id, category, recipe FROM dish_meta").all() as unknown as Row[];
-    return new Map(rows.map((row) => [row.saved_meal_id, { category: row.category, hasRecipe: row.recipe !== null }]));
+  /** Saved meal id → category, whether a recipe is kept, and the other names the dish goes by in the plan. */
+  all(): Map<string, { category: string | null; hasRecipe: boolean; aliases: string[] }> {
+    const rows = this.db.prepare("SELECT saved_meal_id, category, recipe, aliases FROM dish_meta").all() as unknown as Row[];
+    return new Map(rows.map((row) => [row.saved_meal_id, { category: row.category, hasRecipe: row.recipe !== null, aliases: parseAliases(row.aliases) }]));
+  }
+
+  aliases(id: string): string[] {
+    return parseAliases(this.row(id)?.aliases);
+  }
+
+  /** The dish's other names (a plan dish merged into it); without repeats, at most DISH_ALIASES_MAX. */
+  setAliases(id: string, names: string[]): string[] {
+    const seen = new Set<string>();
+    const unique = names.map((n) => n.trim().slice(0, 100)).filter((n) => n && !seen.has(n.toLowerCase()) && seen.add(n.toLowerCase())).slice(-DISH_ALIASES_MAX);
+    this.db
+      .prepare(
+        "INSERT INTO dish_meta (saved_meal_id, aliases) VALUES (?, ?) ON CONFLICT(saved_meal_id) DO UPDATE SET aliases = excluded.aliases, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')",
+      )
+      .run(id.toLowerCase(), unique.length > 0 ? JSON.stringify(unique) : null);
+    return unique;
   }
 
   category(id: string): string | null {
@@ -99,6 +128,6 @@ export class DishStore {
   }
 
   private row(id: string): Row | undefined {
-    return this.db.prepare("SELECT saved_meal_id, category, recipe FROM dish_meta WHERE saved_meal_id = ?").get(id.toLowerCase()) as Row | undefined;
+    return this.db.prepare("SELECT saved_meal_id, category, recipe, aliases FROM dish_meta WHERE saved_meal_id = ?").get(id.toLowerCase()) as Row | undefined;
   }
 }

@@ -44,3 +44,14 @@ describe("plan dishes", () => {
     expect(dishes.every((d) => d.foods.length > 0 && (d.totals || d.foods.every((f) => f.nutrients)))).toBe(true);
   });
 });
+
+describe("similar dishes", () => {
+  it("finds a dish with most words or foods in common, not one that only shares a small word", async () => {
+    const { similarDishes } = await import("../src/index.js");
+    const dish = (name: string, foods: string[]) => ({ name, description: "", items: foods.map((name) => ({ name })) });
+    const list = [dish("Insalata di riso tonno e mozzarella", ["Riso", "Tonno"]), dish("Pasta al pomodoro", ["Pasta", "Passata"]), dish("Riso freddo", ["Riso", "Tonno", "Pomodori", "Mozzarella"])];
+    const found = similarDishes({ name: "Insalata di riso con tonno, pomodori e mozzarella", foods: ["Riso", "Tonno", "Pomodori", "Mozzarella", "Olio"].map((name) => ({ name })) }, list);
+    expect(found.map((f) => f.dish.name).sort()).toEqual(["Insalata di riso tonno e mozzarella", "Riso freddo"]);
+    expect(similarDishes({ name: "Pasta e fagioli", foods: [{ name: "Pasta" }] }, [dish("Pasta al salmone", ["Pasta", "Salmone"])])).toEqual([]);
+  });
+});

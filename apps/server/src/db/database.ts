@@ -128,6 +128,8 @@ const MIGRATIONS: string[] = [
      meal_id TEXT PRIMARY KEY,
      courses TEXT NOT NULL
    )`,
+  // Other names of a dish: plan dishes merged into it ("Unisci", docs/plan-dishes.md)
+  `ALTER TABLE dish_meta ADD COLUMN aliases TEXT`,
 ];
 
 /** Opens (and migrates) the SQLite database. Pass ":memory:" for tests. */
