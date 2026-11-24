@@ -114,6 +114,8 @@ export interface UpdateMealRequest {
   items?: MealItemInput[];
   /** Totals for a meal without items. */
   totals?: { kcal: number; protein: number; carbs: number; fat: number };
+  /** Courses of the meal, by consecutive items (docs/courses.md); null in an edit makes it one dish again. */
+  courses?: Array<{ name: string; count: number }> | null;
 }
 
 /** POST /api/meals: logs a new meal (e.g. confirmed from a photo); same shape as an edit plus an idempotency key. */

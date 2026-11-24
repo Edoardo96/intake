@@ -13,6 +13,28 @@ import { WEEKDAYS } from "./mealPlan.js";
 export const COURSE_NAMES = ["Antipasto", "Primo", "Secondo", "Contorno", "Frutta", "Dolce", "Fine pasto", "Bevanda"] as const;
 export const COURSES_MAX = 6;
 
+/**
+ * The courses of a logged meal (Nuovo pasto / Modifica pasto): Nutrition keeps only the foods, in order, so Intake keeps
+ * which consecutive foods make each course. Ignored when the counts no longer add up to the meal's foods.
+ */
+export interface MealCourse {
+  name: string;
+  count: number;
+}
+
+export const MEAL_COURSES_MAX = 8;
+
+/** The meal's foods split into its courses, or null when there are none or they no longer match the foods. */
+export function splitIntoCourses<T>(items: T[], courses: MealCourse[] | null | undefined): Array<{ name: string; items: T[] }> | null {
+  if (!courses || courses.length < 2 || courses.reduce((s, c) => s + c.count, 0) !== items.length) return null;
+  let start = 0;
+  return courses.map((c) => {
+    const part = items.slice(start, start + c.count);
+    start += c.count;
+    return { name: c.name, items: part };
+  });
+}
+
 /** The text of a course, as a dish: its description or its foods. */
 export function courseText(course: Pick<Course, "description" | "foods">): string {
   return course.description ?? course.foods.map(foodLine).join(" + ");

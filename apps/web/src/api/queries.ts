@@ -390,7 +390,10 @@ export function useUpdateMeal() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, request }: { id: string; request: UpdateMealRequest }) => apiFetch(`/api/meals/${id}`, { method: "PATCH", json: request }),
-    onSettled: () => invalidateDays(queryClient),
+    onSettled: (_data, _error, { id }) => {
+      void queryClient.invalidateQueries({ queryKey: ["meal-courses", id] });
+      return invalidateDays(queryClient);
+    },
   });
 }
 
@@ -1117,5 +1120,14 @@ export function useSetRecipeModel() {
   return useMutation({
     mutationFn: (model: string) => apiFetch<RecipeModelResponse>("/api/dishes/recipe/model", { method: "PUT", json: { model } }),
     onSuccess: (data) => queryClient.setQueryData(["recipe-model"], data),
+  });
+}
+
+/** The courses of a logged meal (docs/courses.md); null when it is one dish. */
+export function useMealCourses(id: string) {
+  return useQuery({
+    queryKey: ["meal-courses", id],
+    queryFn: () => apiFetch<{ courses: Array<{ name: string; count: number }> | null }>(`/api/meals/${id}/courses`).then((r) => r.courses),
+    staleTime: 60_000,
   });
 }
