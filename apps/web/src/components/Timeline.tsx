@@ -8,7 +8,8 @@ import { t } from "../lib/strings";
 import { DayAlternative } from "./DayAlternative";
 import { MACROS } from "./MacroCard";
 import { SleepPhases } from "./SleepPhases";
-import { DishChoice, useDishChoice } from "./DishChoice";
+import { CoursesChoice, DishChoice, useCoursesChoice, useDishChoice, type LogChoice } from "./DishChoice";
+import { courseLabel } from "../lib/courseLabel";
 import { WorkoutCard } from "./WorkoutCard";
 
 interface Props {
@@ -24,7 +25,8 @@ interface Props {
   /** Local time HH:MM:SS when the day is today; the "now" marker is shown only then. */
   now: string | null;
   /** `alternative`: an interchangeable dish chosen in place of the planned one (docs/dish-groups.md). */
-  onLogPlanned: (entry: PlannedEntry, alternative?: { groupId: number; dishIndex: number }) => void;
+  /** With the dish or courses chosen (docs/dish-groups.md, docs/courses.md). */
+  onLogPlanned: (entry: PlannedEntry, choice?: LogChoice) => void;
   /** Skip (true) or restore (false) a planned meal. */
   onSkipPlanned: (entry: PlannedEntry, skip: boolean) => void;
   loggingPlanned: PlannedEntry | null;
@@ -154,13 +156,16 @@ function PlannedCard({
   entry: PlannedEntry;
   /** Today: the AI alternative can be asked. */
   suggest: boolean;
-  onLog: (alternative?: { groupId: number; dishIndex: number }) => void;
+  onLog: (choice?: LogChoice) => void;
   onSkip: (skip: boolean) => void;
   logging: boolean;
   failed: boolean;
   onOther: () => void;
 }) {
   const choice = useDishChoice(entry);
+  const courses = useCoursesChoice(entry);
+  const hasCourses = (entry.courses?.length ?? 0) > 0;
+  const canLog = hasCourses ? courses.canLog : choice.canLog;
   if (entry.status === "skipped") {
     return (
       <article className="meal-card" data-kind="skipped">
@@ -182,13 +187,19 @@ function PlannedCard({
         <h3>{entry.title}</h3>
         <span className="planned-label">{label}</span>
       </header>
-      {entry.foods && <p className="meal-summary">{choice.alternative ? choice.summary : plannedText(entry)}</p>}
-      {(entry.status === "todo" || entry.status === "planned") && <DishChoice entry={entry} choice={choice} />}
+      {entry.foods && !(hasCourses && entry.status === "todo") && <p className="meal-summary">{choice.alternative ? choice.summary : plannedText(entry)}</p>}
+      {hasCourses && entry.status === "todo" && <CoursesChoice choice={courses} label={courseLabel} />}
+      {!hasCourses && (entry.status === "todo" || entry.status === "planned") && <DishChoice entry={entry} choice={choice} />}
       {entry.status === "todo" && (
         <>
           <div className="planned-actions">
-            <button type="button" className="button-small button-inverse" onClick={() => onLog(choice.alternative)} disabled={logging || !choice.canLog}>
-              {t.timeline.eatenAsPlanned}
+            <button
+              type="button"
+              className="button-small button-inverse"
+              onClick={() => onLog(hasCourses ? courses.body : choice.alternative ? { alternative: choice.alternative } : undefined)}
+              disabled={logging || !canLog}
+            >
+              {hasCourses && courses.kcal !== null ? t.courses.logChosen(formatKcal(courses.kcal)) : t.timeline.eatenAsPlanned}
             </button>
             <button type="button" className="button-small button-outline" onClick={onOther}>
               {t.timeline.other}
@@ -197,7 +208,7 @@ function PlannedCard({
               {t.timeline.skip}
             </button>
           </div>
-          {!choice.canLog && <p className="planned-hint">{t.timeline.noMacros}</p>}
+          {!canLog && <p className="planned-hint">{hasCourses && courses.rows.every((r) => !r.eaten) ? t.courses.noneChosen : t.timeline.noMacros}</p>}
           {failed && <p className="error-text">{t.timeline.logFailed}</p>}
           {suggest && <DayAlternative entry={entry} />}
         </>
@@ -310,7 +321,7 @@ export function Timeline({ meals, planned, workouts = [], sleep = null, heading 
               ) : (
                 <PlannedCard
                   entry={entry.entry}
-                  onLog={(alternative) => onLogPlanned(entry.entry, alternative)}
+                  onLog={(choice) => onLogPlanned(entry.entry, choice)}
                   onSkip={(skip) => onSkipPlanned(entry.entry, skip)}
                   logging={loggingPlanned?.planId === entry.entry.planId && loggingPlanned.index === entry.entry.index}
                   failed={logFailed && loggingPlanned?.planId === entry.entry.planId && loggingPlanned.index === entry.entry.index}

@@ -76,3 +76,76 @@ export function DishChoice({ entry, choice }: { entry: PlannedEntry; choice: Dis
     </div>
   );
 }
+
+export type LogChoice = { alternative?: { groupId: number; dishIndex: number }; courses?: Array<{ eaten: boolean; alternative?: { groupId: number; dishIndex: number } }> };
+
+/**
+ * A planned meal with courses (docs/courses.md): which courses were eaten (all, until one is unticked) and, for each,
+ * the planned dish or one of its interchangeable dishes. "Mangiato come previsto" logs them as one meal.
+ */
+export function useCoursesChoice(entry: PlannedEntry) {
+  const groups = useDishGroups();
+  const courses = entry.courses ?? [];
+  const [eaten, setEaten] = useState<boolean[]>(() => courses.map(() => true));
+  const [chosen, setChosen] = useState<Array<number | null>>(() => courses.map(() => null));
+  const rows = courses.map((course, i) => {
+    const alternatives = alternativesFor(groups.data ?? [], course.foods);
+    const alt = chosen[i] === null || chosen[i] === undefined ? undefined : alternatives[chosen[i]!];
+    const macros = alt ? dishMacros(alt.dish) : course.macros;
+    return { course, alternatives, alt, eaten: eaten[i] ?? true, chosen: alt ? chosen[i]! : null, macros, text: alt ? alt.dish.name : course.foods, lines: alt ? alt.dish.foods.map(foodLine) : course.lines };
+  });
+  const picked = rows.filter((r) => r.eaten);
+  const canLog = picked.length > 0 && picked.every((r) => r.macros);
+  return {
+    rows,
+    canLog,
+    kcal: canLog ? Math.round(picked.reduce((s, r) => s + r.macros!.kcal, 0)) : null,
+    toggle: (i: number) => setEaten((list) => list.map((v, j) => (j === i ? !v : v))),
+    choose: (i: number, value: number | null) => setChosen((list) => list.map((v, j) => (j === i ? value : v))),
+    body: { courses: rows.map((r) => ({ eaten: r.eaten, ...(r.alt ? { alternative: { groupId: r.alt.groupId, dishIndex: r.alt.dishIndex } } : {}) })) } satisfies LogChoice,
+  };
+}
+
+export type CoursesChoiceState = ReturnType<typeof useCoursesChoice>;
+
+/** "Cosa hai mangiato?": one row per course with a tick, and chips for its interchangeable dishes. */
+export function CoursesChoice({ choice, label }: { choice: CoursesChoiceState; label: (name: string) => string }) {
+  return (
+    <div className="course-choice" role="group" aria-label={t.courses.eaten}>
+      <span className="dish-choice-title">{t.courses.eaten}</span>
+      {choice.rows.map((row, i) => (
+        <div key={i} className="course-choice-row" data-eaten={row.eaten || undefined}>
+          <input type="checkbox" className="course-check" checked={row.eaten} aria-label={t.courses.toggle(label(row.course.name))} onChange={() => choice.toggle(i)} />
+          <div className="course-choice-body">
+            <span className="plan-course-name">
+              {label(row.course.name).toUpperCase()}
+              {!row.eaten && ` · ${t.courses.skipped.toUpperCase()}`}
+            </span>
+            {row.eaten && row.alternatives.length > 0 ? (
+              <div className="dish-choice-chips">
+                {[null, ...row.alternatives.map((_, k) => k)].map((value) => {
+                  const dish = value === null ? null : row.alternatives[value]!.dish;
+                  const kcal = value === null ? (row.course.macros?.kcal ?? null) : (dishMacros(dish!)?.kcal ?? null);
+                  return (
+                    <button key={value ?? "planned"} type="button" className="dish-chip" aria-pressed={row.chosen === value} onClick={() => choice.choose(i, value)}>
+                      <span className="dish-chip-name">{dish ? dish.name : row.course.foods}</span>
+                      <span className="dish-chip-meta">
+                        {value === null && <span className="dish-chip-tag">{t.dishes.planned}</span>}
+                        {kcal !== null ? `${formatKcal(kcal)} kcal` : t.dishes.noValues}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <span className="course-choice-text">
+                {row.text}
+                {row.macros && ` · ${formatKcal(row.macros.kcal)} kcal`}
+              </span>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}

@@ -54,6 +54,17 @@ export interface PlannedEntry {
   lines: string[];
   status: PlannedStatus;
   macros: PlannedMacros | null;
+  /** The courses of a meal with several (docs/courses.md); absent for a meal that is one dish. */
+  courses?: PlannedCourseEntry[];
+}
+
+/** One course of a planned meal, as the Timeline and Oggi show it. */
+export interface PlannedCourseEntry {
+  name: string;
+  /** The course as a dish (its description or foods), matched against the interchangeable dishes. */
+  foods: string;
+  lines: string[];
+  macros: PlannedMacros | null;
 }
 
 /** kcal and protein of a planned or logged meal. */

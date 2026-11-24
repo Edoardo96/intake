@@ -1,10 +1,11 @@
-import { WEEKDAYS, foodLine, isFixedMeal, type FixedPlannedMeal, type MealPlan, type PlannedDay, type PlannedFood, type PlannedMeal, type StoredPlan, type Weekday } from "@intake/shared";
+import { WEEKDAYS, courseMacros, foodLine, isFixedMeal, type Course, type FixedPlannedMeal, type MealPlan, type PlannedDay, type PlannedFood, type PlannedMeal, type StoredPlan, type Weekday } from "@intake/shared";
 import { useEffect, useState, type ReactNode } from "react";
 import { useAlternativeMeal, useConfirmSplitFoods, useConfirmSplitWeek, useEstimateMacros, useFeatures, useSplitFoodsProposal, useSplitWeekProposal } from "../api/queries";
 import { formatKcal } from "../lib/format";
 import { ApiError } from "../api/client";
 import { planErrorText } from "../lib/planErrors";
 import { t } from "../lib/strings";
+import { courseLabel } from "../lib/courseLabel";
 import { FoodPicker } from "./FoodPicker";
 import { SparklesIcon } from "./icons";
 
@@ -75,12 +76,14 @@ export interface PlanDayMealsProps {
   extra?: (meal: PlannedMeal, index: number) => ReactNode;
   /** Piatti intercambiabili of a fixed meal, between the dish and `extra`. */
   dishes?: (meal: FixedPlannedMeal, index: number) => ReactNode;
+  /** Under each course of a meal with courses: its alternatives and actions (docs/courses.md). */
+  course?: (meal: FixedPlannedMeal, index: number, courseIndex: number, course: Course) => ReactNode;
   /** A meal being replaced is dimmed. */
   busyIndex?: number | null;
 }
 
 /** The meals of one plan day: time (editable), name, kcal, dish, foods and macros. Used by Piano and the AI review. */
-export function PlanDayMeals({ day, onTime, timeBusy, warnings, extra, dishes, busyIndex }: PlanDayMealsProps) {
+export function PlanDayMeals({ day, onTime, timeBusy, warnings, extra, dishes, course, busyIndex }: PlanDayMealsProps) {
   return (
     <div className="plan-meals">
       {day.meals.map((meal, i) => {
@@ -112,13 +115,42 @@ export function PlanDayMeals({ day, onTime, timeBusy, warnings, extra, dishes, b
               <h3>{meal.title}</h3>
               {m && <span className="plan-meal-kcal">{formatKcal(m.kcal)} kcal</span>}
             </header>
-            {meal.description && <p className="plan-meal-dish">{meal.description}</p>}
-            <ul>
-              {meal.foods.map((food, j) => (
-                <li key={j}>{foodLine(food)}</li>
-              ))}
-            </ul>
-            {m && <p className="plan-meal-macros">{t.plan.macroLine(formatKcal(m.protein), formatKcal(m.carbs), formatKcal(m.fat), formatKcal(m.fiber ?? 0))}</p>}
+            {meal.courses ? (
+              <>
+                <p className="plan-meal-macros">
+                  {t.courses.count(meal.courses.length)}
+                  {m && ` · ${t.plan.macroLine(formatKcal(m.protein), formatKcal(m.carbs), formatKcal(m.fat), formatKcal(m.fiber ?? 0))}`}
+                </p>
+                {meal.courses.map((c, k) => {
+                  const cm = courseMacros(c);
+                  return (
+                    <section key={k} className="plan-course" aria-label={c.name}>
+                      <div className="plan-course-head">
+                        <span className="plan-course-name">{courseLabel(c.name).toUpperCase()}</span>
+                        {cm && <span className="plan-course-kcal">{formatKcal(cm.kcal)} kcal</span>}
+                      </div>
+                      {c.description && <p className="plan-meal-dish">{c.description}</p>}
+                      <ul>
+                        {c.foods.map((food, j) => (
+                          <li key={j}>{foodLine(food)}</li>
+                        ))}
+                      </ul>
+                      {course?.(meal, i, k, c)}
+                    </section>
+                  );
+                })}
+              </>
+            ) : (
+              <>
+                {meal.description && <p className="plan-meal-dish">{meal.description}</p>}
+                <ul>
+                  {meal.foods.map((food, j) => (
+                    <li key={j}>{foodLine(food)}</li>
+                  ))}
+                </ul>
+                {m && <p className="plan-meal-macros">{t.plan.macroLine(formatKcal(m.protein), formatKcal(m.carbs), formatKcal(m.fat), formatKcal(m.fiber ?? 0))}</p>}
+              </>
+            )}
             {problems.map((text, j) => (
               <p key={j} className="plan-meal-warn">
                 <span aria-hidden="true">⚠</span> {text}

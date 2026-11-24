@@ -94,6 +94,14 @@ const mealType = z
 
 const description = z.string().trim().min(1).optional().describe("Readable one-line summary of the meal");
 
+/** One course of a meal with several (primo, secondo, fine pasto…); docs/courses.md. */
+export const courseSchema = z.strictObject({
+  name: z.string().trim().min(1).max(30).describe('Name of the course, e.g. "Primo", "Secondo", "Contorno", "Fine pasto"'),
+  description,
+  foods: z.array(plannedFoodSchema).min(1),
+  macros: plannedMacrosSchema.optional().describe("Estimated nutrients of this course"),
+});
+
 export const fixedMealSchema = z.strictObject({
   title: z.string().trim().min(1),
   time,
@@ -104,6 +112,12 @@ export const fixedMealSchema = z.strictObject({
   macros: plannedMacrosSchema
     .optional()
     .describe('Estimated nutrients for the whole meal. Needed for "Mangiato come previsto" to log complete values'),
+  courses: z
+    .array(courseSchema)
+    .min(2)
+    .max(6)
+    .optional()
+    .describe("Optional courses of the meal (e.g. a primo and a yogurt). With courses, foods lists the foods of every course in order and macros is their sum; Intake recomputes both on upload"),
 });
 
 export const freeMealSchema = z.strictObject({
@@ -148,6 +162,7 @@ export type PlannedFood = z.infer<typeof plannedFoodSchema>;
 export type PlannedFoodNutrients = z.infer<typeof plannedFoodNutrientsSchema>;
 export type PlannedMeal = z.infer<typeof plannedMealSchema>;
 export type FixedPlannedMeal = z.infer<typeof fixedMealSchema>;
+export type Course = z.infer<typeof courseSchema>;
 export type MealTypeValue = (typeof MEAL_TYPES)[number];
 export type PlannedDay = z.infer<typeof plannedDaySchema>;
 export type MealPlan = z.infer<typeof mealPlanSchema>;

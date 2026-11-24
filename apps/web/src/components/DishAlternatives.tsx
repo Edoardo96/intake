@@ -183,8 +183,11 @@ export function DishPickerSheet({
   onClose,
   busy,
   failed,
+  subtitle,
 }: {
   meal: string;
+  /** The line under the title; "Alternativa a …" by default. */
+  subtitle?: string;
   category?: string | null;
   exclude?: string[];
   onPick: (dish: Dish) => void;
@@ -217,7 +220,7 @@ export function DishPickerSheet({
             <CloseIcon size={18} strokeWidth={2.5} />
           </button>
         </div>
-        <p className="muted dish-fav-for">{t.dishes.alternativeTo(meal)}</p>
+        <p className="muted dish-fav-for">{subtitle ?? t.dishes.alternativeTo(meal)}</p>
         <input type="search" className="dish-fav-search" value={query} autoFocus placeholder={t.dishes.searchDishes} aria-label={t.dishes.searchDishes} onChange={(e) => setQuery(e.target.value)} />
         {categories.length > 0 && (
           <div className="dish-chips" role="group" aria-label={t.dishBook.categoriesLabel}>

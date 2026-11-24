@@ -1643,6 +1643,25 @@ export const it = {
     tipLabel: "Consiglio (facoltativo)",
     recipeIncomplete: "Servono tempo, porzioni, almeno un ingrediente e un passaggio.",
   },
+  courses: {
+    names: ["Antipasto", "Primo", "Secondo", "Contorno", "Frutta", "Dolce", "Fine pasto", "Bevanda"],
+    count: (n: number) => `${n} portate`,
+    add: "+ Aggiungi portata",
+    whichCourse: "Che portata è?",
+    firstIs: "Il piatto che c’è già è il…",
+    what: "Cosa mangi?",
+    other: "+ Altro nome",
+    otherName: "Nome della portata",
+    defaultName: "Portata",
+    courseOf: (course: string, meal: string) => `${course} · ${meal}`,
+    remove: "Togli portata",
+    removeOf: (course: string) => `Togli la portata ${course}`,
+    eaten: "Cosa hai mangiato?",
+    skipped: "saltata",
+    logChosen: (kcal: string) => `Mangiato come previsto · ${kcal} kcal`,
+    noneChosen: "Spunta almeno una portata.",
+    toggle: (course: string) => `${course} mangiato`,
+  },
 };
 
 export type Strings = typeof it;

@@ -1,5 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
-import { mealPlanSchema, type MealPlan, type PlanStatus, type PlanVersion, type StoredPlan } from "@intake/shared";
+import { mealPlanSchema, normalizeCourses, type MealPlan, type PlanStatus, type PlanVersion, type StoredPlan } from "@intake/shared";
 
 interface PlanRow {
   id: number;
@@ -44,7 +44,9 @@ export class PlanStore {
     return Number(result.changes) > 0;
   }
 
-  add(plan: MealPlan): StoredPlan {
+  add(input: MealPlan): StoredPlan {
+    // A meal with courses keeps its foods and macros equal to those of its courses (docs/courses.md)
+    const plan = normalizeCourses(input);
     const uploadedAt = this.now().toISOString();
     const result = this.db
       .prepare("INSERT INTO plans (valid_from, uploaded_at, content) VALUES (?, ?, ?)")

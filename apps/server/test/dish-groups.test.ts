@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { mealPlanSchema, type Dish, type MealPlan } from "@intake/shared";
+import { addCourse, mealPlanSchema, type Dish, type MealPlan } from "@intake/shared";
 import { describe, expect, it, vi } from "vitest";
 import { buildApp } from "../src/app.js";
 import { openDatabase } from "../src/db/database.js";
@@ -113,5 +113,35 @@ describe("logPlannedMeal with an alternative", () => {
         groups,
       ),
     ).rejects.toBeInstanceOf(PlanMealNotFoundError);
+  });
+});
+
+describe("logPlannedMeal with courses", () => {
+  it("logs only the courses eaten, one of them as its alternative, as one meal", async () => {
+    const db = openDatabase(":memory:");
+    const plans = new PlanStore(db);
+    const index = examplePlan.days.thursday.meals.findIndex((m) => m.title === "Pranzo");
+    const first = examplePlan.days.thursday.meals[index]!;
+    const pasta = { name: "Pasta", quantity: 100, unit: "g", nutrients: { kcal: 350, protein: 12, carbs: 70, fat: 2, fiber: 3 } };
+    const yogurt = { name: "Yogurt greco", quantity: 150, unit: "g", nutrients: { kcal: 90, protein: 15, carbs: 6, fat: 0, fiber: 0 } };
+    let withCourses = { ...examplePlan, days: { ...examplePlan.days, thursday: { ...examplePlan.days.thursday, meals: examplePlan.days.thursday.meals.map((m, i) => (i === index ? { title: first.title, time: first.time, foods: [pasta], description: "Pasta con tonno" } : m)) } } } as MealPlan;
+    withCourses = addCourse(mealPlanSchema.parse(withCourses), { day: "thursday", index, name: "Fine pasto", firstName: "Primo", description: "Yogurt greco", foods: [yogurt] });
+    const plan = plans.add({ ...withCourses, validFrom: "2026-11-02" });
+    const groups = new DishGroupStore(db);
+    const group = groups.link({ dish: dish("Pasta con tonno"), alternative: salmon });
+    const logMeal = vi.fn(async (_input: object) => ({ id: "c-meal" }));
+    const api = { logMeal, mealsByDate: vi.fn(async () => ({ timezone: null, meals: [] })) };
+    await logPlannedMeal(
+      api,
+      plans,
+      { date: "2026-11-05", planId: plan.id, index, today: "2026-11-06", now: "09:00:00", courses: [{ eaten: true, alternative: { groupId: group.id, dishIndex: 1 } }, { eaten: false }] },
+      groups,
+    );
+    const call = logMeal.mock.calls[0]![0] as Record<string, unknown>;
+    expect(call.description).toBe("Pranzo: Pasta al salmone");
+    expect((call.items as Array<{ name: string }>).map((i) => i.name)).toEqual(["Pasta", "Salmone affumicato"]);
+    expect(call.idempotency_key).toBe(`intake-plan-${plan.id}-2026-11-05-${index}-c-${group.id}.1_x`);
+    expect(plans.linksOn("2026-11-05")).toEqual([{ planId: plan.id, index, mealId: "c-meal" }]);
+    await expect(logPlannedMeal(api, plans, { date: "2026-11-05", planId: plan.id, index, today: "2026-11-06", now: "09:00:00", courses: [{ eaten: false }, { eaten: false }] }, groups)).rejects.toBeInstanceOf(PlanMealNotFoundError);
   });
 });

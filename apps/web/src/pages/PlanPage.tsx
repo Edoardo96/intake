@@ -9,7 +9,7 @@ import {
 } from "@intake/shared";
 import { useRef, useState } from "react";
 import { useLocation, useSearch } from "wouter";
-import { PlanUploadFailed, useDay, useFeatures, usePlan, usePlans, useEditPlanMeal, useSetPlanTime, useStartPlan, useSwapPlanMeal, useUploadPlan } from "../api/queries";
+import { PlanUploadFailed, useChangeCourses, useDay, useFeatures, usePlan, usePlans, useEditPlanMeal, useSetPlanTime, useStartPlan, useSwapPlanMeal, useUploadPlan } from "../api/queries";
 import { EditMeal, MoveMeal, PlanDayMeals, PlanDaySummary, SameTimeSwitch, SplitFoods, SplitWeek } from "../components/PlanDay";
 import { CloseIcon, PlanIcon, SparklesIcon } from "../components/icons";
 import { formatKcal, formatMediumDate, formatShortDate } from "../lib/format";
@@ -18,6 +18,7 @@ import { t } from "../lib/strings";
 import { Scrim } from "../components/Scrim";
 import { NeedsCard } from "../components/NeedsCard";
 import { DishesTab } from "../components/DishesTab";
+import { AddCourse, courseLabel } from "../components/Courses";
 import { DishAlternatives, DishGroupsCard, dishAsEdit } from "../components/DishAlternatives";
 import { PLAN_TAB_PARAM, planTabFromSearch, preferredPlanTab, type PlanTab } from "../lib/planTab";
 
@@ -60,6 +61,7 @@ export function PlanPage() {
   const setTime = useSetPlanTime();
   const swap = useSwapPlanMeal();
   const edit = useEditPlanMeal();
+  const courses = useChangeCourses();
   const startNow = useStartPlan();
   const [splitting, setSplitting] = useState<{ day: Weekday; index: number } | null>(null);
   const [splitWeekOpen, setSplitWeekOpen] = useState(false);
@@ -305,13 +307,16 @@ export function PlanPage() {
                   onTime={(index, time) => setTime.mutate({ id: shown.id, day: weekday, index, time, allDays: sameTime })}
                   extra={(meal, index) => (
                     <div className="plan-meal-actions">
-                      <EditMeal
-                        meal={meal}
-                        busy={edit.isPending}
-                        failed={edit.isError}
-                        onSave={(dish, done) => edit.mutate({ id: shown.id, day: weekday, index, ...dish }, { onSuccess: done })}
-                        onSplit={() => setSplitting({ day: weekday, index })}
-                      />
+                      {/* A meal with courses is edited course by course */}
+                      {!("courses" in meal && meal.courses) && (
+                        <EditMeal
+                          meal={meal}
+                          busy={edit.isPending}
+                          failed={edit.isError}
+                          onSave={(dish, done) => edit.mutate({ id: shown.id, day: weekday, index, ...dish }, { onSuccess: done })}
+                          onSplit={() => setSplitting({ day: weekday, index })}
+                        />
+                      )}
                       {splitting?.day === weekday && splitting.index === index && (
                         <SplitFoods plan={shown} day={weekday} index={index} onDone={() => setSplitting(null)} onClose={() => setSplitting(null)} />
                       )}
@@ -319,13 +324,48 @@ export function PlanPage() {
                     </div>
                   )}
                   dishes={(meal, index) => (
-                    <DishAlternatives
-                      meal={meal}
-                      busy={edit.isPending}
-                      onUse={(dish) => edit.mutate({ id: shown.id, day: weekday, index, ...dishAsEdit(dish) })}
-                      {...(canGenerate ? { ai: { planId: shown.id, day: weekday, index } } : {})}
-                    />
+                    <>
+                      {!meal.courses && (
+                        <DishAlternatives
+                          meal={meal}
+                          busy={edit.isPending}
+                          onUse={(dish) => edit.mutate({ id: shown.id, day: weekday, index, ...dishAsEdit(dish) })}
+                          {...(canGenerate ? { ai: { planId: shown.id, day: weekday, index } } : {})}
+                        />
+                      )}
+                      <AddCourse
+                        meal={meal}
+                        busy={courses.isPending}
+                        failed={courses.isError}
+                        onAdd={(add, done) => courses.mutate({ id: shown.id, add: { day: weekday, index, ...add } }, { onSuccess: done })}
+                      />
+                    </>
                   )}
+                  course={(meal, index, k, c) => {
+                    const asMeal = { title: meal.title, ...(c.description ? { description: c.description } : {}), foods: c.foods, ...(c.macros ? { macros: c.macros } : {}) };
+                    return (
+                      <>
+                        <DishAlternatives meal={asMeal} busy={edit.isPending} onUse={(dish) => edit.mutate({ id: shown.id, day: weekday, index, course: k, ...dishAsEdit(dish) })} />
+                        <div className="plan-meal-actions plan-course-actions">
+                          <EditMeal
+                            meal={asMeal}
+                            busy={edit.isPending}
+                            failed={edit.isError}
+                            onSave={(dish, done) => edit.mutate({ id: shown.id, day: weekday, index, course: k, ...dish }, { onSuccess: done })}
+                          />
+                          <button
+                            type="button"
+                            className="plan-meal-action"
+                            disabled={courses.isPending}
+                            aria-label={t.courses.removeOf(courseLabel(c.name))}
+                            onClick={() => courses.mutate({ id: shown.id, remove: { day: weekday, index, course: k } })}
+                          >
+                            {t.courses.remove}
+                          </button>
+                        </div>
+                      </>
+                    );
+                  }}
                 />
               </div>
 

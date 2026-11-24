@@ -1,6 +1,8 @@
 import type {
   RecognitionModelResponse,
   Dish,
+  CourseAdd,
+  CourseRemove,
   DishGroupsResponse,
   DishesResponse,
   DishWrite,
@@ -232,10 +234,16 @@ export function useDisconnectNutrition() {
 export function useLogPlanned(date: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (entry: { date: string; planId: number; index: number; alternative?: { groupId: number; dishIndex: number } }) =>
+    mutationFn: (entry: {
+      date: string;
+      planId: number;
+      index: number;
+      alternative?: { groupId: number; dishIndex: number };
+      courses?: Array<{ eaten: boolean; alternative?: { groupId: number; dishIndex: number } }>;
+    }) =>
       apiFetch<{ mealId: string | null }>(`/api/days/${entry.date}/planned/${entry.planId}/${entry.index}`, {
         method: "POST",
-        ...(entry.alternative ? { json: { alternative: entry.alternative } } : {}),
+        ...(entry.alternative || entry.courses ? { json: { ...(entry.alternative ? { alternative: entry.alternative } : {}), ...(entry.courses ? { courses: entry.courses } : {}) } } : {}),
       }),
     onMutate: async (entry) => {
       await queryClient.cancelQueries({ queryKey: dayKey(date) });
@@ -884,6 +892,21 @@ export function useEditPlanMeal() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, ...edit }: MealEdit & { id: number }) => apiFetch<StoredPlan>(`/api/plans/${id}/meal`, { method: "PATCH", json: edit }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["plans"] });
+      return invalidateDays(queryClient);
+    },
+  });
+}
+
+/** "+ Aggiungi portata" and the × of a course of a planned meal (docs/courses.md). */
+export function useChangeCourses() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (change: ({ add: CourseAdd } | { remove: CourseRemove }) & { id: number }) =>
+      "add" in change
+        ? apiFetch<StoredPlan>(`/api/plans/${change.id}/course`, { method: "POST", json: change.add })
+        : apiFetch<StoredPlan>(`/api/plans/${change.id}/course/remove`, { method: "POST", json: change.remove }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["plans"] });
       return invalidateDays(queryClient);
