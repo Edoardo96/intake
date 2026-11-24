@@ -9,7 +9,7 @@ import {
 } from "@intake/shared";
 import { useRef, useState } from "react";
 import { useLocation, useSearch } from "wouter";
-import { PlanUploadFailed, useChangeCourses, useDay, useFeatures, usePlan, usePlans, useEditPlanMeal, useSetPlanTime, useStartPlan, useSwapPlanMeal, useUploadPlan } from "../api/queries";
+import { PlanUploadFailed, useChangeCourses, useChangePlanMeals, useDay, useFeatures, usePlan, usePlans, useEditPlanMeal, useSetPlanTime, useStartPlan, useSwapPlanMeal, useUploadPlan } from "../api/queries";
 import { EditMeal, MoveMeal, PlanDayMeals, PlanDaySummary, SameTimeSwitch, SplitFoods, SplitWeek } from "../components/PlanDay";
 import { CloseIcon, PlanIcon, SparklesIcon } from "../components/icons";
 import { formatKcal, formatMediumDate, formatShortDate } from "../lib/format";
@@ -19,6 +19,7 @@ import { Scrim } from "../components/Scrim";
 import { NeedsCard } from "../components/NeedsCard";
 import { DishesTab } from "../components/DishesTab";
 import { AddCourse, SplitCourses, courseLabel } from "../components/Courses";
+import { AddPlanMeal, RemoveMeal, RemovedMeals } from "../components/PlanMeals";
 import { DishAlternatives, DishGroupsCard, dishAsEdit } from "../components/DishAlternatives";
 import { PLAN_TAB_PARAM, planTabFromSearch, preferredPlanTab, type PlanTab } from "../lib/planTab";
 
@@ -62,12 +63,15 @@ export function PlanPage() {
   const swap = useSwapPlanMeal();
   const edit = useEditPlanMeal();
   const courses = useChangeCourses();
+  const planMeals = useChangePlanMeals();
   const startNow = useStartPlan();
   const [splitting, setSplitting] = useState<{ day: Weekday; index: number } | null>(null);
   const [splitWeekOpen, setSplitWeekOpen] = useState(false);
   const [sameTime, setSameTime] = useState(true);
 
   const todayWeekday = data ? weekdayOf(data.today) : "monday";
+  // A version already in effect: taking out or adding a meal makes a new version from today (docs/plan-meals.md)
+  const inEffect = Boolean(data && shown && data.active?.id === shown.id && shown.validFrom < data.today);
   const [selected, setSelected] = useState<Weekday | null>(null);
   const weekday = selected ?? todayWeekday;
 
@@ -329,6 +333,15 @@ export function PlanPage() {
                           onSave={(labels, done) => courses.mutate({ id: shown.id, split: { day: weekday, index, labels } }, { onSuccess: done })}
                         />
                       )}
+                      <RemoveMeal
+                        key={`rm-${shown.id}-${weekday}-${index}`}
+                        meal={meal}
+                        dayName={t.weekdaysLong[dayIndex]!}
+                        inEffect={inEffect}
+                        busy={planMeals.isPending}
+                        failed={planMeals.isError}
+                        onRemove={(allDays, done) => planMeals.mutate({ id: shown.id, remove: { day: weekday, index, allDays } }, { onSuccess: done })}
+                      />
                       <MoveMeal plan={shown.plan} day={weekday} index={index} busy={swap.isPending} failed={swap.isError} onMove={(toDay) => swap.mutate({ id: shown.id, day: weekday, index, toDay })} />
                     </div>
                   )}
@@ -375,6 +388,23 @@ export function PlanPage() {
                       </>
                     );
                   }}
+                />
+                <RemovedMeals
+                  plan={shown.plan}
+                  day={weekday}
+                  dayName={t.weekdaysLong[dayIndex]!}
+                  inEffect={inEffect}
+                  busy={planMeals.isPending}
+                  failed={planMeals.isError}
+                  onRestore={(removed, allDays) => planMeals.mutate({ id: shown.id, restore: { day: weekday, removed, allDays } })}
+                />
+                <AddPlanMeal
+                  key={`add-${shown.id}-${weekday}`}
+                  dayName={t.weekdaysLong[dayIndex]!}
+                  inEffect={inEffect}
+                  busy={planMeals.isPending}
+                  failed={planMeals.isError}
+                  onAdd={({ title, time, type, allDays, ...dish }, done) => planMeals.mutate({ id: shown.id, add: { day: weekday, allDays, title, time, type, ...dish } }, { onSuccess: done })}
                 />
               </div>
 

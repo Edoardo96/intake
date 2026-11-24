@@ -314,6 +314,30 @@ describe("plan routes", () => {
     expect(list.versions[0].status).toBe("active");
   });
 
+  it("takes a meal out of a version in effect as a new version from today, moving today's links", async () => {
+    const { app, plans, headers } = await signedIn();
+    const { id } = (await app.inject({ method: "POST", url: "/api/plans", headers, payload: examplePlan })).json();
+    plans.addLink("2026-11-05", id, 1, "snack-meal");
+    plans.addLink("2026-11-05", id, 2, "lunch-meal");
+    plans.addSkip("2026-11-05", id, 4);
+    plans.addLink("2026-11-04", id, 1, "yesterday");
+    const res = await app.inject({ method: "POST", url: `/api/plans/${id}/meals/remove`, headers, payload: { day: "thursday", index: 1, allDays: true } });
+    expect(res.statusCode).toBe(200);
+    const next = res.json();
+    expect(next.id).not.toBe(id);
+    expect(next.validFrom).toBe("2026-11-05");
+    expect(plans.activeOn("2026-11-05")!.id).toBe(next.id);
+    expect(plans.activeOn("2026-11-04")!.id).toBe(id);
+    expect(plans.linksOn("2026-11-05")).toEqual([{ planId: next.id, index: 1, mealId: "lunch-meal" }]);
+    expect(plans.skipsOn("2026-11-05")).toEqual([{ planId: next.id, index: 3 }]);
+    expect(plans.linksOn("2026-11-04")).toEqual([{ planId: id, index: 1, mealId: "yesterday" }]);
+    // The new version starts today: putting the meal back changes it in place
+    const back = await app.inject({ method: "POST", url: `/api/plans/${next.id}/meals/restore`, headers, payload: { day: "thursday", removed: 0, allDays: true } });
+    expect(back.json().id).toBe(next.id);
+    expect(plans.linksOn("2026-11-05")).toEqual([{ planId: next.id, index: 2, mealId: "lunch-meal" }]);
+    expect((await app.inject({ method: "POST", url: `/api/plans/${id}/meals/remove`, headers, payload: { day: "thursday", index: 1, allDays: false } })).statusCode).toBe(409);
+  });
+
   it("changes a meal time of a stored version on one day or on every day", async () => {
     const { app, plans, headers } = await signedIn();
     const { id } = (await app.inject({ method: "POST", url: "/api/plans", headers, payload: examplePlan })).json();
