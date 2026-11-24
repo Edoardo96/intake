@@ -145,6 +145,30 @@ describe("logPlannedMeal with courses", () => {
     await expect(logPlannedMeal(api, plans, { date: "2026-11-05", planId: plan.id, index, today: "2026-11-06", now: "09:00:00", courses: [{ eaten: false }, { eaten: false }] }, groups)).rejects.toBeInstanceOf(PlanMealNotFoundError);
   });
 
+  it("logs one course as planned and another as what was eaten in its place, keeping the courses of the logged meal", async () => {
+    const db = openDatabase(":memory:");
+    const plans = new PlanStore(db);
+    const index = examplePlan.days.thursday.meals.findIndex((m) => m.title === "Pranzo");
+    const first = examplePlan.days.thursday.meals[index]!;
+    const pasta = { name: "Pasta", quantity: 100, unit: "g", nutrients: { kcal: 350, protein: 12, carbs: 70, fat: 2, fiber: 3 } };
+    const yogurt = { name: "Yogurt greco", quantity: 150, unit: "g", nutrients: { kcal: 90, protein: 15, carbs: 6, fat: 0, fiber: 0 } };
+    let withCourses = { ...examplePlan, days: { ...examplePlan.days, thursday: { ...examplePlan.days.thursday, meals: examplePlan.days.thursday.meals.map((m, i) => (i === index ? { title: first.title, time: first.time, foods: [pasta], description: "Pasta con tonno" } : m)) } } } as MealPlan;
+    withCourses = addCourse(mealPlanSchema.parse(withCourses), { day: "thursday", index, name: "Fine pasto", firstName: "Primo", description: "Yogurt greco", foods: [yogurt] });
+    const plan = plans.add({ ...withCourses, validFrom: "2026-11-02" });
+    const logMeal = vi.fn(async (_input: object) => ({ id: "o-meal" }));
+    const api = { logMeal, mealsByDate: vi.fn(async () => ({ timezone: null, meals: [] })) };
+    const set = vi.fn();
+    const tiramisu = { name: "Tiramisù", quantity: 100, unit: "g", nutrients: { kcal: 300, protein: 6, carbs: 30, fat: 17, fiber: 0 } };
+    const caffe = { name: "Caffè", quantity: 1, unit: "tazzina", nutrients: { kcal: 2, protein: 0, carbs: 0, fat: 0, fiber: 0 } };
+    await logPlannedMeal(api, plans, { date: "2026-11-05", planId: plan.id, index, today: "2026-11-06", now: "09:00:00", courses: [{ eaten: true }, { eaten: true, other: { name: "Tiramisù e caffè", foods: [tiramisu, caffe] } }] }, undefined, { set });
+    const call = logMeal.mock.calls[0]![0] as Record<string, unknown>;
+    expect(call.description).toBe("Pranzo: Pasta con tonno + Tiramisù e caffè");
+    expect((call.items as Array<{ name: string }>).map((i) => i.name)).toEqual(["Pasta", "Tiramisù", "Caffè"]);
+    expect(String(call.idempotency_key)).toMatch(/-c-p_o[0-9a-z]+$/);
+    expect(set).toHaveBeenCalledWith("o-meal", [{ name: "Primo", count: 1 }, { name: "Fine pasto", count: 2 }]);
+    expect(plans.linksOn("2026-11-05")).toEqual([{ planId: plan.id, index, mealId: "o-meal" }]);
+  });
+
   it("logs a meal split from totals only with its totals when every course is eaten as planned", async () => {
     const db = openDatabase(":memory:");
     const plans = new PlanStore(db);

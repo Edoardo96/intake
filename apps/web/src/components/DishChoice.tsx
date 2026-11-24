@@ -1,6 +1,9 @@
 import { alternativesFor, dishMacros, foodLine, type PlannedEntry } from "@intake/shared";
 import { useState } from "react";
-import { useDishGroups } from "../api/queries";
+import { MealCourseSheet } from "./MealCourseSheet";
+import { otherFromDish, otherFromManual, otherFromRecognized, otherKcal, type OtherCourse } from "../lib/otherCourse";
+import { photoForRecognition } from "../lib/image";
+import { useDishGroups, useFeatures, useRecognizeMeal } from "../api/queries";
 import { formatKcal } from "../lib/format";
 import { t } from "../lib/strings";
 
@@ -77,7 +80,10 @@ export function DishChoice({ entry, choice }: { entry: PlannedEntry; choice: Dis
   );
 }
 
-export type LogChoice = { alternative?: { groupId: number; dishIndex: number }; courses?: Array<{ eaten: boolean; alternative?: { groupId: number; dishIndex: number } }> };
+export type LogChoice = {
+  alternative?: { groupId: number; dishIndex: number };
+  courses?: Array<{ eaten: boolean; alternative?: { groupId: number; dishIndex: number }; other?: OtherCourse }>;
+};
 
 /**
  * A planned meal with courses (docs/courses.md): which courses were eaten (all, until one is unticked) and, for each,
@@ -88,31 +94,58 @@ export function useCoursesChoice(entry: PlannedEntry) {
   const courses = entry.courses ?? [];
   const [eaten, setEaten] = useState<boolean[]>(() => courses.map(() => true));
   const [chosen, setChosen] = useState<Array<number | null>>(() => courses.map(() => null));
+  // "Altro…": what was eaten in place of a course; it wins over the planned dish and its alternatives
+  const [others, setOthers] = useState<Array<OtherCourse | null>>(() => courses.map(() => null));
   const rows = courses.map((course, i) => {
     const alternatives = alternativesFor(groups.data ?? [], course.foods);
-    const alt = chosen[i] === null || chosen[i] === undefined ? undefined : alternatives[chosen[i]!];
-    const macros = alt ? dishMacros(alt.dish) : course.macros;
-    return { course, alternatives, alt, eaten: eaten[i] ?? true, chosen: alt ? chosen[i]! : null, macros, text: alt ? alt.dish.name : course.foods, lines: alt ? alt.dish.foods.map(foodLine) : course.lines };
+    const other = others[i] ?? null;
+    const alt = other || chosen[i] === null || chosen[i] === undefined ? undefined : alternatives[chosen[i]!];
+    const macros = other ? { kcal: otherKcal(other), protein: 0, carbs: 0, fat: 0, fiber: 0 } : alt ? dishMacros(alt.dish) : course.macros;
+    const text = other ? other.name : alt ? alt.dish.name : course.foods;
+    const lines = other ? other.foods.map(foodLine) : alt ? alt.dish.foods.map(foodLine) : course.lines;
+    return { course, alternatives, alt, other, eaten: eaten[i] ?? true, chosen: alt ? chosen[i]! : null, macros, text, lines };
   });
   const picked = rows.filter((r) => r.eaten);
+  const hasOther = picked.some((r) => r.other);
   // Courses split from a meal with totals only have no values: the whole meal as planned still logs with its totals
-  const asPlanned = rows.every((r) => r.eaten && !r.alt) && entry.macros !== null && entry.macros !== undefined;
+  const asPlanned = rows.every((r) => r.eaten && !r.alt && !r.other) && entry.macros !== null && entry.macros !== undefined;
   const summed = picked.length > 0 && picked.every((r) => r.macros);
   const canLog = summed || asPlanned;
+  const kcal = summed ? Math.round(picked.reduce((s, r) => s + r.macros!.kcal, 0)) : asPlanned ? Math.round(entry.macros!.kcal) : null;
   return {
     rows,
     canLog,
-    kcal: summed ? Math.round(picked.reduce((s, r) => s + r.macros!.kcal, 0)) : asPlanned ? Math.round(entry.macros!.kcal) : null,
+    kcal,
+    /** "Mangiato come previsto · 640 kcal", or "Registra · 720 kcal" once a course is something else. */
+    label: kcal === null ? t.timeline.eatenAsPlanned : hasOther ? t.courses.register(formatKcal(kcal)) : t.courses.logChosen(formatKcal(kcal)),
     toggle: (i: number) => setEaten((list) => list.map((v, j) => (j === i ? !v : v))),
-    choose: (i: number, value: number | null) => setChosen((list) => list.map((v, j) => (j === i ? value : v))),
-    body: { courses: rows.map((r) => ({ eaten: r.eaten, ...(r.alt ? { alternative: { groupId: r.alt.groupId, dishIndex: r.alt.dishIndex } } : {}) })) } satisfies LogChoice,
+    choose: (i: number, value: number | null) => {
+      setOthers((list) => list.map((v, j) => (j === i ? null : v)));
+      setChosen((list) => list.map((v, j) => (j === i ? value : v)));
+    },
+    setOther: (i: number, other: OtherCourse | null) => {
+      setOthers((list) => list.map((v, j) => (j === i ? other : v)));
+      if (other) setEaten((list) => list.map((v, j) => (j === i ? true : v)));
+    },
+    body: {
+      courses: rows.map((r) => ({ eaten: r.eaten, ...(r.other ? { other: r.other } : r.alt ? { alternative: { groupId: r.alt.groupId, dishIndex: r.alt.dishIndex } } : {}) })),
+    } satisfies LogChoice,
   };
 }
 
 export type CoursesChoiceState = ReturnType<typeof useCoursesChoice>;
 
-/** "Cosa hai mangiato?": one row per course with a tick, and chips for its interchangeable dishes. */
+/** "Cosa hai mangiato?": one row per course with a tick, chips for its interchangeable dishes and "Altro…". */
 export function CoursesChoice({ choice, label }: { choice: CoursesChoiceState; label: (name: string) => string }) {
+  const [otherFor, setOtherFor] = useState<number | null>(null);
+  const canRecognize = useFeatures().data?.recognition === true;
+  const recognize = useRecognizeMeal();
+  const [failed, setFailed] = useState(false);
+  const done = (i: number, other: OtherCourse | null) => {
+    if (!other) return setFailed(true);
+    choice.setOther(i, other);
+    setOtherFor(null);
+  };
   return (
     <div className="course-choice" role="group" aria-label={t.courses.eaten}>
       <span className="dish-choice-title">{t.courses.eaten}</span>
@@ -124,7 +157,16 @@ export function CoursesChoice({ choice, label }: { choice: CoursesChoiceState; l
               {label(row.course.name).toUpperCase()}
               {!row.eaten && ` · ${t.courses.skipped.toUpperCase()}`}
             </span>
-            {row.eaten && row.alternatives.length > 0 ? (
+            {row.eaten && row.other ? (
+              <div className="course-other">
+                <span className="course-choice-text">
+                  <span className="dish-chip-tag">{t.courses.otherTag}</span> {row.other.name} · {formatKcal(otherKcal(row.other))} kcal
+                </span>
+                <button type="button" className="item-remove" aria-label={t.courses.otherUndo(label(row.course.name))} onClick={() => choice.setOther(i, null)}>
+                  ×
+                </button>
+              </div>
+            ) : row.eaten ? (
               <div className="dish-choice-chips">
                 {[null, ...row.alternatives.map((_, k) => k)].map((value) => {
                   const dish = value === null ? null : row.alternatives[value]!.dish;
@@ -139,16 +181,34 @@ export function CoursesChoice({ choice, label }: { choice: CoursesChoiceState; l
                     </button>
                   );
                 })}
+                <button type="button" className="dish-chip dish-chip-other" aria-label={t.courses.otherOf(label(row.course.name))} onClick={() => { setFailed(false); recognize.reset(); setOtherFor(i); }}>
+                  <span className="dish-chip-name">{t.courses.otherChip}</span>
+                </button>
               </div>
             ) : (
-              <span className="course-choice-text">
-                {row.text}
-                {row.macros && ` · ${formatKcal(row.macros.kcal)} kcal`}
-              </span>
+              <span className="course-choice-text">{row.text}</span>
             )}
           </div>
         </div>
       ))}
+      {otherFor !== null && choice.rows[otherFor] && (
+        <MealCourseSheet
+          fixedName={choice.rows[otherFor]!.course.name}
+          askFirst={false}
+          ai={canRecognize}
+          busy={recognize.isPending}
+          error={failed || recognize.isError ? t.courses.otherFailed : null}
+          onClose={() => setOtherFor(null)}
+          onText={(text) => recognize.mutate({ text }, { onSuccess: (meal) => done(otherFor, otherFromRecognized(meal.description || text, meal.items)), onError: () => setFailed(true) })}
+          onPhoto={(file) =>
+            void photoForRecognition(file)
+              .then((photo) => recognize.mutate({ images: [{ mediaType: photo.mediaType, data: photo.data }] }, { onSuccess: (meal) => done(otherFor, otherFromRecognized(meal.description, meal.items)) }))
+              .catch(() => setFailed(true))
+          }
+          onDish={(dish) => done(otherFor, otherFromDish(dish))}
+          onManual={(food) => done(otherFor, otherFromManual(food))}
+        />
+      )}
     </div>
   );
 }
