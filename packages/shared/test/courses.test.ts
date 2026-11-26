@@ -110,3 +110,18 @@ describe("generated meal with courses", () => {
     expect("courses" in one && one.courses).toBeFalsy();
   });
 });
+
+describe("food values of a meal of courses", () => {
+  it("go back to each course, and the meal adds them up", async () => {
+    const { withFoodValues, withCourses } = await import("../src/index.js");
+    const meal = withCourses({ title: "Pranzo" }, [
+      { name: "Primo", foods: [{ name: "Pasta", quantity: 80, unit: "g" }, { name: "Tonno", quantity: 80, unit: "g" }] },
+      { name: "Fine pasto", foods: [{ name: "Yogurt", quantity: 150, unit: "g" }] },
+    ], { kcal: 640, protein: 40, carbs: 80, fat: 15, fiber: 4 });
+    const n = (kcal: number) => ({ kcal, protein: 10, carbs: 20, fat: 5, fiber: 1 });
+    const next = withFoodValues(meal, meal.foods.map((f, i) => ({ ...f, nutrients: n([300, 200, 140][i]!) })));
+    expect(next.courses!.map((c) => c.foods.map((f) => f.nutrients?.kcal))).toEqual([[300, 200], [140]]);
+    expect(next.foods.every((f) => f.nutrients)).toBe(true);
+    expect(next.macros!.kcal).toBe(640);
+  });
+});

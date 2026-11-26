@@ -21,7 +21,7 @@ import {
 import { useRef, useState } from "react";
 import { useLocation, useSearch } from "wouter";
 import { PlanUploadFailed, useChangeCourses, useChangePlanMeals, useDishAlias, useDishGroups, useDishes, useSaveDish, useSavePlanDishes, useDay, useFeatures, usePlan, usePlans, useEditPlanMeal, useSetPlanTime, useStartPlan, useSwapPlanMeal, useUploadPlan } from "../api/queries";
-import { EditMeal, MoveMeal, PlanDayMeals, PlanDaySummary, SameTimeSwitch, SplitFoods } from "../components/PlanDay";
+import { EditMeal, MoveMeal, PlanDayMeals, PlanDaySummary, SameTimeSwitch, SplitFoods, SplitWeek } from "../components/PlanDay";
 import { CloseIcon, PlanIcon, SparklesIcon } from "../components/icons";
 import { formatKcal, formatMediumDate, formatShortDate } from "../lib/format";
 import { shareFile } from "../lib/shareFile";
@@ -79,6 +79,7 @@ export function PlanPage() {
   const planMeals = useChangePlanMeals();
   const startNow = useStartPlan();
   const [splitting, setSplitting] = useState<{ day: Weekday; index: number } | null>(null);
+  const [splitWeekOpen, setSplitWeekOpen] = useState(false);
   // The ⋯ of a meal or a course, and the one panel open under it (docs/design/DESIGN.md, "Menu del pasto")
   const [menuFor, setMenuFor] = useState<{ index: number; course?: number } | null>(null);
   const [panel, setPanel] = useState<{ day: Weekday; index: number; course?: number; kind: PanelKind; n: number } | null>(null);
@@ -132,6 +133,8 @@ export function PlanPage() {
         .join(" · ")
     : "";
   const day = shown?.plan.days[weekday];
+  // A meal of the week whose foods lack their values: the menu offers the whole-week split only then
+  const weekNeedsSplit = shown ? WEEKDAYS.some((d) => shown.plan.days[d].meals.some((m) => isFixedMeal(m) && !!m.macros && m.foods.some((f) => !f.nutrients))) : false;
   const dayIndex = WEEKDAYS.indexOf(weekday);
 
   const openPanel = (index: number, kind: PanelKind, course?: number) => setPanel({ day: weekday, index, ...(course !== undefined ? { course } : {}), kind, n: Date.now() });
@@ -243,6 +246,23 @@ export function PlanPage() {
             </button>
             {menuOpen && (
               <div className="menu" role="menu">
+                {canGenerate && shown && weekNeedsSplit && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="menu-item menu-item-rich"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setSplitWeekOpen(true);
+                    }}
+                  >
+                    <strong className="ai-label">
+                      <SparklesIcon size={16} />
+                      {t.plan.splitWeekMenu}
+                    </strong>
+                    <span className="muted">{t.plan.splitWeekMenuHint}</span>
+                  </button>
+                )}
                 {canGenerate && (
                   <button type="button" role="menuitem" className="menu-item menu-item-rich" onClick={() => navigate("/piano/genera")}>
                     <strong className="ai-label">
@@ -383,6 +403,10 @@ export function PlanPage() {
                 </button>
               </div>
             </div>
+          )}
+
+          {shown && splitWeekOpen && (
+            <SplitWeek plan={shown} onDone={() => setSplitWeekOpen(false)} onClose={() => setSplitWeekOpen(false)} />
           )}
 
           {shown && day && (
