@@ -86,6 +86,15 @@ describe("plannedEntries (Thursday of the example plan)", () => {
     expect(entries[1]!.foods).toBe("1 frutto + Bresaola 40 g");
   });
 
+  it("opens a meal of today from an hour before its time, and keeps the comparison on the exact time", () => {
+    const at = (now: string) => plannedEntries(stored, [], [], { ...context, now }).find((e) => e.title === "Pranzo")!.status;
+    expect(at("11:59:00")).toBe("planned");
+    expect(at("12:00:00")).toBe("todo");
+    expect(at("12:30:00")).toBe("todo");
+    // Another day: only past days are open
+    expect(plannedEntries(stored, [], [], { date: "2026-11-06", today: "2026-11-05", now: "23:30:00" }).every((e) => e.status !== "todo")).toBe(true);
+  });
+
   it("hides a planned meal covered by a logged meal of the same type nearby (e.g. logged through Claude)", () => {
     const entries = plannedEntries(stored, [meal("b", "08:03", "breakfast")], [], context);
     expect(entries.map((e) => e.title)).toEqual(["Spuntino", "Pranzo", "Spuntino", "Cena"]);
