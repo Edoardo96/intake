@@ -1,7 +1,6 @@
 import {
   WEEKDAYS,
   dayTotals,
-  dishOfMeal,
   isFixedMeal,
   planAverages,  weekdayOf,
   type PlanUploadError,
@@ -10,14 +9,15 @@ import {
 } from "@intake/shared";
 import { useRef, useState } from "react";
 import { useLocation, useSearch } from "wouter";
-import { PlanUploadFailed, useChangeDishGroups, useDay, useFeatures, usePlan, usePlans, useEditPlanMeal, useSetPlanTime, useStartPlan, useSwapPlanMeal, useUploadPlan } from "../api/queries";
-import { AlternativeMeal, EditMeal, MoveMeal, PlanDayMeals, PlanDaySummary, SameTimeSwitch, SplitFoods, SplitWeek } from "../components/PlanDay";
+import { PlanUploadFailed, useDay, useFeatures, usePlan, usePlans, useEditPlanMeal, useSetPlanTime, useStartPlan, useSwapPlanMeal, useUploadPlan } from "../api/queries";
+import { EditMeal, MoveMeal, PlanDayMeals, PlanDaySummary, SameTimeSwitch, SplitFoods, SplitWeek } from "../components/PlanDay";
 import { CloseIcon, PlanIcon, SparklesIcon } from "../components/icons";
 import { formatKcal, formatMediumDate, formatShortDate } from "../lib/format";
 import { shareFile } from "../lib/shareFile";
 import { t } from "../lib/strings";
 import { Scrim } from "../components/Scrim";
 import { NeedsCard } from "../components/NeedsCard";
+import { DishesTab } from "../components/DishesTab";
 import { DishAlternatives, DishGroupsCard, dishAsEdit } from "../components/DishAlternatives";
 import { PLAN_TAB_PARAM, planTabFromSearch, preferredPlanTab, type PlanTab } from "../lib/planTab";
 
@@ -60,7 +60,6 @@ export function PlanPage() {
   const setTime = useSetPlanTime();
   const swap = useSwapPlanMeal();
   const edit = useEditPlanMeal();
-  const links = useChangeDishGroups();
   const startNow = useStartPlan();
   const [splitting, setSplitting] = useState<{ day: Weekday; index: number } | null>(null);
   const [splitWeekOpen, setSplitWeekOpen] = useState(false);
@@ -201,7 +200,7 @@ export function PlanPage() {
       </header>
 
       <div className="segmented plan-switch" role="tablist" aria-label={t.plan.switch}>
-        {(["plan", "needs"] as const).map((option) => (
+        {(["plan", "dishes", "needs"] as const).map((option) => (
           <button
             key={option}
             type="button"
@@ -220,6 +219,8 @@ export function PlanPage() {
 
       {tab === "needs" ? (
         <NeedsCard />
+      ) : tab === "dishes" ? (
+        <DishesTab />
       ) : (
         <>
           {message && (
@@ -314,27 +315,16 @@ export function PlanPage() {
                       {splitting?.day === weekday && splitting.index === index && (
                         <SplitFoods plan={shown} day={weekday} index={index} onDone={() => setSplitting(null)} onClose={() => setSplitting(null)} />
                       )}
-                      {canGenerate && !meal.free && (
-                        <AlternativeMeal
-                          planId={shown.id}
-                          day={weekday}
-                          index={index}
-                          meal={meal}
-                          busy={edit.isPending}
-                          onKeep={isFixedMeal(meal) ? (dish, done) => links.mutate({ link: { dish: dishOfMeal(meal), alternative: dishOfMeal(dish) } }, { onSuccess: done }) : undefined}
-                          onUse={(dish) => {
-                            const fixed = isFixedMeal(dish) ? dish : null;
-                            if (!fixed) return;
-                            const m = fixed.macros;
-                            edit.mutate({ id: shown.id, day: weekday, index, description: fixed.description ?? "", foods: fixed.foods, ...(m ? { macros: { kcal: m.kcal, protein: m.protein, carbs: m.carbs, fat: m.fat, fiber: m.fiber, ...(m.sugar !== undefined && m.addedSugar !== undefined ? { sugar: m.sugar, addedSugar: m.addedSugar } : {}) } } : {}) });
-                          }}
-                        />
-                      )}
                       <MoveMeal plan={shown.plan} day={weekday} index={index} busy={swap.isPending} failed={swap.isError} onMove={(toDay) => swap.mutate({ id: shown.id, day: weekday, index, toDay })} />
                     </div>
                   )}
                   dishes={(meal, index) => (
-                    <DishAlternatives meal={meal} busy={edit.isPending} onUse={(dish) => edit.mutate({ id: shown.id, day: weekday, index, ...dishAsEdit(dish) })} />
+                    <DishAlternatives
+                      meal={meal}
+                      busy={edit.isPending}
+                      onUse={(dish) => edit.mutate({ id: shown.id, day: weekday, index, ...dishAsEdit(dish) })}
+                      {...(canGenerate ? { ai: { planId: shown.id, day: weekday, index } } : {})}
+                    />
                   )}
                 />
               </div>

@@ -1,11 +1,19 @@
-import { alternativesFor, dishKey, dishKeys, dishMacros, dishOfMeal, foodLine, mealFoodsText, plannedFoodsOf, type Dish, type DishGroup, type FixedPlannedMeal, type PlannedMacros } from "@intake/shared";
+import { alternativesFor, dishCategories, dishKey, dishKeys, dishMacros, dishOfMeal, mealFoodsText, searchDishes, type Dish, type DishSummary, type DishGroup, type FixedPlannedMeal, type PlannedMacros, type Weekday, isFixedMeal } from "@intake/shared";
 import { useEffect, useState } from "react";
-import { useChangeDishGroups, useDishGroups, useSavedMeals } from "../api/queries";
+import { useChangeDishGroups, useDishes, useDishGroups } from "../api/queries";
+import { categoryLabel, dishFromSaved } from "../lib/dishCategory";
+import { Link } from "wouter";
 import { formatKcal } from "../lib/format";
 import { t } from "../lib/strings";
-import { EditMeal, type DishEdit } from "./PlanDay";
-import { CloseIcon } from "./icons";
+import { AlternativeMeal, EditMeal, type DishEdit } from "./PlanDay";
+import { CloseIcon, SparklesIcon } from "./icons";
 import { Scrim } from "./Scrim";
+
+/** The category of the dish of the list with this name (or description), to start the picker on it. */
+function categoryOf(dishes: DishSummary[] | undefined, name: string): string | null {
+  const key = dishKey(name);
+  return dishes?.find((d) => dishKey(d.name) === key || dishKey(d.description) === key)?.category ?? null;
+}
 
 /** A dish written in "A mano" (the plan editor) as a dish of a group. */
 export function dishOfEdit(meal: FixedPlannedMeal, edit: DishEdit): Dish {
@@ -37,12 +45,24 @@ function DishLine({ dish }: { dish: Dish }) {
 /**
  * Piatti intercambiabili under a fixed meal of Piano: the other dishes of its group, each with "Usa questo" (it takes the
  * place of the planned dish) and ×, and "+ Aggiungi alternativa" from a favorite or by hand. The AI one comes from
- * "Alternativa" (AlternativeMeal › "Tieni come alternativa"). Rules in docs/dish-groups.md.
+ * third choice of "+ Aggiungi alternativa" (✦ Con l'IA, while the AI is available). Rules in docs/dish-groups.md.
  */
-export function DishAlternatives({ meal, onUse, busy }: { meal: FixedPlannedMeal; onUse: (dish: Dish) => void; busy?: boolean }) {
+export function DishAlternatives({
+  meal,
+  onUse,
+  busy,
+  ai,
+}: {
+  meal: FixedPlannedMeal;
+  onUse: (dish: Dish) => void;
+  busy?: boolean;
+  /** "✦ Con l'IA": the plan meal the AI proposes for; absent while the AI is not available. */
+  ai?: { planId: number; day: Weekday; index: number };
+}) {
   const groups = useDishGroups();
   const change = useChangeDishGroups();
-  const [adding, setAdding] = useState<null | "menu" | "favorites" | "hand">(null);
+  const dishes = useDishes();
+  const [adding, setAdding] = useState<null | "menu" | "favorites" | "hand" | "ai">(null);
   const name = mealFoodsText(meal);
   const alternatives = alternativesFor(groups.data ?? [], name);
   const group = alternatives[0] ? groups.data?.find((g) => g.id === alternatives[0]!.groupId) : undefined;
@@ -80,21 +100,58 @@ export function DishAlternatives({ meal, onUse, busy }: { meal: FixedPlannedMeal
       )}
       {adding === "menu" && (
         <div className="dish-alt-choose">
+          <strong className="dish-add-title">{t.dishes.addTitle}</strong>
           <span className="muted plan-edit-hint">{t.dishes.hint}</span>
-          <div className="plan-replace-actions">
-            <button type="button" className="button-secondary-small" onClick={() => setAdding(null)}>
-              {t.dishes.cancel}
+          <button type="button" className="dish-add-option" onClick={() => setAdding("favorites")}>
+            <span>
+              <strong>{t.dishes.fromDishes}</strong>
+              <span className="muted">{t.dishes.fromDishesHint}</span>
+            </span>
+            <span aria-hidden="true">›</span>
+          </button>
+          <button type="button" className="dish-add-option" onClick={() => setAdding("hand")}>
+            <span>
+              <strong>{t.dishes.byHand}</strong>
+              <span className="muted">{t.dishes.byHandHint}</span>
+            </span>
+            <span aria-hidden="true">›</span>
+          </button>
+          {ai && (
+            <button type="button" className="dish-add-option" data-ai onClick={() => setAdding("ai")}>
+              <span>
+                <strong className="ai-label">
+                  <SparklesIcon size={14} />
+                  {t.dishes.withAi}
+                </strong>
+                <span>{t.dishes.withAiHint}</span>
+              </span>
+              <span aria-hidden="true">›</span>
             </button>
-            <button type="button" className="button-secondary-small" onClick={() => setAdding("favorites")}>
-              {t.dishes.fromFavorites}
-            </button>
-            <button type="button" className="button-secondary-small" onClick={() => setAdding("hand")}>
-              {t.dishes.byHand}
-            </button>
-          </div>
+          )}
+          <button type="button" className="text-button dish-add-cancel" onClick={() => setAdding(null)}>
+            {t.dishes.cancel}
+          </button>
         </div>
       )}
-      {adding === "favorites" && <FavoriteSheet meal={name} onPick={(dish) => link(dish)} onClose={() => setAdding(null)} busy={change.isPending} failed={change.isError} />}
+      {adding === "ai" && ai && (
+        <AlternativeMeal
+          planId={ai.planId}
+          day={ai.day}
+          index={ai.index}
+          meal={meal}
+          startOpen
+          busy={busy || change.isPending}
+          onCancel={() => setAdding(null)}
+          onKeep={(dish, done) => link(dishOfMeal(dish), done)}
+          onUse={(dish) => {
+            if (isFixedMeal(dish)) onUse(dishOfMeal(dish));
+            setAdding(null);
+          }}
+        />
+      )}
+      {adding === "favorites" && (
+        <DishPickerSheet meal={name} category={categoryOf(dishes.data?.dishes, name)} onPick={(dish) => link(dish)} onClose={() => setAdding(null)} busy={change.isPending} failed={change.isError} />
+      )}
       {adding === "hand" && (
         <EditMeal
           meal={{ title: meal.title, foods: [] }}
@@ -105,7 +162,7 @@ export function DishAlternatives({ meal, onUse, busy }: { meal: FixedPlannedMeal
           onSave={(edit, done) => link(dishOfEdit(meal, edit), done)}
         />
       )}
-      {change.isError && adding === null && (
+      {change.isError && (adding === null || adding === "ai") && (
         <p className="error-text" role="alert">
           {t.dishes.failed}
         </p>
@@ -115,57 +172,94 @@ export function DishAlternatives({ meal, onUse, busy }: { meal: FixedPlannedMeal
 }
 
 /**
- * "Dai preferiti": a sheet with a search over the favorites that have foods; tapping one adds it as an alternative
- * (its foods and values come with it).
+ * "Dai tuoi piatti": a sheet with a search and the categories over the dishes (Nutrition saved meals) that have foods;
+ * it starts on the category of the dish it is for, when known. Tapping one picks it (its foods and values come with it).
  */
-function FavoriteSheet({ meal, onPick, onClose, busy, failed }: { meal: string; onPick: (dish: Dish) => void; onClose: () => void; busy?: boolean; failed?: boolean }) {
-  const saved = useSavedMeals();
+export function DishPickerSheet({
+  meal,
+  category,
+  exclude = [],
+  onPick,
+  onClose,
+  busy,
+  failed,
+}: {
+  meal: string;
+  category?: string | null;
+  exclude?: string[];
+  onPick: (dish: Dish) => void;
+  onClose: () => void;
+  busy?: boolean;
+  failed?: boolean;
+}) {
+  const dishes = useDishes();
+  const groups = useDishGroups();
   const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<string | null>(category ?? null);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
-  const favorites = (saved.data ?? []).filter((m) => m.items.length > 0);
-  const key = dishKey(query);
-  const shown = key ? favorites.filter((m) => dishKey(`${m.name} ${m.items.map((item) => item.name).join(" ")}`).includes(key)) : favorites;
+  // Not the dish itself: by id, or by name for a dish of the plan
+  const own = dishKey(meal);
+  const all = (dishes.data?.dishes ?? []).filter((d) => !exclude.includes(d.id) && dishKey(d.name) !== own && dishKey(d.description) !== own);
+  const categories = dishCategories(dishes.data?.customCategories ?? []).filter((c) => all.some((d) => d.category === c));
+  const shown = searchDishes(all, query).filter((d) => filter === null || d.category === filter);
+  const linked = new Set(alternativesFor(groups.data ?? [], meal).map((alt) => dishKey(alt.dish.name)));
   return (
     <Scrim onClose={onClose}>
-      <div className="sheet dish-fav-sheet" role="dialog" aria-modal="true" aria-label={t.dishes.fromFavorites} onClick={(event) => event.stopPropagation()}>
+      <div className="sheet dish-fav-sheet" role="dialog" aria-modal="true" aria-label={t.dishes.fromDishes} onClick={(event) => event.stopPropagation()}>
         <div className="sheet-grabber" aria-hidden="true" />
         <div className="sheet-head">
-          <h2>{t.dishes.fromFavorites}</h2>
+          <h2>{t.dishes.fromDishes}</h2>
           <button type="button" className="icon-button" aria-label={t.close} onClick={onClose}>
             <CloseIcon size={18} strokeWidth={2.5} />
           </button>
         </div>
         <p className="muted dish-fav-for">{t.dishes.alternativeTo(meal)}</p>
-        <input type="search" className="dish-fav-search" value={query} autoFocus placeholder={t.dishes.searchFavorites} aria-label={t.dishes.searchFavorites} onChange={(e) => setQuery(e.target.value)} />
-        {saved.isLoading && <p className="muted">{t.dishes.loading}</p>}
-        {saved.isSuccess && favorites.length === 0 && <p className="muted">{t.dishes.favoritesEmpty}</p>}
-        {saved.isSuccess && favorites.length > 0 && shown.length === 0 && <p className="muted">{t.dishes.noMatch}</p>}
+        <input type="search" className="dish-fav-search" value={query} autoFocus placeholder={t.dishes.searchDishes} aria-label={t.dishes.searchDishes} onChange={(e) => setQuery(e.target.value)} />
+        {categories.length > 0 && (
+          <div className="dish-chips" role="group" aria-label={t.dishBook.categoriesLabel}>
+            <button type="button" className="dish-filter" aria-pressed={filter === null} onClick={() => setFilter(null)}>
+              {t.dishBook.all}
+            </button>
+            {categories.map((c) => (
+              <button key={c} type="button" className="dish-filter" aria-pressed={filter === c} onClick={() => setFilter(filter === c ? null : c)}>
+                {categoryLabel(c)}
+              </button>
+            ))}
+          </div>
+        )}
+        {filter !== null && category === filter && <p className="muted dish-fav-for">{t.dishes.sameCategory}</p>}
+        {dishes.isLoading && <p className="muted">{t.dishes.loading}</p>}
+        {dishes.isSuccess && all.length === 0 && <p className="muted">{t.dishes.favoritesEmpty}</p>}
+        {dishes.isSuccess && all.length > 0 && shown.length === 0 && <p className="muted">{t.dishes.noMatch}</p>}
         {failed && (
           <p className="error-text" role="alert">
             {t.dishes.failed}
           </p>
         )}
         <div className="sheet-list">
-          {shown.map((favorite) => {
-            const foods = plannedFoodsOf(favorite.items);
+          {shown.map((saved) => {
+            const done = linked.has(dishKey(saved.name));
             return (
-              <button key={favorite.id} type="button" className="sheet-row" disabled={busy} onClick={() => onPick({ name: favorite.name, aliases: [], foods, macros: null })}>
+              <button key={saved.id} type="button" className="sheet-row" disabled={busy || done} onClick={() => onPick(dishFromSaved(saved))}>
                 <span className="sheet-row-text">
-                  <strong>{favorite.name}</strong>
+                  <strong>{saved.name}</strong>
                   <span className="muted">
-                    {favorite.kcal !== null ? `${formatKcal(favorite.kcal)} kcal · ` : ""}
-                    {foods.map(foodLine).join(" + ")}
+                    {saved.kcal !== null ? `${formatKcal(saved.kcal)} kcal · ` : ""}
+                    {saved.protein !== null ? `P ${formatKcal(saved.protein)} g` : ""}
                   </span>
                 </span>
-                <span className="sheet-row-action">{t.dishes.pick}</span>
+                <span className="sheet-row-action">{done ? t.dishes.linked : t.dishes.pick}</span>
               </button>
             );
           })}
         </div>
+        <Link href="/piano/piatti/nuovo" className="text-button text-button-strong dish-new-link">
+          {t.dishes.createDish}
+        </Link>
       </div>
     </Scrim>
   );

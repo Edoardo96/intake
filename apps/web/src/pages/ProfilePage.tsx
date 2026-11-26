@@ -1,7 +1,7 @@
 import type { ProfileView, TrainingSourceId } from "@intake/shared";
 import { Fragment, type ReactNode, useState } from "react";
 import { Link } from "wouter";
-import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useRecognitionModel, useSetRecognitionModel, useMealPhotoKeep, useSetMealPhotoKeep, useClearMealPhotos, usePlanGeneration, useSetPlanModel, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeature, useFeatures, useSetFeatures, useSetLanguage, useSetGoals, useBackups, useBackupAction, deviceTimezone, useHomeLayout, useSetHomeLayout } from "../api/queries";
+import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useRecognitionModel, useSetRecognitionModel, useMealPhotoKeep, useSetMealPhotoKeep, useClearMealPhotos, usePlanGeneration, useSetPlanModel, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeature, useFeatures, useSetFeatures, useSetLanguage, useSetGoals, useBackups, useBackupAction, deviceTimezone, useHomeLayout, useSetHomeLayout, useRecipeModel, useSetRecipeModel } from "../api/queries";
 import { TimezoneConfirm } from "../components/TimezoneNotice";
 import { BACKUP_KEEP, LANGUAGES, completeHomeLayout, parseGoalInput, weightUnitOf, type FeatureKey, type GoalsUpdate, type HomeCardId, type HomeLayout, type WeightUnit } from "@intake/shared";
 import { Avatar } from "../components/ProfileLink";
@@ -613,6 +613,7 @@ function FeaturesCard() {
           {key === "photoMeals" && data.photoMeals && data.recognitionConfigured && <RecognitionModelRow />}
           {key === "photoMeals" && data.photoMeals && data.recognitionConfigured && <PlanModelRow />}
           {key === "photoMeals" && data.photoMeals && <MealPhotosRow />}
+          {key === "photoMeals" && data.photoMeals && data.recognitionConfigured && <RecipeModelRow />}
         </Fragment>
       ))}
       <div className="profile-row-item feature-foot">
@@ -716,6 +717,33 @@ function MealPhotosRow() {
         </div>
       )}
     </>
+  );
+}
+
+/** Pasti da foto › Modello per le ricette: Haiku (default, cheaper), Sonnet or Opus for "Chiedi all'IA" in Piatti. */
+function RecipeModelRow() {
+  const view = useRecipeModel(true);
+  const save = useSetRecipeModel();
+  const s = t.dishBook;
+  if (!view.data) return null;
+  const current = save.variables ?? view.data.model;
+  return (
+    <div className="profile-row-item settings-row recognition-model-row">
+      <span className="connection-text">
+        <strong id="recipe-model-label" className="ai-label">
+          <SparklesIcon size={16} />
+          {s.recipeModel}
+        </strong>
+        <span className="muted">{save.isError ? s.recipeModelFailed : s.recipeModelNote}</span>
+      </span>
+      <div className="segmented settings-segmented" role="radiogroup" aria-labelledby="recipe-model-label">
+        {view.data.models.map((option) => (
+          <button key={option} type="button" role="radio" aria-checked={current === option} className="segmented-option" disabled={save.isPending} onClick={() => option !== view.data.model && save.mutate(option)}>
+            {modelName(option)}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 

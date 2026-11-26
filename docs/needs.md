@@ -61,7 +61,7 @@ that maintenance with the goal's adjustment, never under the floor; within 100 k
 ## The AI opinion
 
 Part of Pasti da foto (`photoMeals`): it needs `ANTHROPIC_API_KEY` and the switch on, and it uses the same model as
-the meal recognition (Impostazioni › Modello IA). With the part off, `POST /api/needs/ai` answers 404 and the card
+the meal recognition (Impostazioni › Modello IA per le foto). With the part off, `POST /api/needs/ai` answers 404 and the card
 and page hide the AI part and the last opinion.
 
 - Sent only when the user asks: the fields, the notes, the weight, the standard calculation and the data check.

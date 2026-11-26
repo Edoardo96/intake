@@ -13,6 +13,10 @@ import { HealthTrendsPage } from "./pages/HealthTrendsPage";
 import { MealPage } from "./pages/MealPage";
 import { NewMealPage } from "./pages/NewMealPage";
 import { NeedsPage } from "./pages/NeedsPage";
+import { DishPage } from "./pages/DishPage";
+import { DishLogPage } from "./pages/DishLogPage";
+import { DishEditPage } from "./pages/DishEditPage";
+import { RecipePage } from "./pages/RecipePage";
 import { PlanPrintPage } from "./pages/PlanPrintPage";
 import { ShoppingListPage } from "./pages/ShoppingListPage";
 import { PlanGeneratePage } from "./pages/PlanGeneratePage";
@@ -97,6 +101,9 @@ function SignedIn({ user, notice, adding, openAdd, closeAdd }: SignedInProps) {
           <Redirect to="/profilo/salute" replace />
         </Route>
         {/* A favorite opens on the confirmation screen; it needs no AI, so it works with Pasti da foto off */}
+        <Route path="/pasto/nuovo/piatti">
+          <DishLogPage />
+        </Route>
         <Route path="/pasto/nuovo/preferito/:id">{(params) => <NewMealPage key={params.id} initialMode="text" savedId={params.id} />}</Route>
         {/* The day's AI alternative, handed over by the Timeline or Oggi, confirmed like any meal */}
         <Route path="/pasto/nuovo/alternativa">
@@ -117,6 +124,12 @@ function SignedIn({ user, notice, adding, openAdd, closeAdd }: SignedInProps) {
           <PlanPrintPage />
         </Route>
         <Route path="/piano/genera">{on?.recognition ? <PlanGeneratePage /> : home}</Route>
+        <Route path="/piano/piatti/nuovo">
+          <DishEditPage key="new" />
+        </Route>
+        <Route path="/piano/piatti/:id/modifica">{(params) => <DishEditPage key={params.id} id={params.id} />}</Route>
+        <Route path="/piano/piatti/:id/ricetta">{(params) => <RecipePage key={params.id} id={params.id} />}</Route>
+        <Route path="/piano/piatti/:id">{(params) => <DishPage key={params.id} id={params.id} />}</Route>
         <Route path="/piano/fabbisogno">
           <NeedsPage />
         </Route>

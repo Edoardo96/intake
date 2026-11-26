@@ -16,6 +16,7 @@ import { NeedsStore } from "./db/needsStore.js";
 import { PlanGenerationStore } from "./db/planGenerationStore.js";
 import { PlanStore } from "./db/planStore.js";
 import { DishGroupStore } from "./db/dishGroupStore.js";
+import { DishStore } from "./db/dishStore.js";
 import { ReminderStore } from "./db/reminderStore.js";
 import { SecretStore } from "./db/secretStore.js";
 import { NutritionConnection } from "./mcp/connection.js";
@@ -25,6 +26,7 @@ export interface Services {
   secrets: SecretStore;
   plans: PlanStore;
   dishGroups: DishGroupStore;
+  dishes: DishStore;
   reminders: ReminderStore;
   health: HealthStore;
   hevySync: HevySyncStore;
@@ -56,6 +58,7 @@ export function createServices(config: Config): Services {
     secrets,
     plans: new PlanStore(db),
     dishGroups: new DishGroupStore(db),
+    dishes: new DishStore(db),
     reminders: new ReminderStore(db),
     health: new HealthStore(db),
     hevySync: new HevySyncStore(db),

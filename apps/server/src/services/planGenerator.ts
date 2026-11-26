@@ -26,6 +26,8 @@ import {
   type PlanDraft,
   type PlanPreferences,
   type PlanTargets,
+  recipeSchema,
+  type Recipe,
 } from "@intake/shared";
 import { LANGUAGE_NAMES, RecognitionError, failureOf } from "./mealRecognition.js";
 
@@ -46,6 +48,8 @@ export interface PlanGeneratorOptions {
   apiKey: string;
   /** Impostazioni › Funzioni › Modello per i piani. */
   model: () => string;
+  /** Impostazioni › Funzioni › Modello per le ricette (Piatti); the plan model without it. */
+  recipeModel?: () => string;
   client?: StreamingClient;
   language?: () => Language;
   log?: { info(details: object, message: string): void; warn(details: object, message: string): void };
@@ -139,6 +143,29 @@ const SPLIT_DAY_JSON_SCHEMA = {
         },
       },
     },
+  },
+} as const;
+
+/** "Chiedi la ricetta all'IA" (Piatti): how to cook a dish of the person's, with its own foods and amounts. */
+const recipeSystem = (language: Language) =>
+  [
+    "You write a short home-cooking recipe for one dish of a person who tracks food in a personal diary.",
+    "Use exactly the foods and amounts you are given, for the servings they make (usually one); you may add only water, salt, pepper, herbs and spices, never other foods or fats, so the dish's nutrients stay as they are.",
+    "Keep it practical: realistic total time, numbered steps of one or two sentences, and at most one short tip. Do not give medical or nutrition advice.",
+    `Write everything in ${LANGUAGE_NAMES[language]}.`,
+  ].join(" ");
+
+const RECIPE_JSON_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["minutes", "servings", "difficulty", "ingredients", "steps", "tip"],
+  properties: {
+    minutes: { type: "integer", description: "total time" },
+    servings: { type: "integer" },
+    difficulty: { type: "string", enum: ["easy", "medium", "hard"] },
+    ingredients: { type: "array", items: { type: "string", description: "one food with its amount" } },
+    steps: { type: "array", items: { type: "string" } },
+    tip: { type: "string", description: "empty when there is nothing useful to add" },
   },
 } as const;
 
@@ -306,9 +333,23 @@ export class PlanGenerator {
     });
   }
 
+  /**
+   * "Chiedi la ricetta all'IA" in Piatti: how to cook the dish with its own foods and amounts. One small request; the
+   * route keeps the answer with the dish, so it is asked once.
+   */
+  async writeRecipe(input: { name: string; description: string; foods: Array<{ name: string; quantity: number | null; unit: string | null }>; note: string }): Promise<Recipe> {
+    const foods = input.foods.map((f) => ({ name: f.name, ...(f.quantity !== null ? { amount: f.quantity, unit: f.unit ?? "" } : {}) }));
+    const text = `Write the recipe of this dish.\n${JSON.stringify({ dish: input.name, description: input.description || undefined, foods: foods.length > 0 ? foods : undefined }, null, 2)}${input.note ? `\n\nWish: ${input.note}` : ""}`;
+    const answer = await this.ask([{ role: "user", content: text }], RECIPE_JSON_SCHEMA, "recipe", undefined, recipeSystem(this.options.language?.() ?? "it"), this.options.recipeModel?.());
+    const { tip, ...rest } = (answer.json ?? {}) as { tip?: string };
+    const parsed = recipeSchema.safeParse({ ...rest, ...(tip ? { tip } : {}) });
+    if (!parsed.success) throw new RecognitionError("unreadable", "Claude API answer did not match the recipe schema");
+    return parsed.data;
+  }
+
   /** One structured-output request, streamed; returns the parsed JSON and the raw text. */
-  private async ask(messages: MessageParam[], schema: unknown, what: string, onText?: (streamed: string) => void, systemText?: string): Promise<{ json: unknown; text: string }> {
-    const model = this.options.model();
+  private async ask(messages: MessageParam[], schema: unknown, what: string, onText?: (streamed: string) => void, systemText?: string, modelOverride?: string): Promise<{ json: unknown; text: string }> {
+    const model = modelOverride ?? this.options.model();
     let streamed = "";
     let response: Message;
     try {
