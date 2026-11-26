@@ -19,9 +19,11 @@ export function foodsLine(meal: Pick<SavedMeal, "items" | "description">): strin
 }
 
 /** A dish of the list as a dish of the plan and of a group of interchangeable dishes. */
-export function dishFromSaved(meal: SavedMeal): Dish {
+export function dishFromSaved(meal: SavedMeal & { aliases?: string[] }): Dish {
   const foods = plannedFoodsOf(meal.items);
-  const aliases = meal.description && dishKey(meal.description) !== dishKey(meal.name) ? [meal.description.slice(0, 200)] : [];
+  // Its description and the plan dishes merged into it ("Unisci") are other names of the same dish
+  const others = [meal.description, ...(meal.aliases ?? [])].filter((name) => name && dishKey(name) !== dishKey(meal.name));
+  const aliases = [...new Map(others.map((name) => [dishKey(name), name.slice(0, 200)])).values()].slice(0, 20);
   const totals = meal.kcal !== null ? { kcal: meal.kcal, protein: meal.protein ?? 0, carbs: meal.carbs ?? 0, fat: meal.fat ?? 0, fiber: 0 } : null;
   return {
     name: meal.name,

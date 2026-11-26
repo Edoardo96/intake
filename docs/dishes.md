@@ -11,6 +11,7 @@ a dish **is** a Nutrition saved meal, so the same dishes can be logged by talkin
 | Name, foods with amounts and values, totals, default meal type | Nutrition saved meal (`save_meal`, `update_saved_meal`, `get_saved_meals`, `delete_saved_meal`) |
 | Category | SQLite `dish_meta.category`, by saved meal id (`db/dishStore.ts`) |
 | Recipe | SQLite `dish_meta.recipe` (JSON: recipe, date, `ai` or `manual`, the foods it was written for) |
+| Other names (plan dishes merged into it) | SQLite `dish_meta.aliases` (JSON list, at most 20; [plan-dishes.md](plan-dishes.md)) |
 | The person's own categories | settings key `dish_categories` (at most 12) |
 | The model of the AI recipes | settings key `recipe_model` (Impostazioni › Funzioni › Modello IA per le ricette: Haiku by default, Sonnet or Opus) |
 
@@ -62,6 +63,7 @@ language. One small structured-output request; the token usage is logged.
 | `POST /api/dishes` | `{ name, category, mealType?, foods[], totals? }` → `save_meal`; 409 `name_taken` |
 | `PATCH /api/dishes/:id` | the same body → `update_saved_meal` (the name only when it changed) |
 | `DELETE /api/dishes/:id` | `delete_saved_meal` and the local category and recipe |
+| `POST /api/dishes/:id/aliases`, `/aliases/remove` | `{ name }`: another name of the dish ("Unisci"), or one taken away |
 | `PUT /api/dishes/categories` | `{ custom: [names] }` |
 | `GET` / `PUT` / `DELETE /api/dishes/:id/recipe` | the kept recipe (`{ recipe, stale }`), a recipe written or corrected by hand, its deletion |
 | `GET` / `PUT /api/dishes/recipe/model` | the recipe model, part Pasti da foto |

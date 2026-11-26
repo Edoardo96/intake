@@ -135,6 +135,7 @@ export const plannedDaySchema = z.strictObject({
   note: z.string().trim().min(1).max(80).optional().describe('One-line note for the day, e.g. "pranzo in famiglia · cena libera"'),
   expectedProtein: z.number().nonnegative().optional().describe("Expected protein for the day in grams"),
   meals: z.array(plannedMealSchema),
+  removed: z.array(plannedMealSchema).max(10).optional().describe("Legacy, ignored: meals taken out by an earlier Intake; dropped on the next change of the day"),
 });
 
 export const mealPlanSchema = z

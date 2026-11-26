@@ -1,5 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
-import { mealPlanSchema, normalizeCourses, type MealPlan, type PlanStatus, type PlanVersion, type StoredPlan } from "@intake/shared";
+import { WEEKDAYS, mealPlanSchema, normalizeCourses, type MealIndexMaps, type MealPlan, type PlanStatus, type PlanVersion, type StoredPlan } from "@intake/shared";
 
 interface PlanRow {
   id: number;
@@ -118,5 +118,28 @@ export class PlanStore {
 
   skipCountBetween(start: string, end: string): number {
     return (this.db.prepare("SELECT COUNT(*) AS n FROM plan_skips WHERE date BETWEEN ? AND ?").get(start, end) as { n: number }).n;
+  }
+
+  /**
+   * After a change that moves meals (a meal taken out, put back or added): the links and skips of plan `fromId` from
+   * `fromDate` on go to plan `toId` at the meals' new positions; those of a meal no longer there are dropped.
+   */
+  moveRefs(fromId: number, toId: number, fromDate: string, maps: MealIndexMaps): void {
+    const weekday = (date: string) => WEEKDAYS[(new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7]!;
+    const target = (date: string, index: number): number | null => {
+      const map = maps[weekday(date)];
+      return map ? (map[index] ?? null) : index;
+    };
+    for (const table of ["plan_links", "plan_skips"] as const) {
+      const columns = table === "plan_links" ? "date, meal_index, meal_id, created_at" : "date, meal_index, created_at";
+      const rows = this.db.prepare(`SELECT ${columns} FROM ${table} WHERE plan_id = ? AND date >= ?`).all(fromId, fromDate) as Array<{ date: string; meal_index: number; meal_id?: string; created_at: string }>;
+      this.db.prepare(`DELETE FROM ${table} WHERE plan_id = ? AND date >= ?`).run(fromId, fromDate);
+      for (const row of rows) {
+        const index = target(row.date, row.meal_index);
+        if (index === null) continue;
+        if (table === "plan_links") this.db.prepare("INSERT OR REPLACE INTO plan_links (date, plan_id, meal_index, meal_id, created_at) VALUES (?, ?, ?, ?, ?)").run(row.date, toId, index, row.meal_id!, row.created_at);
+        else this.db.prepare("INSERT OR IGNORE INTO plan_skips (date, plan_id, meal_index, created_at) VALUES (?, ?, ?, ?)").run(row.date, toId, index, row.created_at);
+      }
+    }
   }
 }

@@ -1,7 +1,7 @@
-import { WEEKDAYS, alternativesFor, dishKey, isFixedMeal, mealFoodsText, type DishGroup, type MealPlan, type Weekday } from "@intake/shared";
+import { WEEKDAYS, alternativesFor, coursesOf, courseText, dishKey, isFixedMeal, looseDishKey, mealFoodsText, type DishGroup, type MealPlan, type Weekday } from "@intake/shared";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { useChangeDishGroups, useChangeRecipe, useDeleteDish, useDishes, useDishGroups, useEditPlanMeal, useFeatures, usePlans } from "../api/queries";
+import { useChangeDishGroups, useChangeRecipe, useDeleteDish, useDishAlias, useDishes, useDishGroups, useEditPlanMeal, useFeatures, usePlans } from "../api/queries";
 import { DishPickerSheet, dishAsEdit } from "../components/DishAlternatives";
 import { CloseIcon, SparklesIcon } from "../components/icons";
 import { Scrim } from "../components/Scrim";
@@ -38,6 +38,7 @@ export function DishPage({ id }: { id: string }) {
   const [placed, setPlaced] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  const alias = useDishAlias();
   const meal = dishes.data?.dishes.find((d) => d.id === id);
   const header = (
     <header className="edit-header edit-header-back">
@@ -70,9 +71,16 @@ export function DishPage({ id }: { id: string }) {
   const group: DishGroup | undefined = alternatives[0] ? groups.data?.find((g) => g.id === alternatives[0]!.groupId) : undefined;
   const fiber = meal.items.length > 0 ? meal.items.reduce((sum, item) => sum + (item.nutrients.fiber ?? 0), 0) : null;
   const plan = plans.data?.active ?? null;
-  const keys = [dishKey(meal.name), dishKey(meal.description)].filter(Boolean);
+  // The same dish with other grams on another day is the same dish; each course of a meal is a dish of its own
+  const keys = [meal.name, meal.description, ...meal.aliases].map(looseDishKey).filter(Boolean);
   const inPlan = plan
-    ? WEEKDAYS.flatMap((w, i) => plan.plan.days[w].meals.flatMap((m) => (isFixedMeal(m) && keys.includes(dishKey(mealFoodsText(m))) ? [`${t.weekdaysLong[i]} ${m.title.toLowerCase()}`] : [])))
+    ? WEEKDAYS.flatMap((w, i) =>
+        plan.plan.days[w].meals.flatMap((m) =>
+          isFixedMeal(m) && (keys.includes(looseDishKey(mealFoodsText(m))) || (m.courses && coursesOf(m).some((c) => keys.includes(looseDishKey(courseText(c))) || keys.includes(looseDishKey(c.foods.map((f) => f.name).join(" + "))))) || keys.includes(looseDishKey(m.foods.map((f) => f.name).join(" + "))))
+            ? [`${t.weekdaysLong[i]} ${m.title.toLowerCase()}`]
+            : [],
+        ),
+      )
     : [];
 
   function putInPlan(day: Weekday, index: number, label: string) {
@@ -203,6 +211,21 @@ export function DishPage({ id }: { id: string }) {
           ))}
         </ul>
         {inPlan.length > 0 && <p className="muted dish-in-plan">{s.inPlan(inPlan.join(", "))}</p>}
+        {meal.aliases.length > 0 && (
+          <div className="dish-aliases">
+            <span className="plan-edit-title">{t.mealMenu.alsoAs}</span>
+            <ul>
+              {meal.aliases.map((name) => (
+                <li key={name}>
+                  <span>{name}</span>
+                  <button type="button" className="item-remove" disabled={alias.isPending} aria-label={t.mealMenu.removeAlias(name)} onClick={() => alias.mutate({ id: meal.id, name, remove: true })}>
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
 
       {placed && (

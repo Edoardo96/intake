@@ -46,6 +46,8 @@ export function itemsAllOrNone(items: Record<string, unknown>[]): Record<string,
   // Sugar and added sugar go together: Nutrition refuses sugar without added sugar (e.g. meals logged before it was tracked)
   if (drop.includes("sugar_g") && !drop.includes("added_sugar_g") && items.some((item) => "added_sugar_g" in item)) drop.push("added_sugar_g");
   if (drop.includes("added_sugar_g") && !drop.includes("sugar_g") && items.some((item) => "sugar_g" in item)) drop.push("sugar_g");
+  // Sugar on every item but added sugar on none is refused too
+  if (!drop.includes("sugar_g") && items.some((item) => "sugar_g" in item) && !items.some((item) => "added_sugar_g" in item)) drop.push("sugar_g");
   if (drop.length === 0) return items;
   return items.map((item) => Object.fromEntries(Object.entries(item).filter(([key]) => !drop.includes(key))));
 }

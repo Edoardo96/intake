@@ -1,4 +1,8 @@
 import {
+  dishAliasSchema,
+  dishKey,
+  dishKeys,
+  findDish,
   dishCategorySchema,
   dishFoodsKey,
   dishWriteSchema,
@@ -14,6 +18,7 @@ import {
 import type { FastifyPluginAsync, FastifyReply, preHandlerHookHandler } from "fastify";
 import { z } from "zod";
 import type { DishStore } from "../db/dishStore.js";
+import type { DishGroupStore } from "../db/dishGroupStore.js";
 import type { NutritionApi, SavedMealWriteFields } from "../mcp/nutritionApi.js";
 import { RecognitionError } from "../services/mealRecognition.js";
 import { macrosToFields, plannedItems } from "../services/logPlanned.js";
@@ -22,6 +27,8 @@ import type { PlanGenerator } from "../services/planGenerator.js";
 export interface DishRoutesOptions {
   api: Pick<NutritionApi, "savedMeals" | "createSavedMeal" | "updateSavedMeal" | "deleteSavedMeal">;
   store: DishStore;
+  /** Interchangeable dishes: "Unisci" adds the other name to the dish there too. */
+  groups?: Pick<DishGroupStore, "list" | "update">;
   /** "Chiedi la ricetta all'IA" (part Pasti da foto); without it the route answers 503. */
   recipes?: Pick<PlanGenerator, "writeRecipe">;
   requireOwner: preHandlerHookHandler;
@@ -39,7 +46,7 @@ export function savedMealFields(dish: DishWrite): SavedMealWriteFields {
 }
 
 /** Piatti under /api/dishes (part Alimentazione; only the AI recipe belongs to Pasti da foto). Rules in docs/dishes.md. */
-export const dishRoutes: FastifyPluginAsync<DishRoutesOptions> = async (app, { api, store, recipes, requireOwner }) => {
+export const dishRoutes: FastifyPluginAsync<DishRoutesOptions> = async (app, { api, store, recipes, groups, requireOwner }) => {
   app.addHook("preHandler", requireOwner);
 
   const find = async (id: string): Promise<SavedMeal | null> => (await api.savedMeals()).find((meal) => meal.id === id) ?? null;
@@ -50,15 +57,15 @@ export const dishRoutes: FastifyPluginAsync<DishRoutesOptions> = async (app, { a
 
   app.get("/dishes", async (): Promise<DishesResponse> => {
     const meta = store.all();
-    const dishes = (await api.savedMeals()).map((meal) => ({ ...meal, category: meta.get(meal.id)?.category ?? null, hasRecipe: meta.get(meal.id)?.hasRecipe ?? false }));
+    const dishes = (await api.savedMeals()).map((meal) => ({ ...meal, category: meta.get(meal.id)?.category ?? null, hasRecipe: meta.get(meal.id)?.hasRecipe ?? false, aliases: meta.get(meal.id)?.aliases ?? [] }));
     return { dishes, customCategories: store.customCategories() };
   });
 
   app.post("/dishes", async (request, reply) => {
     const body = dishWriteSchema.safeParse(request.body);
     if (!body.success) return reply.code(400).send({ error: "invalid_dish" });
-    const exists = (await api.savedMeals()).some((meal) => meal.name.toLowerCase() === body.data.name.toLowerCase());
-    if (exists) return reply.code(409).send({ error: "name_taken" });
+    const existing = (await api.savedMeals()).find((meal) => meal.name.toLowerCase() === body.data.name.toLowerCase());
+    if (existing) return reply.code(409).send({ error: "name_taken", id: existing.id });
     let { id } = await api.createSavedMeal({ name: body.data.name, ...savedMealFields(body.data) });
     // The answer usually carries the new id; otherwise find it by its name
     id ??= (await api.savedMeals()).find((meal) => meal.name === body.data.name)?.id ?? null;
@@ -78,6 +85,33 @@ export const dishRoutes: FastifyPluginAsync<DishRoutesOptions> = async (app, { a
     await api.updateSavedMeal(id, { ...(renamed ? { name: body.data.name } : {}), ...savedMealFields(body.data) });
     store.setCategory(id, body.data.category);
     return { ok: true };
+  });
+
+  // "Unisci" (docs/plan-dishes.md): a plan dish becomes another name of this dish, here and in its interchangeable
+  // dishes, so the plan finds the dish, its recipe and its alternatives under that name too
+  app.post<{ Params: { id: string } }>("/dishes/:id/aliases", async (request, reply) => {
+    const id = idOf(request.params.id);
+    const body = dishAliasSchema.safeParse(request.body);
+    if (!id || !body.success) return reply.code(400).send({ error: "invalid_dish" });
+    const dish = await find(id);
+    if (!dish) return reply.code(404).send({ error: "Dish not found" });
+    const aliases = store.setAliases(id, [...store.aliases(id), body.data.name]);
+    if (groups) {
+      const found = findDish(groups.list(), dish.name);
+      if (found) {
+        const dishes = found.group.dishes.map((d, i) => (i === found.index && !dishKeys(d).includes(dishKey(body.data.name)) ? { ...d, aliases: [...d.aliases, body.data.name].slice(-20) } : d));
+        groups.update(found.group.id, dishes);
+      }
+    }
+    return { aliases };
+  });
+
+  app.post<{ Params: { id: string } }>("/dishes/:id/aliases/remove", async (request, reply) => {
+    const id = idOf(request.params.id);
+    const body = dishAliasSchema.safeParse(request.body);
+    if (!id || !body.success) return reply.code(400).send({ error: "invalid_dish" });
+    const aliases = store.setAliases(id, store.aliases(id).filter((name) => name.toLowerCase() !== body.data.name.toLowerCase()));
+    return { aliases };
   });
 
   // Deleting is confirmed in the app; meals already logged from the dish keep their values
