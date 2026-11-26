@@ -1,4 +1,5 @@
 import {
+  sumFoodNutrients,
   courseMacros,
   courseText,
   sumCourseMacros,
@@ -93,7 +94,7 @@ export interface LogPlannedInput {
   /** The interchangeable dish eaten in place of the planned one (Piatti intercambiabili). */
   alternative?: { groupId: number; dishIndex: number };
   /** A meal with courses: what was eaten of each, in order (docs/courses.md); without it, every course as planned. */
-  courses?: Array<{ eaten: boolean; alternative?: { groupId: number; dishIndex: number } }>;
+  courses?: Array<{ eaten: boolean; alternative?: { groupId: number; dishIndex: number }; other?: { name: string; foods: PlannedFood[] } }>;
 }
 
 /** Where the alternative's group comes from; its dish must be in the same group as the planned dish. */
@@ -112,6 +113,7 @@ export async function logPlannedMeal(
   plans: Pick<PlanStore, "get" | "addLink">,
   input: LogPlannedInput,
   groups?: DishGroupSource,
+  mealCourses?: { set(mealId: string, courses: Array<{ name: string; count: number }>): void },
 ): Promise<{ mealId: string | null }> {
   const stored = plans.get(input.planId);
   if (!stored) throw new PlanMealNotFoundError("Plan not found");
@@ -133,16 +135,23 @@ export async function logPlannedMeal(
     const eaten = meal.courses.flatMap((course, i) => {
       const choice = input.courses![i]!;
       if (!choice.eaten) return [];
-      if (!choice.alternative) return [{ text: courseText(course), foods: course.foods, macros: courseMacros(course) }];
+      // "Altro…": what was eaten in place of this course, with its values
+      if (choice.other) return [{ name: course.name, text: choice.other.name, foods: choice.other.foods, macros: sumFoodNutrients(choice.other.foods) }];
+      if (!choice.alternative) return [{ name: course.name, text: courseText(course), foods: course.foods, macros: courseMacros(course) }];
       const dish = alternativeOf(courseText(course), choice.alternative);
-      return [{ text: dish.name, foods: dish.foods, macros: dishMacros(dish) }];
+      return [{ name: course.name, text: dish.name, foods: dish.foods, macros: dishMacros(dish) }];
     });
     // Courses split from a meal with totals only have no values of their own: the whole meal as planned uses its totals
-    const asPlanned = input.courses.every((c) => c.eaten && !c.alternative);
+    const asPlanned = input.courses.every((c) => c.eaten && !c.alternative && !c.other);
     const total = sumCourseMacros(eaten.map((c) => ({ foods: c.foods, ...(c.macros ? { macros: c.macros } : {}) }))) ?? (asPlanned ? (meal.macros ?? null) : null);
     if (!total) throw new PlanMealWithoutMacrosError();
-    const selection = input.courses.map((c) => (!c.eaten ? "x" : c.alternative ? `${c.alternative.groupId}.${c.alternative.dishIndex}` : "p")).join("_");
-    return logFoods(eaten.map((c) => c.text).join(" + "), eaten.flatMap((c) => c.foods), total, `intake-plan-${stored.id}-${input.date}-${input.index}-c-${selection}`);
+    const selection = input.courses.map((c) => (!c.eaten ? "x" : c.other ? `o${shortHash(JSON.stringify(c.other))}` : c.alternative ? `${c.alternative.groupId}.${c.alternative.dishIndex}` : "p")).join("_");
+    const logged = await logFoods(eaten.map((c) => c.text).join(" + "), eaten.flatMap((c) => c.foods), total, `intake-plan-${stored.id}-${input.date}-${input.index}-c-${selection}`);
+    // Logged food by food: keep which foods make each course, so "Modifica pasto" shows the courses again
+    if (logged.mealId && mealCourses && eaten.length >= 2 && plannedItems(eaten.flatMap((c) => c.foods))) {
+      mealCourses.set(logged.mealId, eaten.map((c) => ({ name: c.name, count: c.foods.length })));
+    }
+    return logged;
   }
 
   // The dish to log: the planned one, or an alternative of its group chosen in the Timeline or Oggi
@@ -185,4 +194,14 @@ export async function logPlannedMeal(
   if (mealId) plans.addLink(input.date, stored!.id, input.index, mealId);
   return { mealId };
   }
+}
+
+/** A short stable hash (FNV-1a, base 36), so a different "Altro…" makes a different idempotency key. */
+function shortHash(text: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(36);
 }

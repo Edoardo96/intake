@@ -1,6 +1,7 @@
-import { isFixedMeal, planDay } from "@intake/shared";
+import { plannedFoodSchema, isFixedMeal, planDay } from "@intake/shared";
 import type { FastifyPluginAsync, preHandlerHookHandler } from "fastify";
 import { z } from "zod";
+import type { MealCourseStore } from "../db/mealCourseStore.js";
 import type { PlanStore } from "../db/planStore.js";
 import type { DishGroupSource } from "../services/logPlanned.js";
 import type { NutritionApi } from "../mcp/nutritionApi.js";
@@ -9,6 +10,8 @@ import { logPlannedMeal, PlanMealNotFoundError, PlanMealWithoutMacrosError } fro
 
 export interface DayRoutesOptions {
   api: Pick<NutritionApi, "clock" | "goalProgress" | "mealsByDate" | "addWater" | "logMeal">;
+  /** The courses of a meal logged from a planned meal with courses (Modifica pasto shows them again). */
+  mealCourses?: Pick<MealCourseStore, "set">;
   plans?: Pick<PlanStore, "activeOn" | "linksOn" | "skipsOn" | "get" | "addLink" | "addSkip" | "removeSkip">;
   /** Piatti intercambiabili: "Mangiato come previsto" can log an alternative of the planned dish. */
   dishGroups?: DishGroupSource;
@@ -19,7 +22,20 @@ const alternativeBody = z.object({ groupId: z.number().int().positive(), dishInd
 const logPlannedBody = z
   .object({
     alternative: alternativeBody.optional(),
-    courses: z.array(z.object({ eaten: z.boolean(), alternative: alternativeBody.optional() })).min(1).max(6).optional(),
+    // "Altro…" on a course: what was eaten in its place, every food with its values (docs/courses.md)
+    courses: z
+      .array(
+        z.object({
+          eaten: z.boolean(),
+          alternative: alternativeBody.optional(),
+          other: z
+            .object({ name: z.string().trim().min(1).max(200), foods: z.array(plannedFoodSchema.required({ nutrients: true })).min(1).max(20) })
+            .optional(),
+        }),
+      )
+      .min(1)
+      .max(6)
+      .optional(),
   })
   .optional();
 
@@ -29,7 +45,7 @@ const addWaterBody = z.object({
 });
 
 /** Day data under /api. */
-export const dayRoutes: FastifyPluginAsync<DayRoutesOptions> = async (app, { api, plans, dishGroups, requireOwner }) => {
+export const dayRoutes: FastifyPluginAsync<DayRoutesOptions> = async (app, { api, plans, dishGroups, mealCourses, requireOwner }) => {
   app.addHook("preHandler", requireOwner);
 
   app.get<{ Params: { date: string } }>("/days/:date", async (request, reply) => {
@@ -61,6 +77,7 @@ export const dayRoutes: FastifyPluginAsync<DayRoutesOptions> = async (app, { api
           plans,
           { date, planId, index, today: clock.localDate, now: clock.localTime, ...(alternative ? { alternative } : {}), ...(courses ? { courses } : {}) },
           dishGroups,
+          mealCourses,
         );
         return reply.code(201).send(result);
       } catch (error) {

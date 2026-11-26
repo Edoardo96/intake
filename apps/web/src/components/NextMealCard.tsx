@@ -139,7 +139,7 @@ function NextMealDish({ entry, busy, onLog }: { entry: PlannedEntry; busy: boole
       <>
         <CoursesChoice choice={courses} label={courseLabel} />
         <button type="button" className="button-primary next-meal-primary" disabled={!courses.canLog || busy} onClick={() => onLog(courses.body)}>
-          {courses.kcal !== null ? t.courses.logChosen(formatKcal(courses.kcal)) : t.timeline.eatenAsPlanned}
+          {courses.label}
         </button>
         {!courses.canLog && <p className="planned-hint">{courses.rows.every((r) => !r.eaten) ? t.courses.noneChosen : t.timeline.noMacros}</p>}
       </>

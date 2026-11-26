@@ -199,10 +199,11 @@ function PlannedCard({
               onClick={() => onLog(hasCourses ? courses.body : choice.alternative ? { alternative: choice.alternative } : undefined)}
               disabled={logging || !canLog}
             >
-              {hasCourses && courses.kcal !== null ? t.courses.logChosen(formatKcal(courses.kcal)) : t.timeline.eatenAsPlanned}
+              {hasCourses ? courses.label : t.timeline.eatenAsPlanned}
             </button>
             <button type="button" className="button-small button-outline" onClick={onOther}>
-              {t.timeline.other}
+              {/* With courses, "Altro…" is per course; this one replaces the whole meal */}
+              {hasCourses ? t.timeline.otherAll : t.timeline.other}
             </button>
             <button type="button" className="button-small button-outline" onClick={() => onSkip(true)}>
               {t.timeline.skip}

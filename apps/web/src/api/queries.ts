@@ -242,7 +242,8 @@ export function useLogPlanned(date: string) {
       planId: number;
       index: number;
       alternative?: { groupId: number; dishIndex: number };
-      courses?: Array<{ eaten: boolean; alternative?: { groupId: number; dishIndex: number } }>;
+      /** Per course: eaten, as one of its alternatives, or "Altro…" with what was eaten in its place (docs/courses.md). */
+      courses?: Array<{ eaten: boolean; alternative?: { groupId: number; dishIndex: number }; other?: { name: string; foods: PlannedFood[] } }>;
     }) =>
       apiFetch<{ mealId: string | null }>(`/api/days/${entry.date}/planned/${entry.planId}/${entry.index}`, {
         method: "POST",

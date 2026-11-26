@@ -61,7 +61,10 @@ export function MealCourseSheet({
   onText,
   onDish,
   onManual,
+  fixedName,
 }: {
+  /** "Altro…" on a planned course: the course is known, so its name is not asked. */
+  fixedName?: string;
   /** The meal on the screen is still one dish: also ask what it is. */
   askFirst: boolean;
   ai: boolean;
@@ -85,7 +88,7 @@ export function MealCourseSheet({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose, busy]);
-  const course = (): CourseSource => ({ name: name.trim() || t.courses.defaultName, ...(askFirst ? { firstName: firstName.trim() || t.courses.defaultName } : {}) });
+  const course = (): CourseSource => (fixedName ? { name: fixedName } : { name: name.trim() || t.courses.defaultName, ...(askFirst ? { firstName: firstName.trim() || t.courses.defaultName } : {}) });
 
   function addManual() {
     const values = { amount: number(food.amount || "1"), kcal: number(food.kcal), protein: number(food.protein || "0"), carbs: number(food.carbs || "0"), fat: number(food.fat || "0") };
@@ -96,20 +99,20 @@ export function MealCourseSheet({
 
   // The dishes picker is a sheet of its own, shown instead of this one
   if (mode === "dishes") {
-    return <DishPickerSheet meal="" subtitle={courseLabel(name) || t.courses.defaultName} onClose={() => setMode(null)} onPick={() => {}} onPickSaved={(dish) => onDish(dish, course())} />;
+    return <DishPickerSheet meal="" subtitle={courseLabel(fixedName ?? name) || t.courses.defaultName} onClose={() => setMode(null)} onPick={() => {}} onPickSaved={(dish) => onDish(dish, course())} />;
   }
   return (
     <Scrim onClose={() => !busy && onClose()}>
       <div className="sheet course-sheet" role="dialog" aria-modal="true" aria-label={t.courses.add} onClick={(event) => event.stopPropagation()}>
         <div className="sheet-grabber" aria-hidden="true" />
         <div className="sheet-head">
-          <h2>{t.courses.addTitle}</h2>
+          <h2>{fixedName ? t.courses.otherTitle(courseLabel(fixedName)) : t.courses.addTitle}</h2>
           <button type="button" className="icon-button" aria-label={t.close} disabled={busy} onClick={onClose}>
             <CloseIcon size={18} strokeWidth={2.5} />
           </button>
         </div>
-        {askFirst && <Chips value={firstName} onChange={setFirstName} label={t.courses.firstIsMeal} />}
-        <Chips value={name} onChange={setName} label={t.courses.whichCourse} />
+        {!fixedName && askFirst && <Chips value={firstName} onChange={setFirstName} label={t.courses.firstIsMeal} />}
+        {!fixedName && <Chips value={name} onChange={setName} label={t.courses.whichCourse} />}
         <span className="plan-edit-title">{t.courses.how}</span>
 
         {busy ? (
