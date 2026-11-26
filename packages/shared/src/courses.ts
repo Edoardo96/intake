@@ -126,3 +126,20 @@ export function coursesFromLabels(foods: PlannedFood[], labels: Array<string | n
   if (order.length < 2 || order.length > COURSES_MAX) return null;
   return order.map((name) => ({ name, foods: byName.get(name.toLowerCase())! }));
 }
+
+/**
+ * The meal with new values for its foods ("Dividi in alimenti con l'IA", one meal or the whole week). A meal of courses
+ * keeps its foods as the courses' foods one after the other, so the values go back to each course; its totals stay.
+ */
+export function withFoodValues<M extends FixedPlannedMeal>(meal: M, foods: PlannedFood[]): FixedPlannedMeal {
+  if (!meal.courses) return { ...meal, foods };
+  let at = 0;
+  const courses = meal.courses.map((course) => {
+    const own = foods.slice(at, at + course.foods.length);
+    at += course.foods.length;
+    const { macros: _old, ...rest } = course;
+    // The course's own totals stay only while some of its foods still have no values
+    return own.every((f) => f.nutrients) ? { ...rest, foods: own } : { ...course, foods: own };
+  });
+  return withCourses(meal, courses, meal.macros);
+}

@@ -1,4 +1,4 @@
-import { WEEKDAYS, mealSplitSchema, splitMeal, addCourse, courseAddSchema, courseRemoveSchema, removeCourse, dishLinkSchema, importPlan, mealPlanSchema, plannedFoodSchema, editMeal, mealEditSchema, mealMoveSchema, mealTimeChangeSchema, setMealTime, swapMeals, type PlanUploadError, type PlansResponse } from "@intake/shared";
+import { WEEKDAYS, withFoodValues, mealSplitSchema, splitMeal, addCourse, courseAddSchema, courseRemoveSchema, removeCourse, dishLinkSchema, importPlan, mealPlanSchema, plannedFoodSchema, editMeal, mealEditSchema, mealMoveSchema, mealTimeChangeSchema, setMealTime, swapMeals, type PlanUploadError, type PlansResponse } from "@intake/shared";
 import type { FastifyPluginAsync, preHandlerHookHandler } from "fastify";
 import { z } from "zod";
 import type { PlanStore } from "../db/planStore.js";
@@ -61,7 +61,7 @@ export const planRoutes: FastifyPluginAsync<PlanRoutesOptions> = async (app, { p
     const body = splitConfirmSchema.safeParse(request.body);
     const current = body.success ? stored.plan.days[body.data.day].meals[body.data.index] : undefined;
     if (!body.success || !current || current.free || body.data.foods.length !== current.foods.length) return reply.code(400).send({ error: "invalid_split" });
-    const meals = stored.plan.days[body.data.day].meals.map((meal, i) => (i === body.data.index && !meal.free ? { ...meal, foods: body.data.foods } : meal));
+    const meals = stored.plan.days[body.data.day].meals.map((meal, i) => (i === body.data.index && !meal.free ? withFoodValues(meal, body.data.foods) : meal));
     const plan = mealPlanSchema.parse({ ...stored.plan, days: { ...stored.plan.days, [body.data.day]: { ...stored.plan.days[body.data.day], meals } } });
     plans.update(stored.id, plan);
     return { ...stored, plan };
@@ -80,7 +80,7 @@ export const planRoutes: FastifyPluginAsync<PlanRoutesOptions> = async (app, { p
       for (const meal of entry.meals) {
         const target = current[meal.index];
         if (!target || target.free || meal.foods.length !== target.foods.length) return reply.code(400).send({ error: "invalid_split" });
-        meals[meal.index] = { ...target, foods: meal.foods };
+        meals[meal.index] = withFoodValues(target, meal.foods);
       }
       days[entry.day] = { ...days[entry.day], meals };
     }
