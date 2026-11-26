@@ -1,7 +1,7 @@
 import type { ProfileView, TrainingSourceId } from "@intake/shared";
 import { Fragment, type ReactNode, useState } from "react";
 import { Link } from "wouter";
-import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useRecognitionModel, useSetRecognitionModel, useRecipeModel, useSetRecipeModel, useMealPhotoKeep, useSetMealPhotoKeep, useClearMealPhotos, usePlanGeneration, useSetPlanModel, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeature, useFeatures, useSetFeatures, useSetLanguage, useSetGoals, useBackups, useBackupAction, deviceTimezone, useHomeLayout, useSetHomeLayout } from "../api/queries";
+import { useDisconnectNutrition, useHealthStatus, useLogWeight, useNutritionStatus, useProfile, useSetHealthSettings, useRecognitionModel, useSetRecognitionModel, useMealPhotoKeep, useSetMealPhotoKeep, useClearMealPhotos, usePlanGeneration, useSetPlanModel, useSignOut, type User, useSetTrainingSource, useTrainingSource, useHevySync, useHevySyncAction, useFeature, useFeatures, useSetFeatures, useSetLanguage, useSetGoals, useBackups, useBackupAction, deviceTimezone, useHomeLayout, useSetHomeLayout, useRecipeModel, useSetRecipeModel } from "../api/queries";
 import { TimezoneConfirm } from "../components/TimezoneNotice";
 import { BACKUP_KEEP, LANGUAGES, completeHomeLayout, parseGoalInput, weightUnitOf, type FeatureKey, type GoalsUpdate, type HomeCardId, type HomeLayout, type WeightUnit } from "@intake/shared";
 import { Avatar } from "../components/ProfileLink";
@@ -612,8 +612,8 @@ function FeaturesCard() {
           {/* The model sits right under its switch, only while the part is on and the key is set */}
           {key === "photoMeals" && data.photoMeals && data.recognitionConfigured && <RecognitionModelRow />}
           {key === "photoMeals" && data.photoMeals && data.recognitionConfigured && <PlanModelRow />}
-          {key === "photoMeals" && data.photoMeals && data.recognitionConfigured && <RecipeModelRow />}
           {key === "photoMeals" && data.photoMeals && <MealPhotosRow />}
+          {key === "photoMeals" && data.photoMeals && data.recognitionConfigured && <RecipeModelRow />}
         </Fragment>
       ))}
       <div className="profile-row-item feature-foot">

@@ -1,7 +1,7 @@
 import { MEAL_PHOTOS_MAX, MEAL_TYPES, NUTRITION_MEAL_TYPES, splitIntoCourses, type Meal, type MealItemInput, type Nutrients, type NutritionMealType, type RecognizedItem } from "@intake/shared";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { mealPhotoUrl, useDay, useFeatures, useMealCourses, useMealPhotoKeep, useMealPhotos, useRecognizeMeal, useSaveMealPhotos, useUpdateMeal } from "../api/queries";
+import { mealPhotoUrl, useDay, useFeatures, useMealPhotoKeep, useMealCourses, useMealPhotos, useRecognizeMeal, useSaveMealPhotos, useUpdateMeal } from "../api/queries";
 import { ConfirmDeleteSheet } from "../components/ConfirmDeleteSheet";
 import { CloseIcon, SparklesIcon } from "../components/icons";
 import { PhotoCarousel } from "../components/PhotoCarousel";
