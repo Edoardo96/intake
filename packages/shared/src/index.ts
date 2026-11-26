@@ -10,3 +10,4 @@ export * from "./needs.js";
 export * from "./planGeneration.js";
 export * from "./shoppingList.js";
 export * from "./dayAlternative.js";
+export * from "./dishGroups.js";

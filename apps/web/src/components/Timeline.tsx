@@ -8,6 +8,7 @@ import { t } from "../lib/strings";
 import { DayAlternative } from "./DayAlternative";
 import { MACROS } from "./MacroCard";
 import { SleepPhases } from "./SleepPhases";
+import { DishChoice, useDishChoice } from "./DishChoice";
 import { WorkoutCard } from "./WorkoutCard";
 
 interface Props {
@@ -22,7 +23,8 @@ interface Props {
   heading?: boolean;
   /** Local time HH:MM:SS when the day is today; the "now" marker is shown only then. */
   now: string | null;
-  onLogPlanned: (entry: PlannedEntry) => void;
+  /** `alternative`: an interchangeable dish chosen in place of the planned one (docs/dish-groups.md). */
+  onLogPlanned: (entry: PlannedEntry, alternative?: { groupId: number; dishIndex: number }) => void;
   /** Skip (true) or restore (false) a planned meal. */
   onSkipPlanned: (entry: PlannedEntry, skip: boolean) => void;
   loggingPlanned: PlannedEntry | null;
@@ -152,12 +154,13 @@ function PlannedCard({
   entry: PlannedEntry;
   /** Today: the AI alternative can be asked. */
   suggest: boolean;
-  onLog: () => void;
+  onLog: (alternative?: { groupId: number; dishIndex: number }) => void;
   onSkip: (skip: boolean) => void;
   logging: boolean;
   failed: boolean;
   onOther: () => void;
 }) {
+  const choice = useDishChoice(entry);
   if (entry.status === "skipped") {
     return (
       <article className="meal-card" data-kind="skipped">
@@ -179,11 +182,12 @@ function PlannedCard({
         <h3>{entry.title}</h3>
         <span className="planned-label">{label}</span>
       </header>
-      {entry.foods && <p className="meal-summary">{plannedText(entry)}</p>}
+      {entry.foods && <p className="meal-summary">{choice.alternative ? choice.summary : plannedText(entry)}</p>}
+      {(entry.status === "todo" || entry.status === "planned") && <DishChoice entry={entry} choice={choice} />}
       {entry.status === "todo" && (
         <>
           <div className="planned-actions">
-            <button type="button" className="button-small button-inverse" onClick={onLog} disabled={logging || !entry.macros}>
+            <button type="button" className="button-small button-inverse" onClick={() => onLog(choice.alternative)} disabled={logging || !choice.canLog}>
               {t.timeline.eatenAsPlanned}
             </button>
             <button type="button" className="button-small button-outline" onClick={onOther}>
@@ -193,7 +197,7 @@ function PlannedCard({
               {t.timeline.skip}
             </button>
           </div>
-          {!entry.macros && <p className="planned-hint">{t.timeline.noMacros}</p>}
+          {!choice.canLog && <p className="planned-hint">{t.timeline.noMacros}</p>}
           {failed && <p className="error-text">{t.timeline.logFailed}</p>}
           {suggest && <DayAlternative entry={entry} />}
         </>
@@ -306,7 +310,7 @@ export function Timeline({ meals, planned, workouts = [], sleep = null, heading 
               ) : (
                 <PlannedCard
                   entry={entry.entry}
-                  onLog={() => onLogPlanned(entry.entry)}
+                  onLog={(alternative) => onLogPlanned(entry.entry, alternative)}
                   onSkip={(skip) => onSkipPlanned(entry.entry, skip)}
                   logging={loggingPlanned?.planId === entry.entry.planId && loggingPlanned.index === entry.entry.index}
                   failed={logFailed && loggingPlanned?.planId === entry.entry.planId && loggingPlanned.index === entry.entry.index}

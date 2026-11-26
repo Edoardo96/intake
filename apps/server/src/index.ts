@@ -138,6 +138,7 @@ const app = await buildApp({
   insightApi: api,
   insightHealth: health,
   plans: services.plans,
+  dishGroups: services.dishGroups,
   push: { store: services.reminders, scheduler, publicKey: vapid.publicKey },
   // With Allenamenti off the workouts list keeps only the Apple Health sessions
   workouts: { gym: () => (features.enabled("training") ? gym() : null), health, api },

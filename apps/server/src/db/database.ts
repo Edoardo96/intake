@@ -110,6 +110,12 @@ const MIGRATIONS: string[] = [
      title TEXT NOT NULL,
      origin TEXT NOT NULL
    );`,
+  // Piatti intercambiabili: groups of dishes that can take each other's place in any plan (docs/dish-groups.md)
+  `CREATE TABLE dish_groups (
+     id INTEGER PRIMARY KEY AUTOINCREMENT,
+     dishes TEXT NOT NULL,
+     updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+   )`,
 ];
 
 /** Opens (and migrates) the SQLite database. Pass ":memory:" for tests. */

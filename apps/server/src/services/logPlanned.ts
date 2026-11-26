@@ -1,4 +1,16 @@
-import { isFixedMeal, mealFoodsText, mealTimes, mealTypeOf, planDay, type PlannedFood, type PlannedMacros } from "@intake/shared";
+import {
+  dishKey,
+  dishKeys,
+  dishMacros,
+  isFixedMeal,
+  mealFoodsText,
+  mealTimes,
+  mealTypeOf,
+  planDay,
+  type DishGroup,
+  type PlannedFood,
+  type PlannedMacros,
+} from "@intake/shared";
 import type { PlanStore } from "../db/planStore.js";
 import type { MealWriteFields, NutritionApi } from "../mcp/nutritionApi.js";
 import { itemFields, itemsAllOrNone } from "./mealWrites.js";
@@ -72,6 +84,13 @@ export interface LogPlannedInput {
   index: number;
   today: string;
   now: string;
+  /** The interchangeable dish eaten in place of the planned one (Piatti intercambiabili). */
+  alternative?: { groupId: number; dishIndex: number };
+}
+
+/** Where the alternative's group comes from; its dish must be in the same group as the planned dish. */
+export interface DishGroupSource {
+  get(id: number): DishGroup | null;
 }
 
 /**
@@ -84,26 +103,45 @@ export async function logPlannedMeal(
   api: Pick<NutritionApi, "logMeal" | "mealsByDate">,
   plans: Pick<PlanStore, "get" | "addLink">,
   input: LogPlannedInput,
+  groups?: DishGroupSource,
 ): Promise<{ mealId: string | null }> {
   const stored = plans.get(input.planId);
   if (!stored) throw new PlanMealNotFoundError("Plan not found");
   const day = planDay(stored.plan, input.date);
   const meal = day.meals[input.index];
   if (!meal || !isFixedMeal(meal)) throw new PlanMealNotFoundError("Planned meal not found");
-  if (!meal.macros) throw new PlanMealWithoutMacrosError();
+
+  // The dish to log: the planned one, or an alternative of its group chosen in the Timeline or Oggi
+  let name = mealFoodsText(meal);
+  let foods = meal.foods;
+  let macros: PlannedMacros | null = meal.macros ?? null;
+  let key = `intake-plan-${stored.id}-${input.date}-${input.index}`;
+  if (input.alternative) {
+    const { groupId, dishIndex } = input.alternative;
+    const group = groups?.get(groupId);
+    const dish = group?.dishes[dishIndex];
+    if (!group || !dish) throw new PlanMealNotFoundError("Alternative not found");
+    const planned = dishKey(name);
+    if (!group.dishes.some((d) => dishKeys(d).includes(planned))) throw new PlanMealNotFoundError("Alternative not found");
+    name = dish.name;
+    foods = dish.foods;
+    macros = dishMacros(dish);
+    key = `${key}-alt-${groupId}-${dishIndex}`;
+  }
+  if (!macros) throw new PlanMealWithoutMacrosError();
 
   const time = mealTimes(day.meals)[input.index]!;
   const atPlannedTime = input.date < input.today;
-  const description = `${meal.title}: ${mealFoodsText(meal)}`;
+  const description = `${meal.title}: ${name}`;
 
   // With per-food values the meal keeps its foods in Nutrition; otherwise only its totals are logged
-  const items = plannedItems(meal.foods);
+  const items = plannedItems(foods);
   const { id } = await api.logMeal({
     description,
     meal_type: mealTypeOf(meal),
-    ...(items ? { items } : macrosToFields(meal.macros)),
+    ...(items ? { items } : macrosToFields(macros)),
     ...(atPlannedTime ? { logged_at: `${input.date}T${time}` } : {}),
-    idempotency_key: `intake-plan-${stored.id}-${input.date}-${input.index}`,
+    idempotency_key: key,
   });
 
   // The response text usually carries the new id; otherwise find the meal we just logged

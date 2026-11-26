@@ -40,7 +40,7 @@ function DayTimeline({ view, selected, onAdd }: { view: DayView; selected: strin
       sleep={health.data?.date === view.date ? health.data.sleep : null}
       now={view.isToday ? view.clock.localTime : null}
       heading={false}
-      onLogPlanned={(entry) => logPlanned.mutate({ date: view.date, planId: entry.planId, index: entry.index })}
+      onLogPlanned={(entry, alternative) => logPlanned.mutate({ date: view.date, planId: entry.planId, index: entry.index, ...(alternative ? { alternative } : {}) })}
       onSkipPlanned={(entry, skip) => skipPlanned.mutate({ date: view.date, planId: entry.planId, index: entry.index, skip })}
       loggingPlanned={pending ? (view.planned.find((p) => p.planId === pending.planId && p.index === pending.index) ?? null) : null}
       logFailed={logPlanned.isError}

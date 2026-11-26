@@ -92,6 +92,10 @@ describe("Claude Fitness import", () => {
     expect(lunch.description).toBe("Pasta 120 g al pomodoro con tonno al naturale 100 g + insalata");
     expect("foods" in lunch && lunch.foods[0]).toEqual({ name: "Pasta", quantity: 120, unit: "g", note: "a crudo" });
     expect("foods" in lunch && lunch.foods[1]).toEqual({ name: "Pomodoro/passata" });
+    // A meal's `alternative` is not text in the plan: it becomes an interchangeable dish of the meal's dish
+    expect(Object.values(plan.days).flatMap((d) => d.meals).some((m) => "foods" in m && m.foods.some((f) => f.name.startsWith("oppure")))).toBe(false);
+    expect(result.links.map((l) => l.alternative.name)).toEqual(["Pasta 100 g + Pomodoro/passata + Polpette di carne magra al forno 150 g"]);
+    expect(result.links[0]!.alternative.foods[0]).toEqual({ name: "Pasta", quantity: 100, unit: "g", note: "a crudo" });
   });
 
   it("uses per-meal macros when the file has them", async () => {

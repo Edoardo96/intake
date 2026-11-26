@@ -1,12 +1,15 @@
-import { WEEKDAYS, importPlan, mealPlanSchema, plannedFoodSchema, editMeal, mealEditSchema, mealMoveSchema, mealTimeChangeSchema, setMealTime, swapMeals, type PlanUploadError, type PlansResponse } from "@intake/shared";
+import { WEEKDAYS, dishLinkSchema, importPlan, mealPlanSchema, plannedFoodSchema, editMeal, mealEditSchema, mealMoveSchema, mealTimeChangeSchema, setMealTime, swapMeals, type PlanUploadError, type PlansResponse } from "@intake/shared";
 import type { FastifyPluginAsync, preHandlerHookHandler } from "fastify";
 import { z } from "zod";
 import type { PlanStore } from "../db/planStore.js";
+import type { DishGroupStore } from "../db/dishGroupStore.js";
 import type { NutritionApi } from "../mcp/nutritionApi.js";
 
 export interface PlanRoutesOptions {
   plans: PlanStore;
   api: Pick<NutritionApi, "clock">;
+  /** Piatti intercambiabili: the alternatives of an uploaded Claude Fitness plan are linked here. */
+  dishGroups?: Pick<DishGroupStore, "link">;
   requireOwner: preHandlerHookHandler;
 }
 
@@ -25,7 +28,7 @@ const splitConfirmSchema = z
   .strict();
 
 /** Meal plan versions under /api/plans. */
-export const planRoutes: FastifyPluginAsync<PlanRoutesOptions> = async (app, { plans, api, requireOwner }) => {
+export const planRoutes: FastifyPluginAsync<PlanRoutesOptions> = async (app, { plans, api, dishGroups, requireOwner }) => {
   app.addHook("preHandler", requireOwner);
 
   app.get("/plans", async (): Promise<PlansResponse> => {
@@ -132,6 +135,11 @@ export const planRoutes: FastifyPluginAsync<PlanRoutesOptions> = async (app, { p
       const body: PlanUploadError = { error: "invalid_plan", issues: result.issues };
       return reply.code(400).send(body);
     }
-    return reply.code(201).send(plans.add(result.plan));
+    const stored = plans.add(result.plan);
+    for (const link of result.links) {
+      const valid = dishLinkSchema.safeParse(link);
+      if (valid.success) dishGroups?.link(valid.data);
+    }
+    return reply.code(201).send(stored);
   });
 };

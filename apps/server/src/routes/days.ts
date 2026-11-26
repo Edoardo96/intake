@@ -2,6 +2,7 @@ import { isFixedMeal, planDay } from "@intake/shared";
 import type { FastifyPluginAsync, preHandlerHookHandler } from "fastify";
 import { z } from "zod";
 import type { PlanStore } from "../db/planStore.js";
+import type { DishGroupSource } from "../services/logPlanned.js";
 import type { NutritionApi } from "../mcp/nutritionApi.js";
 import { getDayView, isValidDate } from "../services/dayView.js";
 import { logPlannedMeal, PlanMealNotFoundError, PlanMealWithoutMacrosError } from "../services/logPlanned.js";
@@ -9,8 +10,14 @@ import { logPlannedMeal, PlanMealNotFoundError, PlanMealWithoutMacrosError } fro
 export interface DayRoutesOptions {
   api: Pick<NutritionApi, "clock" | "goalProgress" | "mealsByDate" | "addWater" | "logMeal">;
   plans?: Pick<PlanStore, "activeOn" | "linksOn" | "skipsOn" | "get" | "addLink" | "addSkip" | "removeSkip">;
+  /** Piatti intercambiabili: "Mangiato come previsto" can log an alternative of the planned dish. */
+  dishGroups?: DishGroupSource;
   requireOwner: preHandlerHookHandler;
 }
+
+const logPlannedBody = z
+  .object({ alternative: z.object({ groupId: z.number().int().positive(), dishIndex: z.number().int().min(0) }).optional() })
+  .optional();
 
 const addWaterBody = z.object({
   amountMl: z.number().int().positive().max(5000),
@@ -18,7 +25,7 @@ const addWaterBody = z.object({
 });
 
 /** Day data under /api. */
-export const dayRoutes: FastifyPluginAsync<DayRoutesOptions> = async (app, { api, plans, requireOwner }) => {
+export const dayRoutes: FastifyPluginAsync<DayRoutesOptions> = async (app, { api, plans, dishGroups, requireOwner }) => {
   app.addHook("preHandler", requireOwner);
 
   app.get<{ Params: { date: string } }>("/days/:date", async (request, reply) => {
@@ -39,9 +46,17 @@ export const dayRoutes: FastifyPluginAsync<DayRoutesOptions> = async (app, { api
       if (!plans || !isValidDate(date) || !Number.isInteger(planId) || !Number.isInteger(index) || index < 0) {
         return reply.code(400).send({ error: "Invalid planned meal" });
       }
+      const body = logPlannedBody.safeParse(request.body ?? undefined);
+      if (!body.success) return reply.code(400).send({ error: "Invalid planned meal" });
+      const alternative = body.data?.alternative;
       const clock = await api.clock();
       try {
-        const result = await logPlannedMeal(api, plans, { date, planId, index, today: clock.localDate, now: clock.localTime });
+        const result = await logPlannedMeal(
+          api,
+          plans,
+          { date, planId, index, today: clock.localDate, now: clock.localTime, ...(alternative ? { alternative } : {}) },
+          dishGroups,
+        );
         return reply.code(201).send(result);
       } catch (error) {
         if (error instanceof PlanMealNotFoundError) return reply.code(404).send({ error: error.message });

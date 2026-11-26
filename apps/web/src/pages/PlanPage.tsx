@@ -1,6 +1,7 @@
 import {
   WEEKDAYS,
   dayTotals,
+  dishOfMeal,
   isFixedMeal,
   planAverages,  weekdayOf,
   type PlanUploadError,
@@ -9,7 +10,7 @@ import {
 } from "@intake/shared";
 import { useRef, useState } from "react";
 import { useLocation, useSearch } from "wouter";
-import { PlanUploadFailed, useDay, useFeatures, usePlan, usePlans, useEditPlanMeal, useSetPlanTime, useStartPlan, useSwapPlanMeal, useUploadPlan } from "../api/queries";
+import { PlanUploadFailed, useChangeDishGroups, useDay, useFeatures, usePlan, usePlans, useEditPlanMeal, useSetPlanTime, useStartPlan, useSwapPlanMeal, useUploadPlan } from "../api/queries";
 import { AlternativeMeal, EditMeal, MoveMeal, PlanDayMeals, PlanDaySummary, SameTimeSwitch, SplitFoods, SplitWeek } from "../components/PlanDay";
 import { CloseIcon, PlanIcon, SparklesIcon } from "../components/icons";
 import { formatKcal, formatMediumDate, formatShortDate } from "../lib/format";
@@ -17,6 +18,7 @@ import { shareFile } from "../lib/shareFile";
 import { t } from "../lib/strings";
 import { Scrim } from "../components/Scrim";
 import { NeedsCard } from "../components/NeedsCard";
+import { DishAlternatives, DishGroupsCard, dishAsEdit } from "../components/DishAlternatives";
 import { PLAN_TAB_PARAM, planTabFromSearch, preferredPlanTab, type PlanTab } from "../lib/planTab";
 
 const roundTo = (value: number, step: number) => Math.round(value / step) * step;
@@ -58,6 +60,7 @@ export function PlanPage() {
   const setTime = useSetPlanTime();
   const swap = useSwapPlanMeal();
   const edit = useEditPlanMeal();
+  const links = useChangeDishGroups();
   const startNow = useStartPlan();
   const [splitting, setSplitting] = useState<{ day: Weekday; index: number } | null>(null);
   const [splitWeekOpen, setSplitWeekOpen] = useState(false);
@@ -318,6 +321,7 @@ export function PlanPage() {
                           index={index}
                           meal={meal}
                           busy={edit.isPending}
+                          onKeep={isFixedMeal(meal) ? (dish, done) => links.mutate({ link: { dish: dishOfMeal(meal), alternative: dishOfMeal(dish) } }, { onSuccess: done }) : undefined}
                           onUse={(dish) => {
                             const fixed = isFixedMeal(dish) ? dish : null;
                             if (!fixed) return;
@@ -329,11 +333,15 @@ export function PlanPage() {
                       <MoveMeal plan={shown.plan} day={weekday} index={index} busy={swap.isPending} failed={swap.isError} onMove={(toDay) => swap.mutate({ id: shown.id, day: weekday, index, toDay })} />
                     </div>
                   )}
+                  dishes={(meal, index) => (
+                    <DishAlternatives meal={meal} busy={edit.isPending} onUse={(dish) => edit.mutate({ id: shown.id, day: weekday, index, ...dishAsEdit(dish) })} />
+                  )}
                 />
               </div>
 
               <aside className="plan-aside">
                 <PlanDaySummary day={day} goals={goals} />
+                <DishGroupsCard />
                 <section className="card plan-times">
                   <SameTimeSwitch checked={sameTime} onChange={setSameTime} />
                   <p className="muted">{t.plan.timeHint}</p>
