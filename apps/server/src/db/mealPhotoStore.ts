@@ -105,6 +105,16 @@ export class MealPhotoStore {
     if (MealPhotoStore.isMealId(mealId)) rmSync(this.folder(mealId), { recursive: true, force: true });
   }
 
+  /** Removes every kept photo ("Elimina le foto salvate"); returns how many were removed. */
+  clear(): number {
+    let removed = 0;
+    for (const [mealId, ids] of Object.entries(this.list())) {
+      removed += ids.length;
+      this.delete(mealId);
+    }
+    return removed;
+  }
+
   /** Meal id → photo ids, for the meals that have photos. */
   list(): Record<string, string[]> {
     let names: string[];

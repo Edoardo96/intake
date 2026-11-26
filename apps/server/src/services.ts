@@ -10,6 +10,7 @@ import { LanguageStore } from "./db/languageStore.js";
 import { HomeLayoutStore } from "./db/homeLayoutStore.js";
 import { BackupStore } from "./db/backupStore.js";
 import { MealPhotoStore } from "./db/mealPhotoStore.js";
+import { MealPhotoSettingsStore } from "./db/mealPhotoSettingsStore.js";
 import { RecognitionModelStore } from "./db/recognitionModelStore.js";
 import { NeedsStore } from "./db/needsStore.js";
 import { PlanGenerationStore } from "./db/planGenerationStore.js";
@@ -30,6 +31,7 @@ export interface Services {
   homeLayout: HomeLayoutStore;
   backups: BackupStore;
   mealPhotos: MealPhotoStore;
+  mealPhotoSettings: MealPhotoSettingsStore;
   recognitionModel: RecognitionModelStore;
   needs: NeedsStore;
   planGeneration: PlanGenerationStore;
@@ -59,6 +61,7 @@ export function createServices(config: Config): Services {
     homeLayout: new HomeLayoutStore(db),
     backups: new BackupStore(db),
     mealPhotos: new MealPhotoStore(join(config.DATA_DIR, "meal-photos")),
+    mealPhotoSettings: new MealPhotoSettingsStore(db),
     recognitionModel: new RecognitionModelStore(db, config.RECOGNITION_MODEL),
     needs: new NeedsStore(db),
     planGeneration: new PlanGenerationStore(db),
