@@ -6,6 +6,7 @@ import { isValidDate } from "../services/dayView.js";
 import { copyMealFields, recentDistinctMeals, updateMealFields } from "../services/mealWrites.js";
 import { MEAL_PHOTO_MAX_BYTES, MealPhotoStore, TooManyPhotosError } from "../db/mealPhotoStore.js";
 import type { RecognitionModelStore } from "../db/recognitionModelStore.js";
+import { mealCoursesSchema, type MealCourseStore } from "../db/mealCourseStore.js";
 import type { MealPhotoSettingsStore } from "../db/mealPhotoSettingsStore.js";
 import { RecognitionError, type MealRecognizer, type RecognitionFailure } from "../services/mealRecognition.js";
 
@@ -14,6 +15,8 @@ export interface MealRoutesOptions {
   requireOwner: preHandlerHookHandler;
   /** Photo and text recognition with the Claude API; the route answers 503 without it. */
   recognizer?: Pick<MealRecognizer, "recognize">;
+  /** Courses of logged meals (docs/courses.md); without it a meal is always one dish. */
+  courses?: MealCourseStore;
   /** Photos kept with meals logged from a photo; without it photos are not stored. */
   photos?: MealPhotoStore;
   /** "Conserva le foto dei pasti" (Impostazioni › Pasti da foto); without it photos are kept. */
@@ -105,7 +108,7 @@ function shiftDate(value: string, days: number): string {
 }
 
 /** Logged meals under /api/meals: edit, delete, save as favorite, repeat. */
-export const mealRoutes: FastifyPluginAsync<MealRoutesOptions> = async (app, { api, requireOwner, recognizer, photos, photoSettings, recognitionModel }) => {
+export const mealRoutes: FastifyPluginAsync<MealRoutesOptions> = async (app, { api, requireOwner, recognizer, courses, photos, photoSettings, recognitionModel }) => {
   app.addHook("preHandler", requireOwner);
 
   const photoCount = () => Object.values(photos?.list() ?? {}).reduce((sum, ids) => sum + ids.length, 0);
@@ -145,12 +148,15 @@ export const mealRoutes: FastifyPluginAsync<MealRoutesOptions> = async (app, { a
         idempotencyKey: z.string().min(8).max(255),
         photos: z.array(jpegUpload).max(MEAL_PHOTOS_MAX).optional(),
         favoriteName: z.string().trim().min(1).max(100).optional(),
+        courses: mealCoursesSchema.optional(),
       })
       .safeParse(request.body);
     if (!body.success || !extra.success) return reply.code(400).send({ error: "Invalid meal" });
+    if (extra.data.courses && extra.data.courses.reduce((s, c) => s + c.count, 0) !== (body.data.items?.length ?? -1)) return reply.code(400).send({ error: "Invalid meal" });
     const jpegs = (extra.data.photos ?? []).map(decodeJpeg);
     if (jpegs.some((jpeg) => jpeg === null)) return reply.code(400).send({ error: "Invalid photo" });
     const result = await api.logMeal({ ...updateMealFields(body.data), description: body.data.description, meal_type: body.data.type, idempotency_key: extra.data.idempotencyKey });
+    if (extra.data.courses && result.id) courses?.set(result.id, extra.data.courses);
     // The meal is logged; a photo that can't be kept does not undo it
     let photosSaved = 0;
     // With "Conserva le foto dei pasti" off the photos were only for the recognition: none is stored
@@ -176,6 +182,8 @@ export const mealRoutes: FastifyPluginAsync<MealRoutesOptions> = async (app, { a
     }
     return reply.code(201).send({ mealId: result.id, photosSaved, favoriteSaved });
   });
+
+  app.get<{ Params: { id: string } }>("/meals/:id/courses", async (request) => ({ courses: courses?.get(request.params.id) ?? null }));
 
   // Meal photos: the ids that have one (for the timeline) and the image itself
   app.get("/meals/photos", async (): Promise<MealPhotosResponse> => ({ photos: photos?.list() ?? {} }));
@@ -262,7 +270,12 @@ export const mealRoutes: FastifyPluginAsync<MealRoutesOptions> = async (app, { a
   app.patch<{ Params: { id: string } }>("/meals/:id", async (request, reply) => {
     const body = updateSchema.safeParse(request.body);
     if (!body.success) return reply.code(400).send({ error: "Invalid meal", issues: body.error.issues.map((i) => i.message) });
+    // Modifica pasto sends the courses again (null: one dish); without the field they stay as they are
+    const raw = (request.body as { courses?: unknown }).courses;
+    const parsed = raw === undefined || raw === null ? null : mealCoursesSchema.safeParse(raw);
+    if (parsed && (!parsed.success || parsed.data.reduce((s, c) => s + c.count, 0) !== (body.data.items?.length ?? -1))) return reply.code(400).send({ error: "Invalid meal" });
     await api.updateMeal(request.params.id, updateMealFields(body.data));
+    if (raw !== undefined) courses?.set(request.params.id, parsed?.success ? parsed.data : null);
     return { ok: true };
   });
 
@@ -270,6 +283,7 @@ export const mealRoutes: FastifyPluginAsync<MealRoutesOptions> = async (app, { a
   app.delete<{ Params: { id: string } }>("/meals/:id", async (request) => {
     await api.deleteMeal(request.params.id);
     photos?.delete(request.params.id);
+    courses?.set(request.params.id, null);
     return { ok: true };
   });
 

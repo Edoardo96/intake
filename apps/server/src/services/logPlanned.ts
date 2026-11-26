@@ -1,4 +1,7 @@
 import {
+  courseMacros,
+  courseText,
+  sumCourseMacros,
   dishKey,
   dishKeys,
   dishMacros,
@@ -86,6 +89,8 @@ export interface LogPlannedInput {
   now: string;
   /** The interchangeable dish eaten in place of the planned one (Piatti intercambiabili). */
   alternative?: { groupId: number; dishIndex: number };
+  /** A meal with courses: what was eaten of each, in order (docs/courses.md); without it, every course as planned. */
+  courses?: Array<{ eaten: boolean; alternative?: { groupId: number; dishIndex: number } }>;
 }
 
 /** Where the alternative's group comes from; its dish must be in the same group as the planned dish. */
@@ -111,6 +116,32 @@ export async function logPlannedMeal(
   const meal = day.meals[input.index];
   if (!meal || !isFixedMeal(meal)) throw new PlanMealNotFoundError("Planned meal not found");
 
+  /** The dish of an interchangeable group that may replace `planned` (same group, matched by name). */
+  const alternativeOf = (planned: string, choice: { groupId: number; dishIndex: number }) => {
+    const group = groups?.get(choice.groupId);
+    const dish = group?.dishes[choice.dishIndex];
+    if (!group || !dish || !group.dishes.some((d) => dishKeys(d).includes(dishKey(planned)))) throw new PlanMealNotFoundError("Alternative not found");
+    return dish;
+  };
+
+  // A meal with courses: the courses eaten, each as planned or as one of its interchangeable dishes
+  if (meal.courses && input.courses) {
+    if (input.courses.length !== meal.courses.length || !input.courses.some((c) => c.eaten)) throw new PlanMealNotFoundError("Invalid courses");
+    const eaten = meal.courses.flatMap((course, i) => {
+      const choice = input.courses![i]!;
+      if (!choice.eaten) return [];
+      if (!choice.alternative) return [{ text: courseText(course), foods: course.foods, macros: courseMacros(course) }];
+      const dish = alternativeOf(courseText(course), choice.alternative);
+      return [{ text: dish.name, foods: dish.foods, macros: dishMacros(dish) }];
+    });
+    // Courses split from a meal with totals only have no values of their own: the whole meal as planned uses its totals
+    const asPlanned = input.courses.every((c) => c.eaten && !c.alternative);
+    const total = sumCourseMacros(eaten.map((c) => ({ foods: c.foods, ...(c.macros ? { macros: c.macros } : {}) }))) ?? (asPlanned ? (meal.macros ?? null) : null);
+    if (!total) throw new PlanMealWithoutMacrosError();
+    const selection = input.courses.map((c) => (!c.eaten ? "x" : c.alternative ? `${c.alternative.groupId}.${c.alternative.dishIndex}` : "p")).join("_");
+    return logFoods(eaten.map((c) => c.text).join(" + "), eaten.flatMap((c) => c.foods), total, `intake-plan-${stored.id}-${input.date}-${input.index}-c-${selection}`);
+  }
+
   // The dish to log: the planned one, or an alternative of its group chosen in the Timeline or Oggi
   let name = mealFoodsText(meal);
   let foods = meal.foods;
@@ -118,27 +149,25 @@ export async function logPlannedMeal(
   let key = `intake-plan-${stored.id}-${input.date}-${input.index}`;
   if (input.alternative) {
     const { groupId, dishIndex } = input.alternative;
-    const group = groups?.get(groupId);
-    const dish = group?.dishes[dishIndex];
-    if (!group || !dish) throw new PlanMealNotFoundError("Alternative not found");
-    const planned = dishKey(name);
-    if (!group.dishes.some((d) => dishKeys(d).includes(planned))) throw new PlanMealNotFoundError("Alternative not found");
+    const dish = alternativeOf(name, input.alternative);
     name = dish.name;
     foods = dish.foods;
     macros = dishMacros(dish);
     key = `${key}-alt-${groupId}-${dishIndex}`;
   }
   if (!macros) throw new PlanMealWithoutMacrosError();
+  return logFoods(name, foods, macros, key);
 
+  async function logFoods(name: string, foods: PlannedFood[], macros: PlannedMacros, key: string): Promise<{ mealId: string | null }> {
   const time = mealTimes(day.meals)[input.index]!;
   const atPlannedTime = input.date < input.today;
-  const description = `${meal.title}: ${name}`;
+  const description = `${meal!.title}: ${name}`;
 
   // With per-food values the meal keeps its foods in Nutrition; otherwise only its totals are logged
   const items = plannedItems(foods);
   const { id } = await api.logMeal({
     description,
-    meal_type: mealTypeOf(meal),
+    meal_type: mealTypeOf(meal!),
     ...(items ? { items } : macrosToFields(macros)),
     ...(atPlannedTime ? { logged_at: `${input.date}T${time}` } : {}),
     idempotency_key: key,
@@ -150,6 +179,7 @@ export async function logPlannedMeal(
     const { meals } = await api.mealsByDate(input.date);
     mealId = meals.find((m) => m.description === description && (!atPlannedTime || m.time === time))?.id ?? null;
   }
-  if (mealId) plans.addLink(input.date, stored.id, input.index, mealId);
+  if (mealId) plans.addLink(input.date, stored!.id, input.index, mealId);
   return { mealId };
+  }
 }

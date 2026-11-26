@@ -1,6 +1,9 @@
 import type {
   RecognitionModelResponse,
   Dish,
+  CourseAdd,
+  CourseRemove,
+  MealSplit,
   DishGroupsResponse,
   DishesResponse,
   DishWrite,
@@ -232,10 +235,16 @@ export function useDisconnectNutrition() {
 export function useLogPlanned(date: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (entry: { date: string; planId: number; index: number; alternative?: { groupId: number; dishIndex: number } }) =>
+    mutationFn: (entry: {
+      date: string;
+      planId: number;
+      index: number;
+      alternative?: { groupId: number; dishIndex: number };
+      courses?: Array<{ eaten: boolean; alternative?: { groupId: number; dishIndex: number } }>;
+    }) =>
       apiFetch<{ mealId: string | null }>(`/api/days/${entry.date}/planned/${entry.planId}/${entry.index}`, {
         method: "POST",
-        ...(entry.alternative ? { json: { alternative: entry.alternative } } : {}),
+        ...(entry.alternative || entry.courses ? { json: { ...(entry.alternative ? { alternative: entry.alternative } : {}), ...(entry.courses ? { courses: entry.courses } : {}) } } : {}),
       }),
     onMutate: async (entry) => {
       await queryClient.cancelQueries({ queryKey: dayKey(date) });
@@ -382,7 +391,10 @@ export function useUpdateMeal() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, request }: { id: string; request: UpdateMealRequest }) => apiFetch(`/api/meals/${id}`, { method: "PATCH", json: request }),
-    onSettled: () => invalidateDays(queryClient),
+    onSettled: (_data, _error, { id }) => {
+      void queryClient.invalidateQueries({ queryKey: ["meal-courses", id] });
+      return invalidateDays(queryClient);
+    },
   });
 }
 
@@ -891,6 +903,23 @@ export function useEditPlanMeal() {
   });
 }
 
+/** "+ Aggiungi portata" and the × of a course of a planned meal (docs/courses.md). */
+export function useChangeCourses() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (change: ({ add: CourseAdd } | { remove: CourseRemove } | { split: MealSplit }) & { id: number }) =>
+      "add" in change
+        ? apiFetch<StoredPlan>(`/api/plans/${change.id}/course`, { method: "POST", json: change.add })
+        : "split" in change
+          ? apiFetch<StoredPlan>(`/api/plans/${change.id}/split`, { method: "POST", json: change.split })
+          : apiFetch<StoredPlan>(`/api/plans/${change.id}/course/remove`, { method: "POST", json: change.remove }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["plans"] });
+      return invalidateDays(queryClient);
+    },
+  });
+}
+
 /** "Dividi in alimenti con l'IA": the proposed food values of a saved meal (Claude API; nothing is saved). */
 export function useSplitFoodsProposal() {
   return useMutation({
@@ -1094,5 +1123,14 @@ export function useSetRecipeModel() {
   return useMutation({
     mutationFn: (model: string) => apiFetch<RecipeModelResponse>("/api/dishes/recipe/model", { method: "PUT", json: { model } }),
     onSuccess: (data) => queryClient.setQueryData(["recipe-model"], data),
+  });
+}
+
+/** The courses of a logged meal (docs/courses.md); null when it is one dish. */
+export function useMealCourses(id: string) {
+  return useQuery({
+    queryKey: ["meal-courses", id],
+    queryFn: () => apiFetch<{ courses: Array<{ name: string; count: number }> | null }>(`/api/meals/${id}/courses`).then((r) => r.courses),
+    staleTime: 60_000,
   });
 }

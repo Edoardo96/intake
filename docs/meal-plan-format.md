@@ -25,7 +25,8 @@ The fields Intake reads; anything else (`targets`, `goal`, `macros_info`, `shopp
 | `days[].expected_protein_g` | Shown on the day tab ("135 g") and as the day note |
 | `days[].tags` | `sweet_snack` shows "dolce" on the day tab |
 | `days[].free_meals` | Free slots of that day |
-| `days[].meals.<slot id>` | `description`, `items[]` (`food`, `quantity`, `unit`, `note`, `grams`), optional `alternative[]`, `free`, `sweet`, `family_friendly`, `macros` |
+| `days[].meals.<slot id>` | `description`, `items[]` (`food`, `quantity`, `unit`, `note`, `grams`, optional `course`), optional `alternative[]`, `free`, `sweet`, `family_friendly`, `macros` |
+| `items[].course` | Optional course of the item: `Antipasto`, `Primo`, `Secondo`, `Contorno`, `Frutta`, `Dolce`, `Fine pasto`, `Bevanda` or a name of your own (up to 30 characters). Items with the same course make one course; with two or more the meal is made of courses and its `macros` stay the meal's totals ([courses.md](courses.md)). Without it the meal is one dish |
 
 A meal with `free: true`, listed in a free-meals field, or with no items is shown as **Libero**. The meal type (breakfast, lunch, dinner, snack) comes from the slot id or label. When an item's unit is not a weight or volume (`pz`, `fette`…), its `grams` are shown next to it: "Banana 1 pz (118 g)".
 
@@ -62,7 +63,7 @@ Add a `macros` object to every non-free meal:
 
 ## Intake format (summary)
 
-`schemaVersion: 1`, `validFrom`, optional `notes[]`, and `days.monday` … `days.sunday`. Each day has optional `label`, `note`, `expectedProtein` and `meals[]`. A meal has `title`, optional `time` and `type`, optional `description`, and either `free: true` or `foods[]` (`name`, optional `quantity`, `unit`, `note` and `nutrients`: `kcal`, `protein`, `carbs`, `fat`, `fiber`, `sugar` + `addedSugar` of that food at its quantity, not per 100 g) plus optional `macros` for the whole meal (`kcal`, `protein`, `carbs`, `fat`, `fiber`, `sugar` + `addedSugar`, `saturatedFat`, `sodiumMg`, `caffeineMg`).
+`schemaVersion: 1`, `validFrom`, optional `notes[]`, and `days.monday` … `days.sunday`. Each day has optional `label`, `note`, `expectedProtein` and `meals[]`. A meal has `title`, optional `time` and `type`, optional `description`, and either `free: true` or `foods[]` (`name`, optional `quantity`, `unit`, `note` and `nutrients`: `kcal`, `protein`, `carbs`, `fat`, `fiber`, `sugar` + `addedSugar` of that food at its quantity, not per 100 g) plus optional `macros` for the whole meal (`kcal`, `protein`, `carbs`, `fat`, `fiber`, `sugar` + `addedSugar`, `saturatedFat`, `sodiumMg`, `caffeineMg`). A fixed meal may also have `courses[]` (2 to 6: `name`, optional `description`, `foods[]`, optional `macros`); then its `foods`, `description` and `macros` are the sum of the courses ([courses.md](courses.md)).
 
 ## Timeline behavior
 

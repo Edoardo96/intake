@@ -183,8 +183,14 @@ export function DishPickerSheet({
   onClose,
   busy,
   failed,
+  subtitle,
+  onPickSaved,
 }: {
   meal: string;
+  /** Picks the dish as it is on Nutrition (Nuovo pasto › + Aggiungi portata) instead of as a dish of a group. */
+  onPickSaved?: (dish: DishSummary) => void;
+  /** The line under the title; "Alternativa a …" by default. */
+  subtitle?: string;
   category?: string | null;
   exclude?: string[];
   onPick: (dish: Dish) => void;
@@ -217,7 +223,7 @@ export function DishPickerSheet({
             <CloseIcon size={18} strokeWidth={2.5} />
           </button>
         </div>
-        <p className="muted dish-fav-for">{t.dishes.alternativeTo(meal)}</p>
+        <p className="muted dish-fav-for">{subtitle ?? t.dishes.alternativeTo(meal)}</p>
         <input type="search" className="dish-fav-search" value={query} autoFocus placeholder={t.dishes.searchDishes} aria-label={t.dishes.searchDishes} onChange={(e) => setQuery(e.target.value)} />
         {categories.length > 0 && (
           <div className="dish-chips" role="group" aria-label={t.dishBook.categoriesLabel}>
@@ -244,7 +250,7 @@ export function DishPickerSheet({
           {shown.map((saved) => {
             const done = linked.has(dishKey(saved.name));
             return (
-              <button key={saved.id} type="button" className="sheet-row" disabled={busy || done} onClick={() => onPick(dishFromSaved(saved))}>
+              <button key={saved.id} type="button" className="sheet-row" disabled={busy || (done && !onPickSaved)} onClick={() => (onPickSaved ? onPickSaved(saved) : onPick(dishFromSaved(saved)))}>
                 <span className="sheet-row-text">
                   <strong>{saved.name}</strong>
                   <span className="muted">
@@ -252,7 +258,7 @@ export function DishPickerSheet({
                     {saved.protein !== null ? `P ${formatKcal(saved.protein)} g` : ""}
                   </span>
                 </span>
-                <span className="sheet-row-action">{done ? t.dishes.linked : t.dishes.pick}</span>
+                <span className="sheet-row-action">{done && !onPickSaved ? t.dishes.linked : t.dishes.pick}</span>
               </button>
             );
           })}

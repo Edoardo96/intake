@@ -1,3 +1,4 @@
+import { coursesFromLabels, withCourses } from "./courses.js";
 import { z } from "zod";
 import {
   MEAL_TYPES,
@@ -36,6 +37,8 @@ const cfItemSchema = z.looseObject({
   note: nullable(z.string()),
   /** schema_version 2: the item's weight in grams, also for units such as "pz" or "fette" */
   grams: nullable(z.number().nonnegative()),
+  /** Optional: the course of this item ("Primo", "Dolce"…); items with the same course make one (docs/courses.md) */
+  course: nullable(z.string().trim().max(30)),
 });
 
 const cfMacrosSchema = z.looseObject({
@@ -175,7 +178,10 @@ export function convertClaudeFitnessPlan(source: ClaudeFitnessPlan, links?: Dish
         noteParts.unshift("pranzo in famiglia");
       }
       const foods = meal.items.map(toFood);
-      const planned = { ...base, title, foods, ...(meal.macros ? { macros: toMacros(meal.macros) } : {}) };
+      const single = { ...base, title, foods, ...(meal.macros ? { macros: toMacros(meal.macros) } : {}) };
+      // Items with a `course` make a meal of courses; the meal's macros stay its totals when the items have no values
+      const courses = coursesFromLabels(foods, meal.items.map((item) => item.course));
+      const planned = courses ? withCourses(single, courses, single.macros) : single;
       meals.push(planned);
       if (links && meal.alternative && meal.alternative.length > 0) {
         const altMacros = cfMacrosSchema.safeParse(meal.alternative_macros);

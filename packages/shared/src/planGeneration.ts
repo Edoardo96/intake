@@ -4,7 +4,9 @@
  * AI here: the server calls the model and runs these checks on every answer. Rules in docs/plan-generation.md.
  */
 import { z } from "zod";
-import { MEAL_PLAN_SCHEMA_VERSION, MEAL_TYPES, WEEKDAYS, mealPlanSchema, plannedFoodSchema, type MealPlan, type PlannedFoodNutrients, type PlannedMacros, type PlannedMeal, type Weekday } from "./mealPlan.js";
+import { MEAL_PLAN_SCHEMA_VERSION, MEAL_TYPES, WEEKDAYS, mealPlanSchema, plannedFoodSchema, type MealPlan, type PlannedFoodNutrients, type PlannedMacros, type PlannedMeal, type Weekday, type Course } from "./mealPlan.js";
+import { COURSE_NAMES, COURSES_MAX, coursesFromLabels, coursesOf, withCourses } from "./courses.js";
+import { isFixedMeal } from "./planUtils.js";
 
 export const PLAN_DIETS = ["omnivore", "vegetarian", "pescatarian", "vegan"] as const;
 export type PlanDiet = (typeof PLAN_DIETS)[number];
@@ -147,7 +149,7 @@ export const generatedPlanSchema = z.object({
             slot: z.string(),
             free: z.boolean(),
             description: z.string().max(160),
-            foods: z.array(foodAnswer).max(12),
+            foods: z.array(foodAnswer.extend({ course: z.string().max(30).optional() })).max(12),
           }),
         ),
       }),
@@ -221,7 +223,17 @@ export const GENERATED_PLAN_JSON_SCHEMA = {
                 foods: {
                   type: "array",
                   description: "The foods with their quantity and the nutrients of that quantity; empty for a free meal. The meal's nutrients are the sum of its foods",
-                  items: foodJson,
+                  items: {
+                    ...foodJson,
+                    required: [...foodJson.required, "course"],
+                    properties: {
+                      ...foodJson.properties,
+                      course: {
+                        type: "string",
+                        description: `Only when the meal is made of separate dishes eaten one after the other (a pasta and then a yogurt): the course of this food, one of Antipasto, Primo, Secondo, Contorno, Frutta, Dolce, Fine pasto, Bevanda (always these Italian names). Empty when the meal is one dish`,
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -276,6 +288,8 @@ export function toPlannedMeal(meal: GeneratedMeal | undefined, base: { title: st
       nutrients: { kcal: Math.round(f.kcal * 10) / 10, protein: round1(f.protein), carbs: round1(f.carbs), fat: round1(f.fat), fiber: round1(f.fiber), sugar, addedSugar: Math.min(sugar, round1(f.addedSugar)) },
     };
   });
+  const courses = coursesFromLabels(foods, meal.foods.map((f) => f.course));
+  if (courses) return withCourses(base, courses);
   return {
     ...base,
     description: meal.description || meal.foods.map((f) => f.name).join(", "),
@@ -355,6 +369,9 @@ export const mealEditSchema = z
   .object({
     day: z.enum(WEEKDAYS),
     index: z.number().int().min(0).max(9),
+    /** A meal with courses: the course edited (docs/courses.md); its name can change with it. */
+    course: z.number().int().min(0).max(5).optional(),
+    courseName: z.string().trim().min(1).max(30).optional(),
     description: z.string().trim().max(200),
     foods: z.array(plannedFoodSchema).min(1).max(20),
     macros: z
@@ -384,7 +401,10 @@ export function editMeal(plan: MealPlan, edit: MealEdit): MealPlan {
   const current = plan.days[edit.day].meals[edit.index];
   if (!current) throw new Error("No such meal");
   const base = { title: current.title, ...(current.time !== undefined ? { time: current.time } : {}), ...(current.type !== undefined ? { type: current.type } : {}) };
-  const previous = "macros" in current && current.macros ? current.macros : null;
+  const courses = edit.course !== undefined && isFixedMeal(current) && current.courses ? current.courses : null;
+  if (edit.course !== undefined && !courses?.[edit.course]) throw new Error("No such course");
+  const editedCourse = courses ? courses[edit.course!]! : null;
+  const previous = editedCourse ? (editedCourse.macros ?? null) : "macros" in current && current.macros ? current.macros : null;
   let macros: PlannedMacros | undefined = previous ?? undefined;
   if (edit.macros) {
     const m = edit.macros;
@@ -403,6 +423,16 @@ export function editMeal(plan: MealPlan, edit: MealEdit): MealPlan {
     if (edit.macros && macros && Math.abs(summed.kcal - macros.kcal) > Math.max(10, macros.kcal * 0.03)) foods = foods.map(({ nutrients: _dropped, ...food }) => food);
     else macros = { ...(macros ?? {}), ...summed };
   }
+  if (courses && editedCourse) {
+    const course: Course = {
+      name: edit.courseName ?? editedCourse.name,
+      ...(edit.description ? { description: edit.description } : {}),
+      foods,
+      ...(macros ? { macros } : {}),
+    };
+    return replaceMeal(plan, edit.day, edit.index, withCourses(base, courses.map((c, i) => (i === edit.course ? course : c))));
+  }
+  // A meal with courses edited as a whole ("Modifica" of the meal) becomes one dish
   const meal = {
     ...base,
     ...(edit.description ? { description: edit.description } : {}),
@@ -592,4 +622,69 @@ export interface FoodMacrosDto {
 /** The nutrients "Ricalcola con l'IA" puts in the editor. */
 export interface EstimatedMacrosDto {
   macros: { kcal: number; protein: number; carbs: number; fat: number; fiber: number };
+}
+
+/** "+ Aggiungi portata" on a planned meal: the new course, and the name of the dish already there when it was one. */
+export const courseAddSchema = z
+  .object({
+    day: z.enum(WEEKDAYS),
+    index: z.number().int().min(0).max(9),
+    name: z.string().trim().min(1).max(30),
+    firstName: z.string().trim().min(1).max(30).optional(),
+    description: z.string().trim().max(200),
+    foods: z.array(plannedFoodSchema).min(1).max(20),
+    macros: mealEditSchema.shape.macros,
+  })
+  .strict();
+export type CourseAdd = z.infer<typeof courseAddSchema>;
+
+export const courseRemoveSchema = z.object({ day: z.enum(WEEKDAYS), index: z.number().int().min(0).max(9), course: z.number().int().min(0).max(5) }).strict();
+export type CourseRemove = z.infer<typeof courseRemoveSchema>;
+
+/** The plan with one more course in a fixed meal; a meal without courses keeps its dish as the first course. */
+export function addCourse(plan: MealPlan, add: CourseAdd): MealPlan {
+  const current = plan.days[add.day].meals[add.index];
+  if (!current || !isFixedMeal(current)) throw new Error("No such meal");
+  const courses = current.courses ? [...current.courses] : [{ ...coursesOf(current)[0]!, name: add.firstName ?? COURSE_NAMES[1] }];
+  if (courses.length >= COURSES_MAX) throw new Error("Too many courses");
+  const summed = sumFoodNutrients(add.foods);
+  const m = add.macros;
+  const macros = summed ?? (m ? { kcal: Math.round(m.kcal), protein: round1(m.protein), carbs: round1(m.carbs), fat: round1(m.fat), fiber: round1(m.fiber), ...(m.sugar !== undefined && m.addedSugar !== undefined ? { sugar: round1(m.sugar), addedSugar: Math.min(round1(m.addedSugar), round1(m.sugar)) } : {}) } : null);
+  courses.push({ name: add.name, ...(add.description ? { description: add.description } : {}), foods: add.foods, ...(macros ? { macros } : {}) });
+  return replaceMeal(plan, add.day, add.index, withCourses(current, courses));
+}
+
+/** The plan without one course of a meal; with one course left the meal is one dish again. */
+export function removeCourse(plan: MealPlan, remove: CourseRemove): MealPlan {
+  const current = plan.days[remove.day].meals[remove.index];
+  if (!current || !isFixedMeal(current) || !current.courses?.[remove.course]) throw new Error("No such course");
+  return replaceMeal(plan, remove.day, remove.index, withCourses(current, current.courses.filter((_, i) => i !== remove.course)));
+}
+
+/** "Dividi in portate" on a planned meal: the course of each of its foods, in the order of the meal's foods. */
+export const mealSplitSchema = z
+  .object({
+    day: z.enum(WEEKDAYS),
+    index: z.number().int().min(0).max(9),
+    labels: z.array(z.string().trim().min(1).max(30)).min(1).max(30),
+  })
+  .strict();
+export type MealSplit = z.infer<typeof mealSplitSchema>;
+
+/**
+ * The plan with a fixed meal split into courses (or put back into one dish when every food has the same course). The
+ * foods keep their values; a meal whose foods have none keeps its totals.
+ */
+export function splitMeal(plan: MealPlan, split: MealSplit): MealPlan {
+  const current = plan.days[split.day].meals[split.index];
+  if (!current || !isFixedMeal(current) || current.foods.length !== split.labels.length) throw new Error("No such meal");
+  const courses = coursesFromLabels(current.foods, split.labels);
+  if (!courses) {
+    if (new Set(split.labels.map((l) => l.toLowerCase())).size > COURSES_MAX) throw new Error("Too many courses");
+    // One course: the meal is one dish again, with its totals (the joined course names of its text are dropped too)
+    const { courses: hadCourses, description, ...single } = current;
+    const text = hadCourses ? undefined : description;
+    return replaceMeal(plan, split.day, split.index, { ...single, ...(text ? { description: text } : {}) });
+  }
+  return replaceMeal(plan, split.day, split.index, withCourses(current, courses, current.macros));
 }

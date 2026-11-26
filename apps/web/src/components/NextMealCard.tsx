@@ -5,7 +5,8 @@ import { useLogPlanned, useSkipPlanned } from "../api/queries";
 import { formatKcal } from "../lib/format";
 import { t } from "../lib/strings";
 import { DayAlternative } from "./DayAlternative";
-import { DishChoice, useDishChoice } from "./DishChoice";
+import { CoursesChoice, DishChoice, useCoursesChoice, useDishChoice, type LogChoice } from "./DishChoice";
+import { courseLabel } from "../lib/courseLabel";
 
 const minutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
 
@@ -97,7 +98,7 @@ export function NextMealCard({ view, onAdd }: Props) {
               key={`${next.planId}-${next.index}`}
               entry={next}
               busy={logPlanned.isPending}
-              onLog={(alternative) => logPlanned.mutate({ date: view.date, planId: next.planId, index: next.index, ...(alternative ? { alternative } : {}) })}
+              onLog={(choice) => logPlanned.mutate({ date: view.date, planId: next.planId, index: next.index, ...(choice ?? {}) })}
             />
             {logPlanned.isError && <p className="error-text">{t.timeline.logFailed}</p>}
             <div className="next-meal-actions">
@@ -130,8 +131,20 @@ export function NextMealCard({ view, onAdd }: Props) {
 }
 
 /** The foods of the next meal, the choice among its interchangeable dishes and "Mangiato come previsto". */
-function NextMealDish({ entry, busy, onLog }: { entry: PlannedEntry; busy: boolean; onLog: (alternative?: { groupId: number; dishIndex: number }) => void }) {
+function NextMealDish({ entry, busy, onLog }: { entry: PlannedEntry; busy: boolean; onLog: (choice?: LogChoice) => void }) {
   const choice = useDishChoice(entry);
+  const courses = useCoursesChoice(entry);
+  if (entry.courses && entry.courses.length > 0) {
+    return (
+      <>
+        <CoursesChoice choice={courses} label={courseLabel} />
+        <button type="button" className="button-primary next-meal-primary" disabled={!courses.canLog || busy} onClick={() => onLog(courses.body)}>
+          {courses.kcal !== null ? t.courses.logChosen(formatKcal(courses.kcal)) : t.timeline.eatenAsPlanned}
+        </button>
+        {!courses.canLog && <p className="planned-hint">{courses.rows.every((r) => !r.eaten) ? t.courses.noneChosen : t.timeline.noMacros}</p>}
+      </>
+    );
+  }
   return (
     <>
       <DishChoice entry={entry} choice={choice} />
@@ -140,7 +153,7 @@ function NextMealDish({ entry, busy, onLog }: { entry: PlannedEntry; busy: boole
           <li key={i}>{line}</li>
         ))}
       </ul>
-      <button type="button" className="button-primary next-meal-primary" disabled={!choice.canLog || busy} onClick={() => onLog(choice.alternative)}>
+      <button type="button" className="button-primary next-meal-primary" disabled={!choice.canLog || busy} onClick={() => onLog(choice.alternative ? { alternative: choice.alternative } : undefined)}>
         {t.timeline.eatenAsPlanned}
       </button>
       {!choice.canLog && <p className="planned-hint">{t.timeline.noMacros}</p>}
